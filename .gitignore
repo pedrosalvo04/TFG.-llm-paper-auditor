@@ -4,3 +4,4 @@ venv/
 data/temp/
 .DS_Store
 *.pyc
+*.pdf

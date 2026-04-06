@@ -1,12 +1,13 @@
-from docling.document_converter import DocumentConverter
+import pymupdf4llm
 
 def convert_pdf_to_markdown(pdf_path):
     """
-    Esta es la función que app.py está buscando.
+    Convierte un PDF a formato Markdown optimizado para LLMs.
+    Es ultra rápido y consume muy poca memoria RAM.
     """
     try:
-        converter = DocumentConverter()
-        result = converter.convert(pdf_path)
-        return result.document.export_to_markdown()
+        # Lee el PDF y lo transforma a Markdown conservando tablas
+        md_text = pymupdf4llm.to_markdown(pdf_path)
+        return md_text
     except Exception as e:
-        return f"Error en Docling: {str(e)}"
+        return f"❌ Error en la extracción del PDF: {str(e)}"
