@@ -66,13 +66,21 @@ class PaperAuditor:
           "revision": [
             {{
               "categoria": "Nombre de la categoría",
-              "estado": "✅ CUMPLE / ⚠️ PARCIAL / ❌ NO CUMPLE / ⚪ N/A",
+              "estado": "🟢 CUMPLE TOTALMENTE / 🔵 CUMPLE MAYORMENTE / 🟡 CUMPLE PARCIALMENTE / 🟠 CUMPLE MÍNIMAMENTE / 🔴 NO CUMPLE / ⚪ N/A",
               "hallazgo": "Breve explicación basada en el texto",
               "recomendacion": "Qué debe añadir el autor"
             }}
           ],
           "veredicto_final": "Resumen general"
         }}
+
+        GUÍA DE ESTADOS:
+        - 🟢 CUMPLE TOTALMENTE: Toda la información requerida está presente y es completa
+        - 🔵 CUMPLE MAYORMENTE: Información casi completa, solo faltan detalles menores
+        - 🟡 CUMPLE PARCIALMENTE: Información presente pero incompleta o ambigua
+        - 🟠 CUMPLE MÍNIMAMENTE: Información muy limitada o apenas mencionada
+        - 🔴 NO CUMPLE: Información ausente o completamente inadecuada
+        - ⚪ N/A: No aplica a este tipo de estudio
 
         TEXTO DEL ARTÍCULO:
         {paper_text}

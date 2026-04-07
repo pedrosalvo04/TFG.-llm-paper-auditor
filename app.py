@@ -7,6 +7,9 @@ from src.parser import convert_pdf_to_markdown
 from src.validator import PaperAuditor
 from src.chatbot import PaperChatbot
 
+if "resultado" not in st.session_state:
+    st.session_state.resultado = None
+
 st.set_page_config(page_title="Nature Auditor Pro", layout="wide", page_icon="🔬")
 
 st.markdown("""
@@ -21,41 +24,71 @@ st.markdown("""
     footer {visibility: hidden;} 
     header {background-color: transparent !important;} 
     
-    /* 🎨 1. FONDOS MÁS OSCUROS (#27374D - Un Azul/Gris más profundo y oscuro) */
-    [data-testid="stPlotlyChart"] {
-        background-color: #27374D !important; 
+    /* 🎨 1. CONTENEDOR DE LA TABLA */
+    [data-testid="stTable"] {
+        background-color: #2d3436 !important; /* Gris grafito oscuro */
         border-radius: 15px !important; 
-        padding: 10px !important; 
+        padding: 5px !important;
     }
 
-    [data-testid="stTable"] > div, .stTable {
-        background-color: #27374D !important; 
-        border-radius: 15px !important; 
-        overflow: hidden !important; 
+    /* 🛠️ EL TRUCO PARA ELIMINAR LÍNEAS DUPLICADAS */
+    [data-testid="stTable"] table {
+        border-collapse: collapse !important; /* Une los bordes en una sola línea */
+        width: 100% !important;
+        border: none !important;
     }
     
     /* 💥 2. CABECERAS (Categoría, Estado, Hallazgo...) */
-    [data-testid="stTable"] th, [data-testid="stTable"] th *, .stTable th {
-        color: #63B3ED !important; /* Azul vivo que resalta sobre el fondo oscuro */
-        font-size: 16px !important; /* Fuente más pequeña que antes */
-        font-weight: 700 !important; /* Un poco menos gruesa */
+    [data-testid="stTable"] th {
+        color: #FFFFFF !important;
+        font-size: 16px !important; 
+        font-weight: 800 !important; 
+        background-color: #3d4446 !important;
+        border: 1px solid #4a4a4a !important; 
+        padding: 12px !important;
+        text-transform: capitalize !important;
+    }
+    [data-testid="stTable"] th * {
+        color: #FFFFFF !important;
+        font-size: 16px !important;
+        font-weight: 800 !important;
+        text-decoration: none !important;
+        border: none !important;
+        text-transform: capitalize !important;
+    }
+    [data-testid="stTable"] tbody th {
+        color: #FFFFFF !important;
+        font-size: 16px !important;
+        background-color: #2d3436 !important;
+    }
+    [data-testid="stTable"] tbody th * {
+        color: #FFFFFF !important;
+        font-size: 16px !important;
         background-color: transparent !important;
-        
-        /* SIN SUBRAYAR */
-        border-bottom: none !important; 
-        text-decoration: none !important; 
     }
 
-    /* 📝 3. CONTENIDO DE LA TABLA Y ESTADOS */
-    [data-testid="stTable"] td, [data-testid="stTable"] td *, .stTable td {
-        background-color: transparent !important; 
+    /* 📝 3. CELDAS DE CONTENIDO (Puntos a analizar) */
+    [data-testid="stTable"] td {
         color: #E2E8F0 !important; 
-        font-size: 14px !important; /* Fuente de los puntos a analizar más pequeña */
+        font-size: 13.5px !important;
         font-weight: 400 !important; 
-        
-        /* ESTADOS SIN SUBRAYAR Y SIN LÍNEAS DIVISORIAS */
-        border-bottom: none !important; 
+        background-color: transparent !important;
+        border: 1px solid #4a4a4a !important; 
+        padding: 12px !important;
+    }
+    [data-testid="stTable"] td * {
+        color: #E2E8F0 !important;
+        font-size: 13.5px !important;
+        font-weight: 400 !important;
         text-decoration: none !important;
+        border: none !important;
+    }
+
+    /* 🎨 4. FONDO DEL GRÁFICO (A juego con la tabla) */
+    [data-testid="stPlotlyChart"] {
+        background-color: #2d3436 !important; 
+        border-radius: 15px !important; 
+        padding: 10px !important; 
     }
     </style>
     """, unsafe_allow_html=True)
@@ -77,13 +110,24 @@ def calcular_puntuacion(revision):
         estado = item.get("estado", "").upper()
         if "N/A" in estado or "NO APLICA" in estado or "⚪" in estado:
             continue
-        aplicables += 1
-        if "CUMPLE" in estado and "NO" not in estado:
-            puntos += 1
-        elif "PARCIAL" in estado:
+        
+        if "CUMPLE TOTALMENTE" in estado or "🟢" in estado:
+            puntos += 1.0
+            aplicables += 1
+        elif "CUMPLE MAYORMENTE" in estado or "🔵" in estado:
+            puntos += 0.75
+            aplicables += 1
+        elif "CUMPLE PARCIALMENTE" in estado or "🟡" in estado:
             puntos += 0.5
+            aplicables += 1
+        elif "CUMPLE MÍNIMAMENTE" in estado or "🟠" in estado:
+            puntos += 0.25
+            aplicables += 1
+        elif "NO CUMPLE" in estado or "🔴" in estado:
+            aplicables += 1
+    
     if aplicables == 0: return 0
-    return int((puntos / aplicables) * 100)
+    return round((puntos / aplicables) * 100)
 
 def dibujar_medidor(score):
     if score >= 80:
@@ -100,11 +144,11 @@ def dibujar_medidor(score):
         title = {'text': "Índice de Reproducibilidad", 'font': {'size': 20}},
         number = {'suffix': "%", 'font': {'size': 40}},
         gauge = {
-            'axis': {'range': [0, 100], 'tickwidth': 1},
+            'axis': {'range': [0, 100], 'tickwidth': 10},
             'bar': {
                 'color': color_barra,
-                # 👇 Borde interior un poco más grueso
-                'line': {'color': "black", 'width': 2} 
+                'thickness': 1,
+                'line': {'color': "black", 'width': 3} 
             },
             'bgcolor': "white",
             # 👇 Borde exterior de la gauge más grueso
@@ -112,16 +156,16 @@ def dibujar_medidor(score):
             'bordercolor': "black",
             
             'steps': [
-                {'range': [0, 50], 'color': "rgba(255, 75, 75, 0.35)"},
-                {'range': [50, 80], 'color': "rgba(255, 153, 0, 0.35)"},
-                {'range': [80, 100], 'color': "rgba(0, 204, 68, 0.35)"}],
+                {'range': [0, 50], 'color': "rgba(255, 75, 75, 0.25)"},
+                {'range': [50, 80], 'color': "rgba(255, 153, 0, 0.25)"},
+                {'range': [80, 100], 'color': "rgba(0, 204, 68, 0.25)"}],
         }
     ))
     
     # 👇 Hacemos el fondo del gráfico transparente para que el CSS actúe
     fig.update_layout(
         height=300, 
-        margin=dict(l=10, r=10, t=40, b=30),
+        margin=dict(l=10, r=10, t=40, b=25),
         paper_bgcolor="rgba(0,0,0,0)", # Totalmente transparente
         font={'color': "#E5E7EB"}
     )
@@ -190,7 +234,7 @@ if uploaded_file:
             st.table(df)
 
         # ---------------------------------------------------------
-        # CHATBOT INTERACTIVO (AHORA ARRIBA DE LA DESCARGA)
+        # CHATBOT INTERACTIVO
         # ---------------------------------------------------------
         st.markdown("---")
         st.header("💬 Pregunta al Revisor")
@@ -203,29 +247,28 @@ if uploaded_file:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
-        if prompt_usuario := st.chat_input("Ej: ¿En qué página falla el paper en su estadística?"):
+        prompt_usuario = st.text_input("Escribe tu pregunta:", key="chat_input", placeholder="Ej: ¿En qué página falla el paper en su estadística?")
+        
+        if st.button("Enviar", key="send_button") and prompt_usuario:
             
             st.session_state.messages.append({"role": "user", "content": prompt_usuario})
-            with st.chat_message("user"):
-                st.markdown(prompt_usuario)
-
+            
             history_str = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages[-4:]])
 
-            with st.chat_message("assistant"):
-                with st.spinner("El revisor está analizando tu consulta..."):
-                    respuesta_ia = st.session_state.chatbot.preguntar(md_text, prompt_usuario, history_str)
-                    st.markdown(respuesta_ia)
+            with st.spinner("El revisor está analizando tu consulta..."):
+                respuesta_ia = st.session_state.chatbot.preguntar(md_text, prompt_usuario, history_str)
             
             st.session_state.messages.append({"role": "assistant", "content": respuesta_ia})
+            st.rerun()
 
         # ---------------------------------------------------------
-        # DESCARGA DEL INFORME (AHORA AL FINAL DEL TODO)
+        # DESCARGA DEL INFORME
         # ---------------------------------------------------------
+        st.markdown("---")
         reporte_descargable = f"# Informe de Auditoría: {uploaded_file.name}\n\n**Índice de Reproducibilidad:** {puntuacion}%\n\n## Veredicto Final\n{resultado.get('veredicto_final', '')}\n\n## Detalles de la Revisión\n\n"
         for item in resultado["revision"]:
             reporte_descargable += f"### {item['categoria']}\n- **Estado:** {item['estado']}\n- **Hallazgo:** {item['hallazgo']}\n- **Recomendación:** {item['recomendacion']}\n\n"
 
-        st.markdown("---")
         st.download_button(
             label="📥 Descargar Informe Completo (.md)",
             data=reporte_descargable,
