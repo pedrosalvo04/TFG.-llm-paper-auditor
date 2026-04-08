@@ -18,7 +18,7 @@ load_dotenv()
 
 class PaperAuditor:
     def __init__(self):
-        self.model_name = "gemini-3.1-flash-lite-preview"
+        self.model_name = "models/gemini-3.1-flash-lite-preview"
         
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
@@ -48,17 +48,17 @@ class PaperAuditor:
         logger.info(f"Iniciando auditoría. Tamaño del documento: {caracteres} caracteres.")
         
         prompt = f"""
-        Actúa como un Auditor Editorial de Nature Portfolio. 
-        Evalúa el manuscrito frente a TODOS los puntos de la 'Reporting Summary'.
+        Actúa como un Auditor Editorial de revistas de alto impacto en Ciencias de la Computación (ACM, IEEE, NeurIPS, ICML, CVPR, etc.).
+        Evalúa el manuscrito frente a los estándares de reproducibilidad y transparencia en investigación computacional.
         
         CRITERIOS A EVALUAR:
-        1. Estadística: Informar n, tests, significancia y si son tests de una o dos colas.
-        2. Software y Código: Disponibilidad, versiones y repositorios (GitHub/Zenodo).
-        3. Disponibilidad de Datos: Declaración de acceso y DOIs de los datasets.
-        4. Diseño Experimental: Tamaño de muestra, exclusión de datos, aleatorización y cegamiento.
-        5. Materiales (Si aplica): Validación de anticuerpos, líneas celulares y autenticación.
-        6. Ética y Humanos (Si aplica): Consentimiento informado, comité de ética y datos clínicos.
-        7. Reproducibilidad: Detalles suficientes de la metodología.
+        1. Estadística y Experimentación: Informar n, métricas de evaluación, tests estadísticos, significancia, intervalos de confianza.
+        2. Código y Software: Disponibilidad del código fuente, repositorios (GitHub/GitLab), versiones de librerías, dependencias, instrucciones de ejecución.
+        3. Datos y Datasets: Disponibilidad de datasets, preprocesamiento, splits (train/val/test), DOIs, licencias de uso.
+        4. Diseño Experimental: Descripción de hiperparámetros, semillas aleatorias, número de ejecuciones, hardware utilizado (GPU/CPU), tiempo de entrenamiento.
+        5. Modelos y Arquitecturas: Detalles completos de la arquitectura, pesos preentrenados, checkpoints, configuración del modelo.
+        6. Reproducibilidad: Suficientes detalles para replicar los experimentos, scripts de entrenamiento/evaluación, entornos (Docker/Conda).
+        7. Comparación con Baselines: Comparación justa con métodos del estado del arte, mismos datasets y métricas.
 
         INSTRUCCIÓN DE SALIDA:
         Devuelve EXCLUSIVAMENTE un objeto JSON con esta estructura:

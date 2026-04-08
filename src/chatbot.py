@@ -11,7 +11,7 @@ class PaperChatbot:
         """
         Constructor: Inicializa el modelo para conversación.
         """
-        self.model_name = "gemini-3.1-flash-lite-preview"
+        self.model_name = "models/gemini-3.1-flash-lite-preview"
         
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
@@ -35,13 +35,14 @@ class PaperChatbot:
         Envía la pregunta del usuario junto con el contexto del paper al modelo.
         """
         prompt = f"""
-        Eres el Revisor Editorial de Nature que acaba de auditar este paper científico. 
+        Eres el Revisor Editorial de una conferencia de alto impacto en Ciencias de la Computación (ACM, IEEE, NeurIPS, etc.) que acaba de auditar este paper. 
         El autor/usuario tiene una duda sobre tu revisión o sobre el contenido del artículo.
         
         TUS REGLAS ESTRICTAS:
         1. Responde de forma profesional, clara y basándote ÚNICAMENTE en el texto proporcionado.
         2. Si te preguntan por algo que NO está en el paper, dilo directamente. No inventes.
         3. Si te piden justificar un fallo, cita las secciones relevantes del texto.
+        4. Enfoca tus respuestas en aspectos de reproducibilidad, código, datos, y experimentación computacional.
 
         CONTENIDO DEL PAPER:
         {paper_text}

@@ -6,9 +6,13 @@ import plotly.graph_objects as go
 from src.parser import convert_pdf_to_markdown
 from src.validator import PaperAuditor
 from src.chatbot import PaperChatbot
+from src.sota_analyzer import SotaAnalyzer
 
 if "resultado" not in st.session_state:
     st.session_state.resultado = None
+
+if 'sota_analyzer' not in st.session_state:
+    st.session_state.sota_analyzer = SotaAnalyzer()
 
 st.set_page_config(page_title="Nature Auditor Pro", layout="wide", page_icon="🔬")
 
@@ -93,7 +97,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🔬 Auditor Integral de Manuscritos")
+st.title("💻 Auditor de Papers en Ciencias de la Computación")
 st.markdown("---")
 
 # Inicialización de módulos
@@ -196,7 +200,7 @@ if uploaded_file:
             st.write("📂 Extrayendo texto y tablas...")
             st.session_state.md_text = convert_pdf_to_markdown(temp_path)
             
-            st.write("🧠 Auditando con la Checklist de Nature...")
+            st.write("🧠 Auditando con estándares de reproducibilidad computacional...")
             st.session_state.resultado = st.session_state.auditor.audit(st.session_state.md_text)
             
             status.update(label="✅ Análisis completado", state="complete", expanded=False)
@@ -216,7 +220,7 @@ if uploaded_file:
         col1, col2 = st.columns([1, 2])
         
         with col1:
-            st.subheader("🏁 Veredicto Principal")
+            st.subheader(f"🏁 Veredicto: {uploaded_file.name}")
             st.info(resultado.get("veredicto_final", ""))
             st.plotly_chart(dibujar_medidor(puntuacion), use_container_width=True)
             
@@ -233,6 +237,119 @@ if uploaded_file:
             df.set_index("categoria", inplace=True)
             st.table(df)
 
+
+        # ---------------------------------------------------------
+        # ANÁLISIS DE ESTADO DEL ARTE (SOTA)
+        # ---------------------------------------------------------
+        st.markdown("---")
+        st.subheader("📚 Validación del Estado del Arte (SOTA 2023-2026)")
+        
+        if st.button("Ejecutar Análisis de Literatura Reciente"):
+            with st.spinner("Conectando con Semantic Scholar y validando bibliografía..."):
+                resultado_sota = st.session_state.sota_analyzer.analyze_sota(md_text)
+                
+                if "error" not in resultado_sota:
+                    st.success("Análisis completado")
+                    
+                    # Conclusión SOTA
+                    st.markdown("### 📝 Conclusión")
+                    st.info(resultado_sota.get('conclusion_sota', ''))
+                    
+                    # Obtener papers omitidos del análisis
+                    papers_omitidos = resultado_sota.get("papers_omitidos", [])
+                    df_papers = pd.DataFrame(resultado_sota.get("papers_analizados", []))
+                    año_paper_estudiado = resultado_sota.get("metadata", {}).get("año_paper_estudiado")
+                    
+                    if not df_papers.empty and papers_omitidos:
+                        # Preparar datos
+                        df_papers['authors_display'] = df_papers['autores'].apply(
+                            lambda x: ', '.join([a.get('name', '') for a in x[:2]]) + (' et al.' if len(x) > 2 else '') if isinstance(x, list) else 'N/A'
+                        )
+                        
+                        # Renombrar columnas para display
+                        df_papers.rename(columns={'titulo': 'title', 'año': 'year', 'citas': 'citationCount'}, inplace=True)
+                        
+                        # Crear set de títulos omitidos (no citados)
+                        titulos_omitidos = {p['titulo'].lower().strip() for p in papers_omitidos}
+                        
+                        # Filtrar solo papers NO citados
+                        def es_omitido(titulo):
+                            titulo_lower = titulo.lower().strip()
+                            for omitido in titulos_omitidos:
+                                if omitido in titulo_lower or titulo_lower in omitido:
+                                    return True
+                            return False
+                        
+                        df_papers['es_omitido'] = df_papers['title'].apply(es_omitido)
+                        df_no_citados = df_papers[df_papers['es_omitido'] == True]
+                        
+                        # Mostrar SOLO recomendaciones de no citados en formato tabla
+                        if not df_no_citados.empty:
+                            st.markdown("### 💡 Artículos Relevantes NO Citados en tu Manuscrito")
+                            st.caption(f"Se encontraron {len(df_no_citados)} artículos recientes que deberías considerar citar")
+                            
+                            # Crear DataFrame para la tabla
+                            tabla_recomendaciones = []
+                            for _, paper in df_no_citados.iterrows():
+                                # Buscar la justificación
+                                justificacion = ""
+                                relevancia = ""
+                                subtema = ""
+                                titulo_paper = paper['title'].lower().strip()
+                                
+                                for omitido in papers_omitidos:
+                                    titulo_omitido = omitido['titulo'].lower().strip()
+                                    if titulo_omitido in titulo_paper or titulo_paper in titulo_omitido:
+                                        justificacion = omitido.get('justificacion', '')
+                                        relevancia = omitido.get('relevancia', '')
+                                        subtema = omitido.get('subtema_relacionado', '')
+                                        break
+                                
+                                # Determinar si es posterior
+                                es_posterior = "✅ Sí" if año_paper_estudiado and paper['year'] > año_paper_estudiado else "❌ No"
+                                if not año_paper_estudiado:
+                                    es_posterior = "?"
+                                
+                                tabla_recomendaciones.append({
+                                    "Título": paper['title'],
+                                    "Autores": paper['authors_display'],
+                                    "Año": paper['year'],
+                                    "Posterior": es_posterior,
+                                    "Citas": paper['citationCount'],
+                                    "Relevancia": relevancia,
+                                    "Subtema": subtema,
+                                    "Justificación": justificacion
+                                })
+                            
+                            df_recomendaciones = pd.DataFrame(tabla_recomendaciones)
+                            
+                            # Mostrar tabla con configuración de columnas
+                            st.dataframe(
+                                df_recomendaciones,
+                                hide_index=True,
+                                use_container_width=True,
+                                column_config={
+                                    "Título": st.column_config.TextColumn("Título", width="large"),
+                                    "Autores": st.column_config.TextColumn("Autores", width="medium"),
+                                    "Año": st.column_config.NumberColumn("Año", width="small"),
+                                    "Posterior": st.column_config.TextColumn("Posterior al tuyo", width="small"),
+                                    "Citas": st.column_config.NumberColumn("Citas", width="small"),
+                                    "Relevancia": st.column_config.TextColumn("Relevancia", width="small"),
+                                    "Subtema": st.column_config.TextColumn("Subtema", width="medium"),
+                                    "Justificación": st.column_config.TextColumn("Justificación", width="large")
+                                }
+                            )
+                            
+                            if año_paper_estudiado:
+                                st.caption(f"📅 Tu artículo es de {año_paper_estudiado}. Los marcados con ✅ son posteriores.")
+                            else:
+                                st.warning("⚠️ No se pudo detectar el año de tu artículo. La columna 'Posterior' muestra '?' para todos los artículos.")
+                        else:
+                            st.success("✅ Tu manuscrito cita adecuadamente la literatura reciente relevante.")
+                    elif not papers_omitidos:
+                        st.success("✅ No se detectaron omisiones significativas en tu bibliografía.")
+                else:
+                    st.error(f"Hubo un error al realizar el análisis SOTA: {resultado_sota.get('error', 'Error desconocido')}")
         # ---------------------------------------------------------
         # CHATBOT INTERACTIVO
         # ---------------------------------------------------------
@@ -265,6 +382,7 @@ if uploaded_file:
         # DESCARGA DEL INFORME
         # ---------------------------------------------------------
         st.markdown("---")
+        st.subheader("📄 Descargar Informe")
         reporte_descargable = f"# Informe de Auditoría: {uploaded_file.name}\n\n**Índice de Reproducibilidad:** {puntuacion}%\n\n## Veredicto Final\n{resultado.get('veredicto_final', '')}\n\n## Detalles de la Revisión\n\n"
         for item in resultado["revision"]:
             reporte_descargable += f"### {item['categoria']}\n- **Estado:** {item['estado']}\n- **Hallazgo:** {item['hallazgo']}\n- **Recomendación:** {item['recomendacion']}\n\n"
@@ -283,6 +401,6 @@ if uploaded_file:
 # BARRA LATERAL
 # ---------------------------------------------------------
 with st.sidebar:
-    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Nature_Logo_2020.svg/1200px-Nature_Logo_2020.svg.png", width=150)
+    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Association_for_Computing_Machinery_%28ACM%29_logo.svg/1200px-Association_for_Computing_Machinery_%28ACM%29_logo.svg.png", width=150)
     st.markdown("### Sobre el TFG")
-    st.write("Herramienta desarrollada para automatizar la auditoría de transparencia en artículos científicos usando LLMs.")
+    st.write("Herramienta desarrollada para automatizar la auditoría de reproducibilidad en artículos de Ciencias de la Computación usando LLMs.")
