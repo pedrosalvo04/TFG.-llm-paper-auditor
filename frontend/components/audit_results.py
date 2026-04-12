@@ -8,7 +8,16 @@ def render_audit_results(resultado, uploaded_file):
     """Renderiza los resultados de la auditoría con el medidor y la tabla de criterios"""
     st.success("Auditoría Finalizada")
     
+    # Calcular puntuación
     puntuacion = calcular_puntuacion(resultado["revision"])
+    
+    # Debug: mostrar cálculo en consola
+    print(f"\n=== DEBUG PUNTUACIÓN ===")
+    print(f"Total categorías: {len(resultado['revision'])}")
+    for item in resultado["revision"]:
+        print(f"  - {item['categoria']}: {item['estado']}")
+    print(f"Puntuación calculada: {puntuacion}%")
+    print(f"========================\n")
     
     col1, col2 = st.columns([1, 2])
     
@@ -19,7 +28,8 @@ def render_audit_results(resultado, uploaded_file):
         
         tiempo = resultado.get('metricas', {}).get('tiempo_segundos', 'N/A')
         caracteres = resultado.get('metricas', {}).get('caracteres_leidos', 'N/A')
-        st.caption(f"⏱️ **Tiempo IA:** {tiempo}s | 📄 **Caracteres:** {caracteres}")
+        red_flags = resultado.get('metricas', {}).get('red_flags_detectadas', 'N/A')
+        st.caption(f"⏱️ **Tiempo IA:** {tiempo}s | 📄 **Caracteres:** {caracteres} | ⚠️ **Red Flags:** {red_flags}")
     
     with col2:
         st.subheader("📊 Desglose de Criterios")

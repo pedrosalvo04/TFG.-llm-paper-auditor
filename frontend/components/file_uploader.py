@@ -1,10 +1,10 @@
-"""Componente de carga y procesamiento de archivos PDF"""
+"""Componente de carga y procesamiento de archivos (PDF, TXT, MD)"""
 import streamlit as st
 import os
 from backend.services.pdf_parser import convert_pdf_to_markdown
 
 def process_uploaded_file(uploaded_file):
-    """Procesa el archivo PDF subido y guarda el resultado en session_state"""
+    """Procesa el archivo subido (PDF, TXT, MD) y guarda el resultado en session_state"""
     # Verificar si es un archivo nuevo
     if "archivo_actual" not in st.session_state or st.session_state.archivo_actual != uploaded_file.name:
         st.session_state.archivo_actual = uploaded_file.name
@@ -14,13 +14,23 @@ def process_uploaded_file(uploaded_file):
             os.makedirs("temp")
         
         temp_path = os.path.join("temp", uploaded_file.name)
+        file_extension = uploaded_file.name.split('.')[-1].lower()
         
         with st.status("🚀 Procesando documento...", expanded=True) as status:
             with open(temp_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
             
-            st.write("📂 Extrayendo texto y tablas...")
-            st.session_state.md_text = convert_pdf_to_markdown(temp_path)
+            # Procesar según el tipo de archivo
+            if file_extension == 'pdf':
+                st.write("📂 Extrayendo texto del PDF...")
+                st.session_state.md_text = convert_pdf_to_markdown(temp_path)
+            elif file_extension in ['txt', 'md']:
+                st.write(f"📄 Leyendo archivo {file_extension.upper()}...")
+                with open(temp_path, 'r', encoding='utf-8') as f:
+                    st.session_state.md_text = f.read()
+            else:
+                st.error(f"❌ Formato no soportado: {file_extension}")
+                return
             
             st.write("🧠 Auditando con estándares de reproducibilidad computacional...")
             st.session_state.resultado = st.session_state.auditor.audit(st.session_state.md_text)

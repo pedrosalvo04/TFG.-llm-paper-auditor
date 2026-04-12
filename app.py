@@ -25,7 +25,10 @@ st.title(TITLE)
 st.markdown("---")
 
 # Carga de archivo
-uploaded_file = st.file_uploader("Sube el PDF del artículo científico", type="pdf")
+uploaded_file = st.file_uploader(
+    "Sube el artículo científico (PDF, TXT o Markdown)", 
+    type=["pdf", "txt", "md"]
+)
 
 if uploaded_file:
     process_uploaded_file(uploaded_file)
