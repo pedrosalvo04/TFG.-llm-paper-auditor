@@ -1,51 +1,32 @@
-import os
-import google.generativeai as genai
+"""Servicio de auditoría de papers"""
 import json
-import logging
 import time
-from dotenv import load_dotenv
+from backend.common.llm_client import LLMClient
+from backend.common.config import AUDIT_CONFIG
+from backend.utils.logger import get_logger
 
-# 1. Configuración del sistema de Logs
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    datefmt='%H:%M:%S'
-)
-logger = logging.getLogger(__name__)
-
-# Cargamos las variables del entorno
-load_dotenv()
+logger = get_logger(__name__)
 
 class PaperAuditor:
+    """Auditor de reproducibilidad en papers científicos"""
+    
     def __init__(self):
-        self.model_name = "models/gemini-3.1-flash-lite-preview"
-        
-        api_key = os.getenv("GOOGLE_API_KEY")
-        if not api_key:
-            logger.error("CRÍTICO: No se encontró la GOOGLE_API_KEY en el .env")
-            raise ValueError("No se encontró la GOOGLE_API_KEY en el .env")
-            
-        genai.configure(api_key=api_key)
-        
-        # Configuración determinista
-        self.model = genai.GenerativeModel(
-            model_name=self.model_name,
-            generation_config={
-                "response_mime_type": "application/json",
-                "temperature": 0.0,
-                "top_k": 1,
-                "top_p": 0.1
-            }
-        )
-        logger.info(f"✅ Modelo {self.model_name} inicializado correctamente (temperature=0.0).")
+        """Inicializa el auditor con configuración determinista"""
+        self.llm_client = LLMClient(generation_config=AUDIT_CONFIG)
+        logger.info("✅ Auditor de papers inicializado correctamente")
 
     def audit(self, paper_text):
         """
-        Analiza el texto y registra métricas de rendimiento.
+        Analiza el texto y registra métricas de rendimiento
+        
+        Args:
+            paper_text: Texto del paper en formato markdown
+            
+        Returns:
+            Diccionario con resultados de la auditoría
         """
-        # Log de inicio
         caracteres = len(paper_text)
-        logger.info(f"Iniciando auditoría. Tamaño del documento: {caracteres} caracteres.")
+        logger.info(f"Iniciando auditoría. Tamaño del documento: {caracteres} caracteres")
         
         prompt = f"""
         Actúa como un Auditor Editorial de revistas de alto impacto en Ciencias de la Computación (ACM, IEEE, NeurIPS, ICML, CVPR, etc.).
@@ -86,16 +67,16 @@ class PaperAuditor:
         {paper_text}
         """
         
-        start_time = time.time() # ⏱️ Arranca el cronómetro
+        start_time = time.time()
         
         try:
             logger.info("Enviando petición a la API de Gemini...")
-            response = self.model.generate_content(prompt)
+            response = self.llm_client.generate(prompt)
             
-            end_time = time.time() # ⏱️ Para el cronómetro
+            end_time = time.time()
             execution_time = round(end_time - start_time, 2)
             
-            logger.info(f"✅ Respuesta recibida con éxito en {execution_time} segundos.")
+            logger.info(f"✅ Respuesta recibida con éxito en {execution_time} segundos")
             
             # Intentamos extraer métricas de tokens si la API los devuelve
             try:
@@ -103,12 +84,12 @@ class PaperAuditor:
                 tokens_resp = response.usage_metadata.candidates_token_count
                 logger.info(f"📊 Consumo de Tokens -> Entrada: {tokens_prompt} | Salida: {tokens_resp}")
             except Exception:
-                logger.info("📊 Métrica de tokens no disponible en esta llamada.")
+                logger.info("📊 Métrica de tokens no disponible en esta llamada")
 
             # Parsear el JSON devuelto
             resultado_json = json.loads(response.text)
             
-            # Inyectamos nuestras propias métricas en el resultado para que app.py pueda usarlas
+            # Inyectamos métricas en el resultado
             resultado_json["metricas"] = {
                 "tiempo_segundos": execution_time,
                 "caracteres_leidos": caracteres

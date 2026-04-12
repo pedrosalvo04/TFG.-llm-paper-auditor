@@ -1,39 +1,31 @@
-import os
+"""Servicio de análisis del Estado del Arte (SOTA)"""
 import json
-import logging
-import requests
 import time
-import google.generativeai as genai
-from dotenv import load_dotenv
+import requests
+from backend.common.llm_client import LLMClient
+from backend.common.config import (
+    SOTA_CONFIG, 
+    SEMANTIC_SCHOLAR_API_KEY,
+    SEMANTIC_SCHOLAR_BASE_URL,
+    SEMANTIC_SCHOLAR_YEAR_RANGE,
+    SEMANTIC_SCHOLAR_LIMIT,
+    SEMANTIC_SCHOLAR_FIELDS
+)
+from backend.utils.logger import get_logger
 
-logger = logging.getLogger(__name__)
-load_dotenv()
+logger = get_logger(__name__)
 
 class SotaAnalyzer:
+    """Analizador del Estado del Arte en papers científicos"""
+    
     def __init__(self):
-        # Utiliza el mismo modelo que tu auditor
-        self.model_name = "models/gemini-3.1-flash-lite-preview"
-        
-        api_key = os.getenv("GOOGLE_API_KEY")
-        if not api_key:
-            raise ValueError("No se encontró la GOOGLE_API_KEY en el .env")
-            
-        genai.configure(api_key=api_key)
-        
-        # API Key de Semantic Scholar
-        self.s2_api_key = os.getenv("SEMANTIC_SCHOLAR_API_KEY")
-        
-        # Configuración forzando JSON como salida
-        self.model = genai.GenerativeModel(
-            model_name=self.model_name,
-            generation_config={
-                "response_mime_type": "application/json",
-                "temperature": 0.1 # Ligera creatividad para generar queries variadas
-            }
-        )
+        """Inicializa el analizador SOTA"""
+        self.llm_client = LLMClient(generation_config=SOTA_CONFIG)
+        self.s2_api_key = SEMANTIC_SCHOLAR_API_KEY
+        logger.info("✅ Analizador SOTA inicializado correctamente")
 
     def extract_thematic_coverage(self, paper_text):
-        """Identifica subtemas, áreas y año del manuscrito."""
+        """Identifica subtemas, áreas y año del manuscrito"""
         prompt = f"""
         Analiza este manuscrito científico e identifica:
         1. Los 3-5 subtemas principales que aborda
@@ -61,7 +53,7 @@ class SotaAnalyzer:
         {paper_text[-5000:]}
         """
         try:
-            response = self.model.generate_content(prompt)
+            response = self.llm_client.generate(prompt)
             result = json.loads(response.text)
             year = result.get("año_paper")
             if year:
@@ -74,7 +66,7 @@ class SotaAnalyzer:
             return {"subtemas": [], "areas_tecnicas": [], "año_paper": None}
 
     def extract_search_queries(self, paper_text, thematic_data):
-        """Paso 1: Extrae queries especializadas en inglés usando LLM (aumentadas a 6)."""
+        """Extrae queries especializadas en inglés usando LLM"""
         subtemas_str = ", ".join(thematic_data.get("subtemas", []))
         areas_str = ", ".join(thematic_data.get("areas_tecnicas", []))
         
@@ -100,7 +92,7 @@ class SotaAnalyzer:
         {paper_text[:8000]}
         """
         try:
-            response = self.model.generate_content(prompt)
+            response = self.llm_client.generate(prompt)
             queries = json.loads(response.text).get("queries", [])
             logger.info(f"Queries generadas: {queries}")
             return queries
@@ -109,8 +101,7 @@ class SotaAnalyzer:
             return []
 
     def fetch_semantic_scholar(self, queries):
-        """Paso 2: Busca en Semantic Scholar literatura 2023-2026 de alto impacto (aumentado a 10 papers)."""
-        base_url = "https://api.semanticscholar.org/graph/v1/paper/search"
+        """Busca en Semantic Scholar literatura 2023-2026 de alto impacto"""
         sota_papers = []
         
         headers = {}
@@ -124,14 +115,14 @@ class SotaAnalyzer:
                 
             params = {
                 "query": q,
-                "year": "2023-2026",
-                "limit": 5,
-                "fields": "paperId,title,authors,year,citationCount,abstract,url"
+                "year": SEMANTIC_SCHOLAR_YEAR_RANGE,
+                "limit": SEMANTIC_SCHOLAR_LIMIT,
+                "fields": SEMANTIC_SCHOLAR_FIELDS
             }
             
             try:
                 logger.info(f"Buscando: {q}")
-                response = requests.get(base_url, params=params, headers=headers, timeout=15)
+                response = requests.get(SEMANTIC_SCHOLAR_BASE_URL, params=params, headers=headers, timeout=15)
                 logger.info(f"Status: {response.status_code}")
                 
                 if response.status_code == 200:
@@ -155,7 +146,7 @@ class SotaAnalyzer:
         return sorted_papers[:10]
 
     def analyze_coverage_gaps(self, paper_text, thematic_data):
-        """Analiza gaps de cobertura bibliográfica por subtema."""
+        """Analiza gaps de cobertura bibliográfica por subtema"""
         subtemas_str = ", ".join(thematic_data.get("subtemas", []))
         
         prompt = f"""
@@ -180,14 +171,14 @@ class SotaAnalyzer:
         }}
         """
         try:
-            response = self.model.generate_content(prompt)
+            response = self.llm_client.generate(prompt)
             return json.loads(response.text)
         except Exception as e:
             logger.error(f"Error analizando gaps: {str(e)}")
             return {"areas_debiles": []}
 
     def cross_validate(self, paper_text, sota_papers, thematic_data):
-        """Paso 3: Identifica SOLO papers omitidos relevantes con justificación detallada."""
+        """Identifica SOLO papers omitidos relevantes con justificación detallada"""
         if not sota_papers:
             return {
                 "papers_omitidos": [],
@@ -248,7 +239,7 @@ class SotaAnalyzer:
         }}
         """
         try:
-            response = self.model.generate_content(prompt)
+            response = self.llm_client.generate(prompt)
             result = json.loads(response.text)
             
             logger.info(f"Papers omitidos identificados: {len(result.get('papers_omitidos', []))}")
@@ -275,23 +266,23 @@ class SotaAnalyzer:
             return {"error": str(e)}
 
     def analyze_sota(self, paper_text):
-        """Función orquestadora principal con análisis de cobertura temática."""
+        """Función orquestadora principal con análisis de cobertura temática"""
         logger.info("Iniciando análisis SOTA con cobertura temática...")
         
         # Paso 1: Análisis temático
         thematic_data = self.extract_thematic_coverage(paper_text)
         logger.info(f"Subtemas: {thematic_data.get('subtemas', [])}")
         
-        # Paso 2: Generar queries aumentadas
+        # Paso 2: Generar queries
         queries = self.extract_search_queries(paper_text, thematic_data)
         
         if not queries:
             return {"error": "No se pudieron generar queries."}
             
-        # Paso 3: Búsqueda ampliada
+        # Paso 3: Búsqueda
         papers = self.fetch_semantic_scholar(queries)
         
-        # Paso 4: Validación cruzada con análisis de cobertura
+        # Paso 4: Validación cruzada
         resultado = self.cross_validate(paper_text, papers, thematic_data)
         
         # Metadata
@@ -304,4 +295,3 @@ class SotaAnalyzer:
         }
         
         return resultado
-    

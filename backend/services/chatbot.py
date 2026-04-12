@@ -1,38 +1,29 @@
-import os
-import google.generativeai as genai
-import logging
-from dotenv import load_dotenv
+"""Servicio de chatbot interactivo"""
+from backend.common.llm_client import LLMClient
+from backend.common.config import CHAT_CONFIG
+from backend.utils.logger import get_logger
 
-logger = logging.getLogger(__name__)
-load_dotenv()
+logger = get_logger(__name__)
 
 class PaperChatbot:
+    """Chatbot para interactuar sobre papers auditados"""
+    
     def __init__(self):
-        """
-        Constructor: Inicializa el modelo para conversación.
-        """
-        self.model_name = "models/gemini-3.1-flash-lite-preview"
-        
-        api_key = os.getenv("GOOGLE_API_KEY")
-        if not api_key:
-            logger.error("CRÍTICO: No se encontró la GOOGLE_API_KEY en el .env")
-            raise ValueError("No se encontró la GOOGLE_API_KEY en el .env")
-            
-        genai.configure(api_key=api_key)
-        
-        # Para el chat subimos un poquito la temperatura (0.2) para que el lenguaje
-        # sea más natural y fluido, pero sin llegar a alucinar.
-        self.model = genai.GenerativeModel(
-            model_name=self.model_name,
-            generation_config={
-                "temperature": 0.2,
-            }
-        )
-        logger.info("✅ Módulo de Chatbot inicializado correctamente.")
+        """Inicializa el chatbot con temperatura más alta para conversación natural"""
+        self.llm_client = LLMClient(generation_config=CHAT_CONFIG)
+        logger.info("✅ Módulo de Chatbot inicializado correctamente")
 
     def preguntar(self, paper_text, question, history_text):
         """
-        Envía la pregunta del usuario junto con el contexto del paper al modelo.
+        Envía la pregunta del usuario junto con el contexto del paper al modelo
+        
+        Args:
+            paper_text: Texto completo del paper
+            question: Pregunta del usuario
+            history_text: Historial de conversación
+            
+        Returns:
+            Respuesta del chatbot
         """
         prompt = f"""
         Eres el Revisor Editorial de una conferencia de alto impacto en Ciencias de la Computación (ACM, IEEE, NeurIPS, etc.) que acaba de auditar este paper. 
@@ -56,7 +47,7 @@ class PaperChatbot:
         
         try:
             logger.info("Enviando pregunta al Chatbot...")
-            response = self.model.generate_content(prompt)
+            response = self.llm_client.generate(prompt)
             return response.text
         except Exception as e:
             logger.error(f"❌ Error en el chatbot: {str(e)}")

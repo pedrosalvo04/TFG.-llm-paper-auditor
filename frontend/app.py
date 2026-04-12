@@ -1,4 +1,4 @@
-"""Punto de entrada principal de la aplicación"""
+"""Aplicación principal del Auditor de Papers - Frontend Modular"""
 import streamlit as st
 
 # IMPORTANTE: configure_page() debe ser lo primero
@@ -28,13 +28,9 @@ st.markdown("---")
 uploaded_file = st.file_uploader("Sube el PDF del artículo científico", type="pdf")
 
 if uploaded_file:
-    process_uploaded_file(uploaded_file)
+    md_text, resultado = process_uploaded_file(uploaded_file)
     
-    # Acceder directamente desde session_state como en el original
-    resultado = st.session_state.get('resultado')
-    md_text = st.session_state.get('md_text')
-    
-    if resultado and "revision" in resultado:
+    if "revision" in resultado:
         puntuacion = render_audit_results(resultado, uploaded_file)
         render_sota_analysis(md_text)
         render_chatbot(md_text)
@@ -49,7 +45,7 @@ if uploaded_file:
             file_name=f"auditoria_{uploaded_file.name.replace('.pdf', '')}.md",
             mime="text/markdown"
         )
-    elif resultado and "error" in resultado:
+    elif "error" in resultado:
         st.error(f"Error en la auditoría: {resultado['error']}")
 
 # Barra lateral
