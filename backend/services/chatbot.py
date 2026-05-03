@@ -1,21 +1,31 @@
-"""Servicio de chatbot interactivo"""
+"""Servicio de chatbot interactivo refactorizado con arquitectura de skills"""
 from backend.common.llm_client import LLMClient
 from backend.common.config import CHAT_CONFIG
 from backend.utils.logger import get_logger
+from backend.skills.chatbot_skills import (
+    ConversationalResponseSkill,
+    ContextValidationSkill
+)
 
 logger = get_logger(__name__)
 
 class PaperChatbot:
-    """Chatbot para interactuar sobre papers auditados"""
+    """Chatbot para interactuar sobre papers auditados usando arquitectura de skills"""
     
     def __init__(self):
         """Inicializa el chatbot con temperatura más alta para conversación natural"""
         self.llm_client = LLMClient(generation_config=CHAT_CONFIG)
-        logger.info("✅ Módulo de Chatbot inicializado correctamente")
+        
+        # Inicializar skills con el cliente LLM
+        self.response_skill = ConversationalResponseSkill(llm_client=self.llm_client)
+        self.validation_skill = ContextValidationSkill()
+        
+        logger.info("✅ Módulo de Chatbot inicializado con arquitectura de skills")
 
     def preguntar(self, paper_text, question, history_text):
         """
         Envía la pregunta del usuario junto con el contexto del paper al modelo
+        usando la arquitectura de skills.
         
         Args:
             paper_text: Texto completo del paper
@@ -25,30 +35,27 @@ class PaperChatbot:
         Returns:
             Respuesta del chatbot
         """
-        prompt = f"""
-        Eres el Revisor Editorial de una conferencia de alto impacto en Ciencias de la Computación (ACM, IEEE, NeurIPS, etc.) que acaba de auditar este paper. 
-        El autor/usuario tiene una duda sobre tu revisión o sobre el contenido del artículo.
+        # Preparar contexto
+        context = {
+            'paper_text': paper_text,
+            'question': question,
+            'history_text': history_text
+        }
         
-        TUS REGLAS ESTRICTAS:
-        1. Responde de forma profesional, clara y basándote ÚNICAMENTE en el texto proporcionado.
-        2. Si te preguntan por algo que NO está en el paper, dilo directamente. No inventes.
-        3. Si te piden justificar un fallo, cita las secciones relevantes del texto.
-        4. Enfoca tus respuestas en aspectos de reproducibilidad, código, datos, y experimentación computacional.
-
-        CONTENIDO DEL PAPER:
-        {paper_text}
-
-        HISTORIAL BREVE DE LA CONVERSACIÓN:
-        {history_text}
-
-        PREGUNTA DEL USUARIO:
-        {question}
-        """
+        # Skill 1: Validar contexto
+        validation_result = self.validation_skill.execute(context)
         
-        try:
-            logger.info("Enviando pregunta al Chatbot...")
-            response = self.llm_client.generate(prompt)
-            return response.text
-        except Exception as e:
-            logger.error(f"❌ Error en el chatbot: {str(e)}")
-            return f"❌ Hubo un error de conexión con el revisor: {str(e)}"
+        if not validation_result.get('is_valid', False):
+            error_msg = validation_result.get('error', 'Error desconocido')
+            logger.error(f"❌ Validación fallida: {error_msg}")
+            return f"❌ Error de validación: {error_msg}"
+        
+        # Skill 2: Generar respuesta conversacional
+        response_result = self.response_skill.execute(context)
+        
+        return response_result.get('response', '❌ Error generando respuesta')
+
+
+class Chatbot(PaperChatbot):
+    """Alias para compatibilidad con tests"""
+    pass

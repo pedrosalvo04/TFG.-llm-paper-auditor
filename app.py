@@ -1,5 +1,20 @@
 """Punto de entrada principal de la aplicación"""
 import streamlit as st
+import warnings
+import logging
+import os
+
+# Eliminar logs molestos de transformers y huggingface
+os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+warnings.filterwarnings("ignore", message=".*Accessing.*__path__.*")
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
+logging.getLogger("transformers").setLevel(logging.ERROR)
+
+# Desactivar telemetría de ChromaDB y OpenTelemetry para evitar conflictos en Streamlit
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+os.environ["OTEL_SDK_DISABLED"] = "true"
 
 # IMPORTANTE: configure_page() debe ser lo primero
 st.set_page_config(
@@ -37,7 +52,12 @@ if uploaded_file:
     resultado = st.session_state.get('resultado')
     md_text = st.session_state.get('md_text')
     
-    if resultado and "revision" in resultado:
+    if resultado and "error" in resultado:
+        st.error(f"❌ Error en la auditoría: {resultado['error']}")
+    elif resultado and "evaluation_error" in resultado:
+        st.error(f"❌ Error del LLM: {resultado['evaluation_error']}")
+        st.warning("🔄 El modelo está experimentando alta demanda. Intenta nuevamente.")
+    elif resultado and resultado.get("peer_review_scores") and len(resultado["peer_review_scores"]) > 0:
         puntuacion = render_audit_results(resultado, uploaded_file)
         render_sota_analysis(md_text)
         render_chatbot(md_text)
@@ -52,8 +72,9 @@ if uploaded_file:
             file_name=f"auditoria_{uploaded_file.name.replace('.pdf', '')}.md",
             mime="text/markdown"
         )
-    elif resultado and "error" in resultado:
-        st.error(f"Error en la auditoría: {resultado['error']}")
+    elif resultado:
+        st.error("⚠️ La auditoría no generó resultados válidos.")
+        st.json(resultado)
 
 # Barra lateral
 with st.sidebar:

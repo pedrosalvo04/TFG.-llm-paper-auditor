@@ -25,12 +25,27 @@ st.title(TITLE)
 st.markdown("---")
 
 # Carga de archivo
-uploaded_file = st.file_uploader("Sube el PDF del artículo científico", type="pdf")
+if st.button("🔄 Limpiar y subir nuevo archivo"):
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.rerun()
+
+uploaded_file = st.file_uploader("Sube el PDF del artículo científico", type=["pdf", "txt", "md"])
 
 if uploaded_file:
     md_text, resultado = process_uploaded_file(uploaded_file)
+if uploaded_file:
+    md_text, resultado = process_uploaded_file(uploaded_file)
     
-    if "revision" in resultado:
+    # Verificar errores primero
+    if resultado and "error" in resultado:
+        st.error(f"❌ Error en la auditoría: {resultado['error']}")
+    elif resultado and "evaluation_error" in resultado:
+        st.error(f"❌ Error del LLM: {resultado['evaluation_error']}")
+        st.warning("🔄 El modelo está experimentando alta demanda. Intenta nuevamente.")
+        st.info("💡 Tip: Recarga la página o sube el archivo nuevamente.")
+    elif resultado and resultado.get("peer_review_scores") and len(resultado["peer_review_scores"]) > 0:
+        # Renderizar resultados
         puntuacion = render_audit_results(resultado, uploaded_file)
         render_sota_analysis(md_text)
         render_chatbot(md_text)
@@ -45,8 +60,11 @@ if uploaded_file:
             file_name=f"auditoria_{uploaded_file.name.replace('.pdf', '')}.md",
             mime="text/markdown"
         )
-    elif "error" in resultado:
-        st.error(f"Error en la auditoría: {resultado['error']}")
+    elif resultado:
+        st.error("⚠️ La auditoría no generó resultados válidos.")
+        st.info("Posibles causas: respuesta vacía del LLM o JSON inválido.")
+    else:
+        st.warning("⚠️ No hay resultado disponible.")
 
 # Barra lateral
 with st.sidebar:

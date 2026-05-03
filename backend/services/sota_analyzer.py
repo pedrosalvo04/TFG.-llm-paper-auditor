@@ -1,297 +1,101 @@
-"""Servicio de análisis del Estado del Arte (SOTA)"""
-import json
-import time
-import requests
+"""Servicio de análisis del Estado del Arte (SOTA) - Refactorizado con Skills"""
+from typing import Dict, Any
 from backend.common.llm_client import LLMClient
-from backend.common.config import (
-    SOTA_CONFIG, 
-    SEMANTIC_SCHOLAR_API_KEY,
-    SEMANTIC_SCHOLAR_BASE_URL,
-    SEMANTIC_SCHOLAR_YEAR_RANGE,
-    SEMANTIC_SCHOLAR_LIMIT,
-    SEMANTIC_SCHOLAR_FIELDS
-)
+from backend.common.config import SOTA_CONFIG
 from backend.utils.logger import get_logger
+from backend.skills.sota_skills import (
+    ThematicCoverageSkill,
+    QueryGenerationSkill,
+    SemanticScholarSearchSkill,
+    CoverageGapAnalysisSkill,
+    CrossValidationSkill
+)
 
 logger = get_logger(__name__)
 
+
 class SotaAnalyzer:
-    """Analizador del Estado del Arte en papers científicos"""
+    """
+    Analizador del Estado del Arte en papers científicos.
+    
+    Utiliza un conjunto de skills especializados para:
+    - Identificar subtemas y cobertura temática
+    - Generar queries de búsqueda
+    - Buscar papers en Semantic Scholar
+    - Analizar gaps de cobertura
+    - Validar y detectar omisiones bibliográficas
+    """
     
     def __init__(self):
-        """Inicializa el analizador SOTA"""
-        self.llm_client = LLMClient(generation_config=SOTA_CONFIG)
-        self.s2_api_key = SEMANTIC_SCHOLAR_API_KEY
-        logger.info("✅ Analizador SOTA inicializado correctamente")
+        """Inicializa el analizador SOTA con todos los skills necesarios"""
+        llm_client = LLMClient(generation_config=SOTA_CONFIG)
+        
+        # Inicializar skills
+        self.thematic_skill = ThematicCoverageSkill(llm_client=llm_client)
+        self.query_skill = QueryGenerationSkill(llm_client=llm_client)
+        self.search_skill = SemanticScholarSearchSkill()
+        self.gap_skill = CoverageGapAnalysisSkill(llm_client=llm_client)
+        self.validation_skill = CrossValidationSkill(llm_client=llm_client)
+        
+        logger.info("✅ Analizador SOTA inicializado con skills")
 
-    def extract_thematic_coverage(self, paper_text):
-        """Identifica subtemas, áreas y año del manuscrito"""
-        prompt = f"""
-        Analiza este manuscrito científico e identifica:
-        1. Los 3-5 subtemas principales que aborda
-        2. Las áreas técnicas específicas que cubre
-        3. El año de publicación o envío (busca en: encabezado, pie de página, sección de metadata, fecha de envío/aceptación, copyright)
-        
-        IMPORTANTE para el año:
-        - Busca patrones como "2024", "Published: 2023", "Submitted: 2022", "Copyright © 2024"
-        - Si encuentras múltiples fechas (envío, revisión, aceptación), usa la más reciente
-        - Si no encuentras ninguna fecha clara, devuelve null
-        - NO inventes el año, debe estar explícitamente en el texto
-        
-        Devuelve EXCLUSIVAMENTE un JSON:
-        {{
-            "subtemas": ["subtema 1", "subtema 2", ...],
-            "areas_tecnicas": ["área 1", "área 2", ...],
-            "año_paper": 2024
-        }}
-        
-        TEXTO (primeras páginas y últimas páginas donde suelen estar las fechas):
-        INICIO:
-        {paper_text[:15000]}
-        
-        FINAL:
-        {paper_text[-5000:]}
+
+    def analyze_sota(self, paper_text: str) -> Dict[str, Any]:
         """
-        try:
-            response = self.llm_client.generate(prompt)
-            result = json.loads(response.text)
-            year = result.get("año_paper")
-            if year:
-                logger.info(f"Año del paper detectado: {year}")
-            else:
-                logger.warning("No se pudo detectar el año del paper")
-            return result
-        except Exception as e:
-            logger.error(f"Error extrayendo cobertura temática: {str(e)}")
-            return {"subtemas": [], "areas_tecnicas": [], "año_paper": None}
-
-    def extract_search_queries(self, paper_text, thematic_data):
-        """Extrae queries especializadas en inglés usando LLM"""
-        subtemas_str = ", ".join(thematic_data.get("subtemas", []))
-        areas_str = ", ".join(thematic_data.get("areas_tecnicas", []))
+        Función orquestadora principal del análisis SOTA.
         
-        prompt = f"""
-        Actúa como un investigador senior en Ciencias de la Computación.
-        Analiza el siguiente manuscrito científico.
+        Ejecuta secuencialmente todos los skills necesarios para el análisis
+        completo del estado del arte.
         
-        SUBTEMAS IDENTIFICADOS: {subtemas_str}
-        ÁREAS TÉCNICAS: {areas_str}
+        Args:
+            paper_text: Texto completo del paper a analizar.
         
-        Genera 3 búsquedas especializadas EN INGLÉS para encontrar SOTA reciente:
-        - 2 queries generales sobre el tema principal (amplias)
-        - 1 query específica sobre el subtema más relevante
-        
-        IMPORTANTE: Usa términos amplios y comunes, evita ser demasiado específico.
-        
-        Devuelve EXCLUSIVAMENTE un JSON:
-        {{
-            "queries": ["query 1", "query 2", "query 3"]
-        }}
-        
-        TEXTO DEL MANUSCRITO:
-        {paper_text[:8000]}
+        Returns:
+            Diccionario con resultados completos del análisis.
         """
-        try:
-            response = self.llm_client.generate(prompt)
-            queries = json.loads(response.text).get("queries", [])
-            logger.info(f"Queries generadas: {queries}")
-            return queries
-        except Exception as e:
-            logger.error(f"Error generando queries: {str(e)}")
-            return []
-
-    def fetch_semantic_scholar(self, queries):
-        """Busca en Semantic Scholar literatura 2023-2026 de alto impacto"""
-        sota_papers = []
+        logger.info("🚀 Iniciando análisis SOTA con arquitectura basada en skills...")
         
-        headers = {}
-        if self.s2_api_key:
-            headers["x-api-key"] = self.s2_api_key
-            logger.info("Usando API Key de Semantic Scholar")
-        
-        for i, q in enumerate(queries):
-            if i > 0:
-                time.sleep(0.5)
-                
-            params = {
-                "query": q,
-                "year": SEMANTIC_SCHOLAR_YEAR_RANGE,
-                "limit": SEMANTIC_SCHOLAR_LIMIT,
-                "fields": SEMANTIC_SCHOLAR_FIELDS
-            }
-            
-            try:
-                logger.info(f"Buscando: {q}")
-                response = requests.get(SEMANTIC_SCHOLAR_BASE_URL, params=params, headers=headers, timeout=15)
-                logger.info(f"Status: {response.status_code}")
-                
-                if response.status_code == 200:
-                    data = response.json().get("data", [])
-                    logger.info(f"Papers encontrados: {len(data)}")
-                    if len(data) == 0:
-                        logger.warning(f"Query sin resultados: {q}")
-                    sota_papers.extend(data)
-                elif response.status_code == 429:
-                    logger.warning("Rate limit alcanzado, esperando...")
-                    time.sleep(2)
-                else:
-                    logger.warning(f"Error {response.status_code} para query: {q}")
-            except Exception as e:
-                logger.error(f"Error en API: {str(e)}")
-                
-        unique_papers = {p['paperId']: p for p in sota_papers if p.get('paperId')}.values()
-        sorted_papers = sorted(unique_papers, key=lambda x: x.get('citationCount', 0), reverse=True)
-        
-        logger.info(f"Total papers únicos: {len(sorted_papers)}")
-        return sorted_papers[:10]
-
-    def analyze_coverage_gaps(self, paper_text, thematic_data):
-        """Analiza gaps de cobertura bibliográfica por subtema"""
-        subtemas_str = ", ".join(thematic_data.get("subtemas", []))
-        
-        prompt = f"""
-        Analiza la cobertura bibliográfica de este manuscrito.
-        
-        SUBTEMAS IDENTIFICADOS: {subtemas_str}
-        
-        TEXTO (inicio y referencias):
-        INICIO: {paper_text[:5000]}
-        REFERENCIAS: {paper_text[-10000:]}
-        
-        Identifica qué subtemas tienen POCA o NULA cobertura bibliográfica.
-        
-        Devuelve JSON:
-        {{
-            "areas_debiles": [
-                {{
-                    "subtema": "nombre del subtema",
-                    "diagnostico": "por qué tiene baja cobertura"
-                }}
-            ]
-        }}
-        """
-        try:
-            response = self.llm_client.generate(prompt)
-            return json.loads(response.text)
-        except Exception as e:
-            logger.error(f"Error analizando gaps: {str(e)}")
-            return {"areas_debiles": []}
-
-    def cross_validate(self, paper_text, sota_papers, thematic_data):
-        """Identifica SOLO papers omitidos relevantes con justificación detallada"""
-        if not sota_papers:
-            return {
-                "papers_omitidos": [],
-                "cobertura_tematica": {"areas_debiles": []},
-                "conclusion_sota": "No se encontraron artículos recientes (2023-2026) en Semantic Scholar."
-            }
-        
-        logger.info(f"Analizando {len(sota_papers)} papers candidatos...")
-        for i, p in enumerate(sota_papers[:3]):
-            logger.info(f"  [{i+1}] {p['title'][:80]}... ({p['year']}, {p['citationCount']} citas)")
-            
-        sota_context = "\n\n".join([
-            f"[{i+1}] Título: {p['title']}\nAño: {p['year']}\nCitas: {p['citationCount']}\nURL: {p.get('url', 'N/A')}\nAbstract: {(p.get('abstract') or 'No abstract')[:400]}"
-            for i, p in enumerate(sota_papers)
-        ])
-        
-        subtemas_str = ", ".join(thematic_data.get("subtemas", []))
-
-        prompt = f"""
-        Actúa como Revisor Editorial Experto.
-        
-        MANUSCRITO ORIGINAL:
-        INICIO: {paper_text[:5000]}
-        REFERENCIAS: {paper_text[-15000:]}
-        
-        SUBTEMAS DEL MANUSCRITO: {subtemas_str}
-        
-        PAPERS SOTA CANDIDATOS (2023-2026):
-        {sota_context}
-        
-        TAREA:
-        Identifica papers OMITIDOS (no citados) que sean RELEVANTES para el manuscrito.
-        
-        CRITERIOS:
-        - Descartar si el título es similar al manuscrito (es el propio paper)
-        - Descartar si ya está citado en referencias
-        - Incluir si aporta valor al tema tratado
-        - Justificar por qué debería citarse
-        - Indicar qué subtema fortalece
-        
-        IMPORTANTE: Si encuentras papers relevantes, inclúyelos. No seas demasiado restrictivo.
-        Selecciona hasta 5 papers omitidos más relevantes, ordenados por importancia.
-        
-        Devuelve JSON:
-        {{
-            "papers_omitidos": [
-                {{
-                    "titulo": "título exacto",
-                    "año": 2024,
-                    "citas": 150,
-                    "url": "url",
-                    "relevancia": "Alta/Media",
-                    "subtema_relacionado": "subtema que fortalece",
-                    "justificacion": "Por qué es crucial citarlo y dónde encajaría (sección específica)"
-                }}
-            ],
-            "conclusion_sota": "Evaluación de la frescura bibliográfica y cobertura actual"
-        }}
-        """
-        try:
-            response = self.llm_client.generate(prompt)
-            result = json.loads(response.text)
-            
-            logger.info(f"Papers omitidos identificados: {len(result.get('papers_omitidos', []))}")
-            
-            # Añadir análisis de gaps de cobertura
-            coverage_gaps = self.analyze_coverage_gaps(paper_text, thematic_data)
-            result["cobertura_tematica"] = coverage_gaps
-            
-            # Añadir lista de papers analizados para referencia
-            result["papers_analizados"] = [
-                {
-                    "titulo": p['title'],
-                    "año": p['year'],
-                    "citas": p['citationCount'],
-                    "url": p.get('url', 'N/A'),
-                    "autores": p.get('authors', [])
-                }
-                for p in sota_papers[:10]
-            ]
-            
-            return result
-        except Exception as e:
-            logger.error(f"Error en validación cruzada: {str(e)}")
-            return {"error": str(e)}
-
-    def analyze_sota(self, paper_text):
-        """Función orquestadora principal con análisis de cobertura temática"""
-        logger.info("Iniciando análisis SOTA con cobertura temática...")
+        # Contexto compartido entre skills
+        context = {'paper_text': paper_text}
         
         # Paso 1: Análisis temático
-        thematic_data = self.extract_thematic_coverage(paper_text)
-        logger.info(f"Subtemas: {thematic_data.get('subtemas', [])}")
+        thematic_result = self.thematic_skill.execute(context)
+        context.update(thematic_result)
         
-        # Paso 2: Generar queries
-        queries = self.extract_search_queries(paper_text, thematic_data)
+        if not context.get('thematic_data'):
+            return {"error": "No se pudo extraer información temática del paper."}
         
-        if not queries:
-            return {"error": "No se pudieron generar queries."}
-            
-        # Paso 3: Búsqueda
-        papers = self.fetch_semantic_scholar(queries)
+        # Paso 2: Generar queries de búsqueda
+        query_result = self.query_skill.execute(context)
+        context.update(query_result)
         
-        # Paso 4: Validación cruzada
-        resultado = self.cross_validate(paper_text, papers, thematic_data)
+        if not context.get('search_queries'):
+            return {"error": "No se pudieron generar queries de búsqueda."}
         
-        # Metadata
-        resultado["metadata"] = {
+        # Paso 3: Buscar papers en Semantic Scholar
+        search_result = self.search_skill.execute(context)
+        context.update(search_result)
+        
+        # Paso 4: Analizar gaps de cobertura
+        gap_result = self.gap_skill.execute(context)
+        context.update(gap_result)
+        
+        # Paso 5: Validación cruzada
+        validation_result = self.validation_skill.execute(context)
+        final_results = validation_result.get('validation_results', {})
+        
+        # Añadir metadata
+        thematic_data = context.get('thematic_data', {})
+        sota_papers = context.get('sota_papers', [])
+        search_queries = context.get('search_queries', [])
+        
+        final_results["metadata"] = {
             "subtemas_identificados": thematic_data.get("subtemas", []),
             "areas_tecnicas": thematic_data.get("areas_tecnicas", []),
             "año_paper_estudiado": thematic_data.get("año_paper"),
-            "total_papers_analizados": len(papers),
-            "queries_ejecutadas": len(queries)
+            "total_papers_analizados": len(sota_papers),
+            "queries_ejecutadas": len(search_queries)
         }
         
-        return resultado
+        logger.info("✅ Análisis SOTA completado exitosamente")
+        return final_results

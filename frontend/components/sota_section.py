@@ -87,7 +87,7 @@ def _render_missing_papers(df_papers, papers_omitidos, año_paper_estudiado):
         st.dataframe(
             df_recomendaciones,
             hide_index=True,
-            use_container_width=True,
+            width='stretch',
             column_config={
                 "Título": st.column_config.TextColumn("Título", width="large"),
                 "Autores": st.column_config.TextColumn("Autores", width="medium"),
