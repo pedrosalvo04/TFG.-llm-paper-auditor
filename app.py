@@ -23,9 +23,9 @@ os.environ["OTEL_SDK_DISABLED"] = "true"
 
 # IMPORTANTE: configure_page() debe ser lo primero
 st.set_page_config(
-    page_title="Nature Auditor Pro",
+    page_title="AI Paper Auditor Pro",
     layout="wide",
-    page_icon="🔬"
+    page_icon="🤖"
 )
 
 from frontend.config import TITLE, SIDEBAR_IMAGE, SIDEBAR_DESCRIPTION
@@ -46,7 +46,7 @@ st.markdown("---")
 
 # Carga de archivo
 uploaded_file = st.file_uploader(
-    "Sube el artículo científico (PDF, TXT o Markdown)", 
+    "Sube el artículo de Inteligencia Artificial (PDF, TXT o Markdown)", 
     type=["pdf", "txt", "md"]
 )
 

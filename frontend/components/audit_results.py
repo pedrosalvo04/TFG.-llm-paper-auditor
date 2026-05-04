@@ -139,7 +139,7 @@ def render_audit_results(resultado, uploaded_file):
     table_html = _build_table_html(health["items"])
     # Altura: 16 filas x 58px + cabecera + margen
     row_height = max(900, len(health["items"]) * 58 + 60)
-    st.iframe(table_html, height=row_height, scrolling=False)
+    st.iframe(table_html, height=row_height)
 
     return health
 

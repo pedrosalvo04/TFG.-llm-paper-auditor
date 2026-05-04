@@ -1,9 +1,10 @@
 """Plantillas de prompts para el sistema de auditoria"""
 import json
 
-def get_extraction_prompt(paper_text: str, red_flags: dict) -> str:
+def get_extraction_prompt(context_mapping: dict, red_flags: dict) -> str:
     """
     Genera el prompt para la fase de extraccion de informacion.
+    Utiliza 'Context Mapping' para inyectar solo fragmentos relevantes por sección.
     Incluye snippets detectados por regex para que el LLM los valide.
     """
     hp_snippets = red_flags.get('_hp_snippets', {})
@@ -158,8 +159,52 @@ RETURN JSON:
   }}
 }}
 
-PAPER TEXT:
-{paper_text}
+CONTEXT MAPPING (Read the specific section for each topic):
+
+--- 1. CODE ---
+{context_mapping.get('code', 'NOT FOUND')}
+
+--- 2. DATA ---
+{context_mapping.get('data', 'NOT FOUND')}
+
+--- 3. HYPERPARAMETERS ---
+{context_mapping.get('hyperparameters', 'NOT FOUND')}
+
+--- 4. HARDWARE ---
+{context_mapping.get('hardware', 'NOT FOUND')}
+
+--- 5. STATISTICS ---
+{context_mapping.get('statistics', 'NOT FOUND')}
+
+--- 6. ARCHITECTURE ---
+{context_mapping.get('architecture', 'NOT FOUND')}
+
+--- 7. BASELINE COMPARISON ---
+{context_mapping.get('baseline_comparison', 'NOT FOUND')}
+
+--- 8. SOFTWARE ---
+{context_mapping.get('software', 'NOT FOUND')}
+
+--- 9. LIMITATIONS ---
+{context_mapping.get('limitations', 'NOT FOUND')}
+
+--- 10. PROBLEMATIC PHRASES ---
+{context_mapping.get('problematic_phrases', 'NOT FOUND')}
+
+--- 11. THEORY AND PROOFS ---
+{context_mapping.get('theory_and_proofs', 'NOT FOUND')}
+
+--- 12. BROADER IMPACTS ---
+{context_mapping.get('broader_impacts', 'NOT FOUND')}
+
+--- 13. LLM USAGE ---
+{context_mapping.get('llm_usage', 'NOT FOUND')}
+
+--- 14. HUMAN SUBJECTS ---
+{context_mapping.get('human_subjects', 'NOT FOUND')}
+
+--- 15. LICENSES ---
+{context_mapping.get('licenses', 'NOT FOUND')}
 """
 
 
@@ -215,18 +260,26 @@ def get_evaluation_prompt(extracted_info: dict, red_flags: dict) -> str:
         f"DETECTED -> assets_used: {assets_used}, licenses_named: {licenses_named}, "
         f"has_external_assets (computed): {has_external_assets}. "
         "RULE: If has_external_assets is False -> answer N/A. "
-        "If has_external_assets is True but licenses_named is empty -> answer No. "
+        "If has_external_assets is True but specific licenses (e.g., MIT, CC-BY) are NOT explicitly named -> answer 'No' and set justification to: 'Falta de transparencia: Se usan activos externos pero no se especifican sus licencias.'. "
         "If license names are explicitly stated -> answer Yes with evidence."
     )
 
     # Signal for Item 14: was crowdsourcing/human subjects actually used?
     uses_crowd = clean_flags.get('usa_crowdsourcing', False)
     human_annotation = extracted_info.get('human_subjects_extraction', {}).get('uses_human_annotation', 'no')
+    compensation_details = extracted_info.get('human_subjects_extraction', {}).get('compensation_details', 'NOT FOUND')
     crowdsourcing_signal = (
-        f"DETECTED -> regex_crowdsourcing_flag: {uses_crowd}, uses_human_annotation: {human_annotation}. "
-        "STRICT RULE: If both are false/no, the paper does NOT involve human subjects -> answer MUST be N/A. "
-        "Do NOT answer No just because compensation is unmentioned when there is no crowdsourcing at all. "
-        "Only answer No/Yes if crowdsourcing or human annotation is CONFIRMED present."
+        f"DETECTED -> regex_crowdsourcing_flag: {uses_crowd}, uses_human_annotation: {human_annotation}, compensation_details: {compensation_details}. "
+        "STRICT RULE: If both flags are false/no, the paper does NOT involve human subjects -> answer MUST be N/A. "
+        "If human annotation or crowdsourcing is detected, you MUST look for compensation terms (wage, paid, salary, compensation). "
+        "If compensation is missing or 'NOT FOUND', answer 'No' and set justification EXACTLY to: 'Riesgo Ético: Has declarado uso de humanos pero no has detallado su compensación económica según el Código de Ética de NeurIPS'."
+    )
+
+    # Signal for Item 15: IRB Approvals
+    irb_signal = (
+        f"DETECTED -> uses_human_annotation: {human_annotation}. "
+        "STRICT RULE: If human annotators or crowdsourcing are used, the system MUST require a mention of an 'Institutional Review Board' (IRB) or ethics committee. "
+        "If there is no trace of IRB approval, you MUST answer 'No' and state 'Riesgo de Desk Reject: Faltan aprobaciones del comité de ética (IRB).' in the justification."
     )
 
     return f"""
@@ -247,6 +300,7 @@ PRE-COMPUTED SIGNALS - USE THESE TO AVOID COMMON ERRORS
 [Item 7 - Statistics]        {stats_signal}
 [Item 12 - Licenses]         {licenses_signal}
 [Item 14 - Crowdsourcing]    {crowdsourcing_signal}
+[Item 15 - IRB Approvals]    {irb_signal}
 
 =======================================================
 OUTPUT RULES - MANDATORY FOR ALL 16 ITEMS
@@ -282,10 +336,13 @@ Item 7 (Statistical Significance):
   Use the [Item 7] pre-computed signal for is_no_justified decision.
 
 Item 12 (Licenses):
-  Use the [Item 12] pre-computed signal EXACTLY as instructed.
+  Use the [Item 12 - Licenses] pre-computed signal EXACTLY as instructed.
 
 Item 14 (Crowdsourcing and Human Subjects):
-  Use the [Item 14] pre-computed signal EXACTLY as instructed. When in doubt, N/A is correct for non-human-subject papers.
+  Use the [Item 14 - Crowdsourcing] pre-computed signal EXACTLY as instructed. 
+
+Item 15 (IRB Approvals):
+  Use the [Item 15 - IRB Approvals] pre-computed signal EXACTLY as instructed.
 
 Item 16 (Declaration of LLM Usage):
   Only required if LLM is CENTRAL to the scientific method. If used only for writing/editing -> "N/A".
