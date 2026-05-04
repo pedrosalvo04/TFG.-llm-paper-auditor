@@ -10,11 +10,12 @@ from backend.skills.regex_detection_skills import (
     StatisticsDetectionSkill,
     EnvironmentalImpactDetectionSkill,
     ProblematicPhrasesDetectionSkill,
-    TableDetectionSkill,
-    ReproducibilityDetectionSkill,
     LimitationsQualityDetectionSkill,
     SoftwareVersionDetectionSkill,
     HardwareDetailDetectionSkill,
+    LlmUsageDetectionSkill,
+    CrowdsourcingDetectionSkill,
+    LicenseDetectionSkill,
 )
 
 
@@ -29,11 +30,12 @@ class RedFlagDetectionSkill(BaseSkill):
         self.statistics_skill = StatisticsDetectionSkill()
         self.environmental_skill = EnvironmentalImpactDetectionSkill()
         self.problematic_skill = ProblematicPhrasesDetectionSkill()
-        self.table_skill = TableDetectionSkill()
-        self.reproducibility_skill = ReproducibilityDetectionSkill()
         self.limitations_skill = LimitationsQualityDetectionSkill()
         self.software_skill = SoftwareVersionDetectionSkill()
         self.hardware_detail_skill = HardwareDetailDetectionSkill()
+        self.llm_usage_skill = LlmUsageDetectionSkill()
+        self.crowdsourcing_skill = CrowdsourcingDetectionSkill()
+        self.license_skill = LicenseDetectionSkill()
     
     def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
         if not self.validate_context(context, ['paper_text']):
@@ -48,11 +50,12 @@ class RedFlagDetectionSkill(BaseSkill):
         stats_result = self.statistics_skill.execute(context)
         env_result = self.environmental_skill.execute(context)
         prob_result = self.problematic_skill.execute(context)
-        table_result = self.table_skill.execute(context)
-        repro_result = self.reproducibility_skill.execute(context)
         limits_result = self.limitations_skill.execute(context)
         sw_result = self.software_skill.execute(context)
         hw_detail_result = self.hardware_detail_skill.execute(context)
+        llm_usage_result = self.llm_usage_skill.execute(context)
+        crowdsourcing_result = self.crowdsourcing_skill.execute(context)
+        license_result = self.license_skill.execute(context)
         
         # Consolidar resultados
         red_flags = {}
@@ -64,15 +67,13 @@ class RedFlagDetectionSkill(BaseSkill):
         red_flags['sin_batch_size'] = not hyper_flags.get('has_batch_size', False)
         red_flags['sin_optimizer'] = not hyper_flags.get('has_optimizer', False)
         red_flags['sin_weight_decay'] = not hyper_flags.get('has_weight_decay', False)
-        red_flags['sin_betas'] = not hyper_flags.get('has_betas', False)
-        red_flags['sin_epsilon'] = not hyper_flags.get('has_epsilon', False)
+        # NeurIPS 2026: betas y epsilon se consideran secundarios y no generan red flags
         red_flags['sin_epochs'] = not hyper_flags.get('has_epochs', False)
         red_flags['sin_warmup'] = not hyper_flags.get('has_warmup', False)
         
         # Guardar snippets de hiperparámetros encontrados para validación LLM
         hp_snippets = {}
-        for key in ['optimizer', 'learning_rate', 'batch_size', 'epochs', 'warmup',
-                     'weight_decay', 'betas', 'epsilon']:
+        for key in ['optimizer', 'learning_rate', 'batch_size', 'epochs', 'warmup', 'weight_decay']:
             val = hyper_flags.get(f'{key}_value')
             if val:
                 hp_snippets[key] = val
@@ -84,11 +85,12 @@ class RedFlagDetectionSkill(BaseSkill):
         red_flags.update(stats_result.get('statistics_flags', {}))
         red_flags.update(env_result.get('environmental_flags', {}))
         red_flags.update(prob_result.get('problematic_flags', {}))
-        red_flags.update(table_result.get('table_flags', {}))
-        red_flags.update(repro_result.get('reproducibility_flags', {}))
         red_flags.update(limits_result.get('limitations_flags', {}))
         red_flags.update(sw_result.get('software_flags', {}))
         red_flags.update(hw_detail_result.get('hardware_detail_flags', {}))
+        red_flags.update(llm_usage_result.get('llm_usage_flags', {}))
+        red_flags.update(crowdsourcing_result.get('crowdsourcing_flags', {}))
+        red_flags.update(license_result.get('license_flags', {}))
         
         critical_flags = [
             k for k, v in red_flags.items() 
@@ -193,13 +195,17 @@ class MetricsCalculationSkill(BaseSkill):
         paper_text = context['paper_text']
         red_flags = context['red_flags']
         
+        critical_flags = [
+            k for k, v in red_flags.items() 
+            if v and not k.startswith("tiene_") and not k.startswith("menciona_") 
+            and not k.startswith("_") and not k.startswith("cantidad_")
+            and not k.startswith("puntos_")
+        ]
+        
         metrics = {
             "tiempo_segundos": context.get('execution_time', 0),
             "caracteres_leidos": len(paper_text),
-            "red_flags_detectadas": sum(
-                1 for k, v in red_flags.items() 
-                if v and not k.startswith("tiene_")
-            )
+            "red_flags_detectadas": len(critical_flags)
         }
         
         self.log_execution(f"✅ Métricas calculadas: {metrics['red_flags_detectadas']} red flags")
@@ -218,18 +224,22 @@ class MetadataAggregationSkill(BaseSkill):
         evaluation = context.get('evaluation', {})
         
         result = {
-            "self_written_summary": evaluation.get('self_written_summary', ''),
-            "claims_scope_audit": evaluation.get('claims_scope_audit', {}),
-            "limitations_impact": evaluation.get('limitations_impact', {}),
-            "theoretical_rigor": evaluation.get('theoretical_rigor', {}),
-            "reproducibility": evaluation.get('reproducibility', {}),
-            "originality_significance": evaluation.get('originality_significance', {}),
-            "ethics_flag": evaluation.get('ethics_flag', {}),
-            "peer_review_scores": evaluation.get('peer_review_scores', {}),
-            "summary_contributions": evaluation.get('summary_contributions', ''),
-            "questions_for_authors": evaluation.get('questions_for_authors', []),
-            "recommendation": evaluation.get('recommendation', ''),
-            "confidence": evaluation.get('confidence', ''),
+            "claims": evaluation.get('claims', {}),
+            "limitations": evaluation.get('limitations', {}),
+            "theory_assumptions_proofs": evaluation.get('theory_assumptions_proofs', {}),
+            "experimental_result_reproducibility": evaluation.get('experimental_result_reproducibility', {}),
+            "open_access_data_code": evaluation.get('open_access_data_code', {}),
+            "experimental_setting_details": evaluation.get('experimental_setting_details', {}),
+            "experiment_statistical_significance": evaluation.get('experiment_statistical_significance', {}),
+            "experiments_compute_resource": evaluation.get('experiments_compute_resource', {}),
+            "code_of_ethics": evaluation.get('code_of_ethics', {}),
+            "broader_impacts": evaluation.get('broader_impacts', {}),
+            "safeguards": evaluation.get('safeguards', {}),
+            "licenses": evaluation.get('licenses', {}),
+            "assets": evaluation.get('assets', {}),
+            "crowdsourcing_human_subjects": evaluation.get('crowdsourcing_human_subjects', {}),
+            "irb_approvals": evaluation.get('irb_approvals', {}),
+            "declaration_llm_usage": evaluation.get('declaration_llm_usage', {}),
             "informacion_extraida": context.get('extracted_info', {}),
             "red_flags": context['red_flags'],
             "metricas": context.get('metrics', {})

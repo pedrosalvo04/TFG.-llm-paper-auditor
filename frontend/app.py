@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
 """Aplicación principal del Auditor de Papers - Frontend Modular"""
 import streamlit as st
 
 # IMPORTANTE: configure_page() debe ser lo primero
 st.set_page_config(
-    page_title="Nature Auditor Pro",
+    page_title="NeurIPS 2026 Checklist Auditor",
     layout="wide",
     page_icon="🔬"
 )
@@ -24,7 +25,7 @@ initialize_session_state()
 st.title(TITLE)
 st.markdown("---")
 
-# Carga de archivo
+# Limpiar estado
 if st.button("🔄 Limpiar y subir nuevo archivo"):
     for key in list(st.session_state.keys()):
         del st.session_state[key]
@@ -34,30 +35,32 @@ uploaded_file = st.file_uploader("Sube el PDF del artículo científico", type=[
 
 if uploaded_file:
     md_text, resultado = process_uploaded_file(uploaded_file)
-if uploaded_file:
-    md_text, resultado = process_uploaded_file(uploaded_file)
-    
+
     # Verificar errores primero
     if resultado and "error" in resultado:
-        st.error(f"❌ Error en la auditoría: {resultado['error']}")
+        err = resultado["error"]
+        if err == "INVALID_PAPER_TYPE":
+            st.error(f"❌ Paper no válido: {resultado.get('message', 'Solo se evalúan papers de ML/AI')}")
+        else:
+            st.error(f"❌ Error en la auditoría: {err}")
     elif resultado and "evaluation_error" in resultado:
         st.error(f"❌ Error del LLM: {resultado['evaluation_error']}")
         st.warning("🔄 El modelo está experimentando alta demanda. Intenta nuevamente.")
         st.info("💡 Tip: Recarga la página o sube el archivo nuevamente.")
-    elif resultado and resultado.get("peer_review_scores") and len(resultado["peer_review_scores"]) > 0:
-        # Renderizar resultados
-        puntuacion = render_audit_results(resultado, uploaded_file)
+    elif resultado and resultado.get("claims"):
+        # Resultado válido: tiene al menos el ítem 'claims' del checklist
+        health = render_audit_results(resultado, uploaded_file)
         render_sota_analysis(md_text)
         render_chatbot(md_text)
-        
+
         # Descarga del informe
         st.markdown("---")
         st.subheader("📄 Descargar Informe")
-        reporte = generate_report(resultado, uploaded_file, puntuacion)
+        reporte = generate_report(resultado, uploaded_file, health)
         st.download_button(
             label="📥 Descargar Informe Completo (.md)",
             data=reporte,
-            file_name=f"auditoria_{uploaded_file.name.replace('.pdf', '')}.md",
+            file_name=f"auditoria_neurips_{uploaded_file.name.replace('.pdf', '').replace('.md', '')}.md",
             mime="text/markdown"
         )
     elif resultado:

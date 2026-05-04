@@ -451,12 +451,11 @@ class ProblematicPhrasesDetectionSkill(BaseSkill):
         return {'problematic_flags': results}
 
 
-class TableDetectionSkill(BaseSkill):
-    """Detecta tablas relevantes"""
+class LlmUsageDetectionSkill(BaseSkill):
+    """Detecta uso de LLMs en la metodología"""
     
     PATTERNS = {
-        'hyperparameters': r"(Table|Tab\.)\s+\d+[\s\S]{0,100}(hyperparameters?|training\s+settings?|optimizer|learning\s+rate)",
-        'comparative': r"(Table|Tab\.)\s+\d+[\s\S]{0,100}(comparison|baseline|results?|performance)"
+        'llm_usage': r"(ChatGPT|GPT-4|GPT-3|Claude|LLaMA|BERT|RoBERTa|T5|LLM|Large\s+Language\s+Model).{0,60}(annotat|filter|evaluat|generat|process|label)"
     }
     
     def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
@@ -464,44 +463,100 @@ class TableDetectionSkill(BaseSkill):
             return {}
         
         text = context['paper_text']
+        self.log_execution("=== LLM USAGE DETECTION ===")
         
-        self.log_execution("=== TABLE DETECTION ===")
-        for key, pattern in self.PATTERNS.items():
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                snippet = match.group(0)[:100]
-                self.log_execution(f"✅ {key}: FOUND - '{snippet}...'")
-            else:
-                self.log_execution(f"❌ {key}: NOT FOUND")
-        
-        results = {
-            'tiene_tabla_hiperparametros': bool(re.search(self.PATTERNS['hyperparameters'], text, re.IGNORECASE)),
-            'tiene_tabla_comparativa': bool(re.search(self.PATTERNS['comparative'], text, re.IGNORECASE))
-        }
-        
-        self.log_execution(f"📊 RESUMEN: hiperparámetros={results['tiene_tabla_hiperparametros']}, comparativa={results['tiene_tabla_comparativa']}")
-        return {'table_flags': results}
+        match = re.search(self.PATTERNS['llm_usage'], text, re.IGNORECASE)
+        found = bool(match)
+        if found:
+            self.log_execution(f"✅ LLM Usage: FOUND - '{match.group(0)[:80]}...'")
+        else:
+            self.log_execution("❌ LLM Usage: NOT FOUND")
+            
+        return {'llm_usage_flags': {'usa_llm_como_herramienta': found}}
 
 
-class ReproducibilityDetectionSkill(BaseSkill):
-    """Detecta menciones de reproducibilidad"""
+class CrowdsourcingDetectionSkill(BaseSkill):
+    """Detecta el uso de anotadores humanos o crowdsourcing"""
     
-    PATTERNS = {
-        'reproducibility': r"(reproducib|replicab|open\s+science|fully\s+open)"
-    }
+    # Crowdsourcing ACTIVO: el paper mismo recluta anotadores
+    # Usar lookahead negativo para excluir frases de negacion ("no human subjects", "without human annotators")
+    CROWDSOURCING_ACTIVE = [
+        r"(?<!no\s)(?<!without\s)(?<!not\s)\b(crowdsourc|Mechanical\s+Turk|MTurk|Prolific|Scale\s+AI)\b",
+        r"\b(we\s+(?:hired|recruited|employed|paid)\s+.{0,30}(?:annotator|worker|participant))",
+        r"\b(human\s+annotators?\s+(?:were|are|were\s+asked|labeled|annotated))",
+        r"\b(participants?\s+(?:were\s+)?(?:recruited|compensated|paid))",
+    ]
+    # Uso de datasets de terceros con etiquetas humanas
+    HUMAN_DATASET_USE = [
+        r"\b(human[\s-]?label(?:ed|ing)|human[\s-]?annotat(?:ed|ion))\b",
+        r"\b(SFT|RLHF|human\s+feedback|preference\s+data).{0,40}(?:dataset|data|corpus)",
+    ]
+    COMPENSATION = r"\b(compensation|wage|paid\s+(?:at|\$)|minimum\s+wage|hourly\s+rate|instructions\s+provided|consent\s+form)\b"
+    # Frases de negacion de crowdsourcing
+    NEGATION_CROWD = r"(?:no|not|without|does\s+not\s+use|did\s+not\s+use).{0,20}(?:human\s+subject|human\s+annotator|crowdsourc|human\s+participant)"
     
-    def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
+    def execute(self, context):
         if not self.validate_context(context, ['paper_text']):
             return {}
         
         text = context['paper_text']
-        results = {
-            'menciona_reproducibilidad': bool(re.search(self.PATTERNS['reproducibility'], text, re.IGNORECASE))
-        }
+        self.log_execution("=== CROWDSOURCING DETECTION ===")
         
-        self.log_execution(f"Reproducibilidad mencionada: {results['menciona_reproducibilidad']}")
-        return {'reproducibility_flags': results}
+        # Verificar primero si hay negacion explicita
+        has_negation = bool(re.search(self.NEGATION_CROWD, text, re.IGNORECASE))
+        
+        has_active_crowd = False
+        if not has_negation:
+            has_active_crowd = any(
+                re.search(p, text, re.IGNORECASE) for p in self.CROWDSOURCING_ACTIVE
+            )
+        
+        has_human_dataset = any(
+            re.search(p, text, re.IGNORECASE) for p in self.HUMAN_DATASET_USE
+        )
+        has_comp = bool(re.search(self.COMPENSATION, text, re.IGNORECASE))
+        
+        self.log_execution(f"negation={has_negation}, active_crowd={has_active_crowd}, human_dataset={has_human_dataset}, compensation={has_comp}")
+        
+        return {'crowdsourcing_flags': {
+            'usa_crowdsourcing': has_active_crowd,
+            'usa_datasets_humanos': has_human_dataset,
+            'sin_compensacion_mencionada': has_active_crowd and not has_comp
+        }}
 
+class LicenseDetectionSkill(BaseSkill):
+    """Detecta menciones a licencias de software y datos"""
+    
+    # Licencias nombradas explicitamente
+    EXPLICIT_LICENSE = r"(CC[\s-]BY(?:[\s-]\d\.\d)?(?:[\s-](?:SA|NC|ND))*|MIT\s+[Ll]icense|Apache\s+2\.0|GPL(?:[\s-]\d)?|BSD(?:[\s-]\d[\s-][Cc]lause)?|Creative\s+Commons|\bCC0\b)"
+    # Datasets conocidos que requieren citar su licencia
+    KNOWN_DATASETS = r"\b(ImageNet|COCO|CIFAR|MNIST|WikiText|RedPajama|OpenWebText|Alpaca|ShareGPT|LAION|WMT\d+|SQuAD|GLUE|SuperGLUE|HumanEval|GSM8K|MMLU|CommonCrawl|BookCorpus|The\s+Pile)\b"
+    
+    def execute(self, context):
+        if not self.validate_context(context, ['paper_text']):
+            return {}
+        
+        text = context['paper_text']
+        self.log_execution("=== LICENSE DETECTION ===")
+        
+        license_match = re.search(self.EXPLICIT_LICENSE, text, re.IGNORECASE)
+        dataset_match = re.search(self.KNOWN_DATASETS, text, re.IGNORECASE)
+        
+        found_license = bool(license_match)
+        uses_known_dataset = bool(dataset_match)
+        
+        if found_license:
+            self.log_execution(f"Explicit license FOUND: '{license_match.group(0)[:60]}'")
+        else:
+            self.log_execution("Explicit license: NOT FOUND")
+        if uses_known_dataset:
+            self.log_execution(f"Known dataset FOUND: '{dataset_match.group(0)[:60]}'")
+        
+        return {'license_flags': {
+            'menciona_licencia': found_license,
+            'usa_datasets_conocidos': uses_known_dataset,
+            'posible_licencia_faltante': uses_known_dataset and not found_license
+        }}
 
 class LimitationsQualityDetectionSkill(BaseSkill):
     """Detecta si la sección de limitaciones es específica o vaga"""
@@ -511,7 +566,7 @@ class LimitationsQualityDetectionSkill(BaseSkill):
         r"(?:bias|toxicity|fairness).{0,40}(?:evaluat|measur|test|audit|analyz)",
         r"(?:fail|error|degrad).{0,40}(?:when|if|under|specific|certain)",
     ]
-    SECTION_PATTERN = r"(?:^|\n)\s*(?:#+\s*(?:Limitation|Broader\s+Impact|Conclusion|Discussion)|(?:\*\*|__)Limitations?[\.\s:]|Limitations?[\.\s:])"
+    SECTION_PATTERN = r"(?:^|\n)\s*(?:#+\s*[\*_]{0,2}(?:Limitation|Broader\s+Impact|Conclusion|Discussion|Social\s+Impact)[\*_]{0,2}|(?:\*\*|__)Limitations?[\.\s:]|Limitations?[\.\s:])"
     
     def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
         if not self.validate_context(context, ['paper_text']):

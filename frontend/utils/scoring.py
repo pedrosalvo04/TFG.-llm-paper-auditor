@@ -1,126 +1,129 @@
-"""Utilidades para cálculo de puntuaciones con sistema híbrido de penalizaciones"""
+# -*- coding: utf-8 -*-
+"""
+Lógica de estado del checklist NeurIPS 2026.
+Reemplaza el antiguo sistema de puntuación numérica.
+El auditor ya no pone una nota: valida que cada ítem tenga respuesta + evidencia/justificación.
+"""
+
+CHECKLIST_KEYS = [
+    "claims", "limitations", "theory_assumptions_proofs",
+    "experimental_result_reproducibility", "open_access_data_code",
+    "experimental_setting_details", "experiment_statistical_significance",
+    "experiments_compute_resource", "code_of_ethics", "broader_impacts",
+    "safeguards", "licenses", "assets", "crowdsourcing_human_subjects",
+    "irb_approvals", "declaration_llm_usage"
+]
+
+CHECKLIST_LABELS = {
+    "claims": "1. Claims",
+    "limitations": "2. Limitations",
+    "theory_assumptions_proofs": "3. Theory, Assumptions & Proofs",
+    "experimental_result_reproducibility": "4. Experimental Result Reproducibility",
+    "open_access_data_code": "5. Open Access to Data and Code",
+    "experimental_setting_details": "6. Experimental Setting / Details",
+    "experiment_statistical_significance": "7. Experiment Statistical Significance",
+    "experiments_compute_resource": "8. Experiments Compute Resource",
+    "code_of_ethics": "9. Code of Ethics",
+    "broader_impacts": "10. Broader Impacts",
+    "safeguards": "11. Safeguards",
+    "licenses": "12. Licenses",
+    "assets": "13. Assets",
+    "crowdsourcing_human_subjects": "14. Crowdsourcing & Human Subjects",
+    "irb_approvals": "15. IRB Approvals",
+    "declaration_llm_usage": "16. Declaration of LLM Usage",
+}
 
 
-def calcular_puntuacion(peer_review_scores, red_flags=None, evaluation=None):
+def get_checklist_health(evaluation: dict) -> dict:
     """
-    Calcula puntuación basada en los prestigiosos criterios de NeurIPS.
-    Prioriza el Overall Score del LLM sobre las penalizaciones por micro-detalles.
-    """
-    if not peer_review_scores:
-        return 0, {"score_base": 0, "penalizaciones": [], "bonificaciones": [], "total_penalizaciones": 0}
-    
-    # Convertir a int si vienen como string
-    def safe_int(value, default=0):
-        try:
-            return int(value) if value else default
-        except (ValueError, TypeError):
-            return default
-    
-    # --- ANCLA NEURIPS: Overall Score (1-10) ---
-    overall_score_raw = peer_review_scores.get('overall_score', {})
-    overall_val = safe_int(overall_score_raw.get('score', 0))
-    
-    # El Score Base viene directamente del veredicto del revisor (NeurIPS scale 1-10)
-    # 10 -> 100%, 8 -> 80%, 5 -> 50%, etc.
-    score_base = overall_val * 10
-    
-    # Sub-criterios para el desglose visual
-    soundness = safe_int(peer_review_scores.get('soundness', {}).get('score', 0))
-    presentation = safe_int(peer_review_scores.get('presentation', {}).get('score', 0))
-    contribution = safe_int(peer_review_scores.get('contribution', {}).get('score', 0))
-    
-    penalizaciones = []
-    bonificaciones = []
-    
-    # ===== PENALIZACIONES CRÍTICAS (SOLO LO REALMENTE GRAVE) =====
-    if red_flags:
-        # Solo penalizamos si NO hay sección de limitaciones (Requisito NeurIPS)
-        if not red_flags.get('tiene_seccion_limitaciones', True):
-            penalizaciones.append(("Falta sección obligatoria de Limitaciones", -5))
-            
-        # Solo penalizamos si los datos son propietarios Y además no hay forma de verificarlos
-        if red_flags.get('datos_propietarios') and red_flags.get('cannot_release_data'):
-            penalizaciones.append(("Datos propietarios sin vía de verificación", -5))
+    Analiza el estado del checklist sin calcular ninguna puntuación numérica.
 
-    if evaluation:
-        ethics = evaluation.get('ethics_flag', {})
-        if isinstance(ethics, dict) and ethics.get('requires_ethics_review', '').strip().lower() == 'yes':
-            penalizaciones.append(("Bandera ética activada (Requiere revisión)", -5))
+    Para cada ítem valida:
+    - ¿Tiene respuesta (Yes/No/N/A)?
+    - Si es "Yes" → ¿existe evidencia (sección o fragmento del paper)?
+    - Si es "No" o "N/A" → ¿existe justificación del autor?
 
-    # ===== BONIFICACIONES POR EXCELENCIA CIENTÍFICA =====
-    # Premiar la innovación real
-    if contribution >= 4:
-        bonificaciones.append(("Contribución excepcional / Paradigm-shifting", +10))
-    elif contribution >= 3:
-        bonificaciones.append(("Contribución sólida a la comunidad", +5))
-    
-    # Premiar la robustez técnica
-    if soundness >= 4:
-        bonificaciones.append(("Metodología técnica impecable", +5))
-    
-    # Si reporta hardware detallado o impacto ambiental (Buenas prácticas NeurIPS)
-    if red_flags:
-        if sum(1 for f in ['tiene_carbon_footprint', 'tiene_energy_consumption', 'tiene_pue'] if red_flags.get(f)) >= 1:
-            bonificaciones.append(("Transparencia en impacto ambiental", +3))
-        
-        hw_detail_count = sum(1 for k in ['tiene_gpu_model', 'tiene_gpu_count', 'tiene_gpu_memory', 'tiene_training_time'] if red_flags.get(k))
-        if hw_detail_count >= 2:
-            bonificaciones.append(("Detalles de hardware completos", +2))
-
-    # ===== CÁLCULO FINAL =====
-    total_penalizaciones = sum(p[1] for p in penalizaciones)
-    total_bonificaciones = sum(b[1] for b in bonificaciones)
-    
-    score_final = score_base + total_penalizaciones + total_bonificaciones
-    score_final = max(0, min(100, round(score_final, 1)))
-    
-    desglose = {
-        "score_base": round(score_base, 1),
-        "penalizaciones": penalizaciones,
-        "bonificaciones": bonificaciones,
-        "total_penalizaciones": total_penalizaciones,
-        "total_bonificaciones": total_bonificaciones,
-        "scores_llm": {
-            "soundness": soundness,
-            "presentation": presentation,
-            "contribution": contribution
+    Devuelve:
+        {
+          "status": "valid" | "risk",
+          "items": [{ key, label, answer, evidence, justification,
+                      needs_justification, pending_justification,
+                      alert_msg }],
+          "pending_count": int,
+          "total": int,
         }
+    """
+    if not evaluation:
+        return {
+            "status": "risk",
+            "items": [],
+            "pending_count": 0,
+            "total": 0,
+        }
+
+    items = []
+    pending_count = 0
+
+    for key in CHECKLIST_KEYS:
+        val = evaluation.get(key, {})
+        answer_raw = val.get("answer", "").strip()
+        answer_norm = answer_raw.lower()
+        justification = val.get("justification", "").strip()
+        evidence = val.get("evidence", "").strip()
+        is_no_justified_raw = val.get("is_no_justified", False)
+        if isinstance(is_no_justified_raw, str):
+            is_no_justified = is_no_justified_raw.lower() == "true"
+        else:
+            is_no_justified = bool(is_no_justified_raw)
+
+        # --- Risk detection ---
+        pending_justification = False
+        missing_evidence = False
+        alert_msg = ""
+
+        if "yes" in answer_norm:
+            # Yes → necesitamos la sección o evidencia del paper
+            if not evidence and not justification:
+                missing_evidence = True
+                pending_count += 1
+                alert_msg = "⚠️ Respuesta 'Yes' sin evidencia de sección del paper."
+        elif "no" in answer_norm:
+            # No → necesitamos justificación del autor
+            if not is_no_justified or not justification:
+                pending_justification = True
+                pending_count += 1
+                alert_msg = "🔴 'No' sin justificación del autor → Riesgo de Desk Reject."
+
+            # Regla especial ítem 14: alerta de Código de Ética NeurIPS
+            if key == "crowdsourcing_human_subjects" and not is_no_justified:
+                alert_msg += " ⚠️ NeurIPS Code of Ethics: compensación mínima obligatoria."
+
+        elif "n/a" in answer_norm or answer_norm == "":
+            # N/A → aceptable si hay un mínimo de contexto
+            if not justification and not evidence:
+                # N/A sin nada es aceptable solo si el ítem no aplica; no lo marcamos como riesgo
+                pass
+
+        # Evidencia final a mostrar (priorizar el campo evidence, sino justification)
+        display_evidence = evidence if evidence else justification if justification else "—"
+
+        items.append({
+            "key": key,
+            "label": CHECKLIST_LABELS.get(key, key),
+            "answer": answer_raw if answer_raw else "—",
+            "evidence": display_evidence,
+            "justification": justification,
+            "is_no_justified": is_no_justified,
+            "pending_justification": pending_justification,
+            "missing_evidence": missing_evidence,
+            "alert_msg": alert_msg,
+        })
+
+    status = "valid" if pending_count == 0 else "risk"
+
+    return {
+        "status": status,
+        "items": items,
+        "pending_count": pending_count,
+        "total": len(items),
     }
-    
-    return score_final, desglose
-
-
-def _apply_extracted_info_penalties(extracted_info, penalizaciones):
-    """
-    Aplica penalizaciones reducidas basadas en la información extraída.
-    """
-    def is_missing(value):
-        if not value or not isinstance(value, str): return True
-        return value.strip().lower() in ('not found', 'n/a', 'none', '')
-    
-    def is_problematic(value):
-        if not value or not isinstance(value, str): return False
-        problematic_terms = ['proprietary', 'confidential', 'cannot release', 'internal']
-        return any(term in value.strip().lower() for term in problematic_terms)
-    
-    hp_info = extracted_info.get('hyperparameters', {})
-    if isinstance(hp_info, dict):
-        hp_missing = sum(1 for f in ['optimizer', 'learning_rate', 'batch_size', 'epochs', 'warmup', 'weight_decay', 'betas', 'epsilon'] if is_missing(hp_info.get(f, '')))
-        if hp_missing >= 6:
-            penalizaciones.append((f"Faltan muchos hiperparámetros (LLM)", -2))
-    
-    data_info = extracted_info.get('data', {})
-    if isinstance(data_info, dict):
-        if is_problematic(data_info.get('access_url', '')) or is_problematic(data_info.get('negative_phrase', '')):
-            penalizaciones.append(("Datos marcados como propietarios (LLM)", -3))
-            
-    code_info = extracted_info.get('code', {})
-    if isinstance(code_info, dict):
-        if is_problematic(code_info.get('negative_phrase', '')) or is_problematic(code_info.get('repository_url', '')):
-            penalizaciones.append(("Código con restricciones de acceso (LLM)", -3))
-            
-    problematic = extracted_info.get('problematic_phrases', [])
-    if isinstance(problematic, list) and len(problematic) > 0:
-        real_problems = [p for p in problematic if isinstance(p, str) and not is_missing(p)]
-        if len(real_problems) >= 2:
-            penalizaciones.append(("Frases problemáticas (propietario/confidencial)", -2))

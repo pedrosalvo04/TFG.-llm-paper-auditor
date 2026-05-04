@@ -42,7 +42,7 @@ def process_uploaded_file(uploaded_file):
                 return None, {'error': f'Formato no soportado: {file_extension}'}
         
         # Auditar
-        with st.spinner("🧠 Auditando con estándares de reproducibilidad..."):
+        with st.spinner("🧠 Analizando el documento..."):
             st.session_state.resultado = st.session_state.auditor.audit(st.session_state.md_text)
         
         st.success("✅ Análisis completado")

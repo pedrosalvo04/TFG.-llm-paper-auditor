@@ -138,8 +138,9 @@ class HybridHyperparameterExtractionSkill(BaseSkill):
         cleaned = {}
         for key, value in data.items():
             str_val = str(value).strip()
-            if str_val == 'NOT FOUND' or str_val == '':
-                cleaned[key] = str_val
+            upper_val = str_val.upper()
+            if upper_val in ['NOT FOUND', 'N/A', 'NONE', 'MISSING'] or str_val == '':
+                cleaned[key] = 'NOT FOUND'
                 continue
                 
             if key in ['learning_rate', 'weight_decay']:

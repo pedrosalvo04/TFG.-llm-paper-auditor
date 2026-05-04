@@ -4,6 +4,11 @@ import warnings
 import logging
 import os
 
+# iniciar env: .\.venv\Scripts\Activate.ps1
+# ejecutar app: streamlit run app.py
+
+#******************************************
+
 # Eliminar logs molestos de transformers y huggingface
 os.environ["TRANSFORMERS_VERBOSITY"] = "error"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -57,7 +62,7 @@ if uploaded_file:
     elif resultado and "evaluation_error" in resultado:
         st.error(f"❌ Error del LLM: {resultado['evaluation_error']}")
         st.warning("🔄 El modelo está experimentando alta demanda. Intenta nuevamente.")
-    elif resultado and resultado.get("peer_review_scores") and len(resultado["peer_review_scores"]) > 0:
+    elif resultado and resultado.get("claims"):
         puntuacion = render_audit_results(resultado, uploaded_file)
         render_sota_analysis(md_text)
         render_chatbot(md_text)
