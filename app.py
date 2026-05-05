@@ -16,6 +16,7 @@ warnings.filterwarnings("ignore", message=".*Accessing.*__path__.*")
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 logging.getLogger("transformers").setLevel(logging.ERROR)
+logging.getLogger("docling").setLevel(logging.ERROR)
 
 # Desactivar telemetría de ChromaDB y OpenTelemetry para evitar conflictos en Streamlit
 os.environ["ANONYMIZED_TELEMETRY"] = "False"

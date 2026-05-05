@@ -37,7 +37,7 @@ class SotaAnalyzer:
         self.gap_skill = CoverageGapAnalysisSkill(llm_client=llm_client)
         self.validation_skill = CrossValidationSkill(llm_client=llm_client)
         
-        logger.info("✅ Analizador SOTA inicializado con skills")
+        logger.debug("✅ Analizador SOTA inicializado con skills")
 
 
     def analyze_sota(self, paper_text: str) -> Dict[str, Any]:

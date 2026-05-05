@@ -29,7 +29,7 @@ class PaperAuditor:
         self.metrics_skill = MetricsCalculationSkill()
         self.metadata_skill = MetadataAggregationSkill()
         
-        logger.info("✅ Auditor de papers inicializado correctamente")
+        logger.debug("✅ Auditor de papers inicializado correctamente")
     
     
     def audit(self, paper_text):
@@ -44,7 +44,7 @@ class PaperAuditor:
             Diccionario con resultados de la auditoría
         """
         caracteres = len(paper_text)
-        logger.info(f"🚀 Iniciando auditoría con skills. Tamaño: {caracteres} caracteres")
+        logger.log(25, f"🚀 Iniciando auditoría con skills. Tamaño: {caracteres} caracteres")
         
         start_time = time.time()
         
@@ -136,7 +136,15 @@ class PaperAuditor:
             if 'extracted_hyperparameters_hybrid' in context:
                 final_result['extracted_hyperparameters_hybrid'] = context['extracted_hyperparameters_hybrid']
             
-            logger.info(f"✅ Auditoría completada en {execution_time} segundos")
+            # Guardar contexto de depuración RAG
+            if 'rag_debug_context' in context:
+                final_result['rag_debug_context'] = context['rag_debug_context']
+            if 'rag_top_fragments' in context:
+                final_result['rag_top_fragments'] = context['rag_top_fragments']
+            if 'final_rag_prompt' in context:
+                final_result['final_rag_prompt'] = context['final_rag_prompt']
+            
+            logger.log(25, f"✅ Auditoría completada en {execution_time} segundos")
             
             return final_result
 

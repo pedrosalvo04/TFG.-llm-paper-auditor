@@ -24,7 +24,7 @@ class LLMClient:
         self.model_name = MODEL_NAME
         self.generation_config = generation_config or {}
         
-        logger.info(f"✅ Cliente LLM inicializado: {self.model_name}")
+        logger.debug(f"✅ Cliente LLM inicializado: {self.model_name}")
     
     def generate(self, prompt):
         """

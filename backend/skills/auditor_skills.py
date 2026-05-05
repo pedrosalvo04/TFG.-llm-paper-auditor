@@ -41,7 +41,7 @@ class RedFlagDetectionSkill(BaseSkill):
         if not self.validate_context(context, ['paper_text']):
             return {'red_flags': {}}
         
-        self.log_execution("=== CONSOLIDANDO RED FLAGS ===")
+        self.log_execution("🚩 Analizando Red Flags (Regex)...", level="notice")
         
         # Ejecutar todos los detectores
         hyper_result = self.hyperparameter_skill.execute(context)
@@ -99,14 +99,7 @@ class RedFlagDetectionSkill(BaseSkill):
             and not k.startswith("puntos_")
         ]
         
-        self.log_execution("\n" + "="*60)
-        self.log_execution(f"🚩 RED FLAGS FINALES: {len(critical_flags)} detectadas")
-        if critical_flags:
-            for flag in critical_flags:
-                self.log_execution(f"  ⚠️ {flag}")
-        else:
-            self.log_execution("✅ No se detectaron red flags críticas")
-        self.log_execution("="*60 + "\n")
+        self.log_execution(f"🚩 Análisis finalizado: {len(critical_flags)} Red Flags detectadas", level="info")
         
         return {'red_flags': red_flags}
 
@@ -122,7 +115,7 @@ class InformationExtractionSkill(BaseSkill):
             self.log_execution("No hay cliente LLM configurado", level="error")
             return {'extracted_info': {}}
         
-        self.log_execution("🔍 Extrayendo información estructurada usando Context Mapping...")
+        self.log_execution("🔍 Ejecutando Context Mapping (Agentic RAG)...", level="notice")
         
         try:
             from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -130,12 +123,12 @@ class InformationExtractionSkill(BaseSkill):
             import chromadb
             
             # 1. Chunking
-            self.log_execution("Fragmentando texto para Context Mapping...")
+            self.log_execution("Fragmentando texto...", level="debug")
             splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=300)
             chunks = splitter.split_text(context['paper_text'])
             
             # 2. Embedding
-            self.log_execution("Generando embeddings locales para 15 agentes virtuales...")
+            self.log_execution("Generando embeddings locales...", level="debug")
             model = SentenceTransformer('all-MiniLM-L6-v2')
             embeddings = model.encode(chunks).tolist()
             
@@ -151,8 +144,8 @@ class InformationExtractionSkill(BaseSkill):
             
             # 3. Consultas específicas por dominio (Los 15 'Agentes')
             queries_map = {
-                'code': ["github repository url", "source code open source", "code is available at"],
-                'data': ["dataset availability", "data download link", "dataset can be found"],
+                'code': ["github repository url", "source code open source", "code is available at", "will release the code", "open-source commitment"],
+                'data': ["dataset availability", "data download link", "dataset can be found", "will release the data", "data availability statement"],
                 'hyperparameters': ["hyperparameters training details", "learning rate optimizer batch size epochs"],
                 'hardware': ["hardware gpu tpu cpu memory", "compute resources time hours days"],
                 'statistics': ["confidence intervals error bars", "statistical significance p-value multiple runs"],
@@ -198,7 +191,7 @@ class InformationExtractionSkill(BaseSkill):
                     'invalid_reason': extracted_info.get('invalid_reason', 'Not ML/AI paper')
                 }
             
-            self.log_execution("✅ Información extraída correctamente")
+            self.log_execution("✅ Extracción de información completada exitosamente", level="notice")
             return {'extracted_info': extracted_info, 'invalid_paper': False}
         except Exception as e:
             self.log_execution(f"❌ Error en extracción: {str(e)}", level="error")
@@ -216,7 +209,7 @@ class ReproducibilityEvaluationSkill(BaseSkill):
             self.log_execution("No hay cliente LLM configurado", level="error")
             return {'evaluation': {}}
         
-        self.log_execution("📊 Evaluando reproducibilidad...")
+        self.log_execution("📊 Evaluando cumplimiento NeurIPS 2026...")
         
         try:
             evaluation_prompt = get_evaluation_prompt(
@@ -247,7 +240,7 @@ class MetricsCalculationSkill(BaseSkill):
         if not self.validate_context(context, ['paper_text', 'red_flags']):
             return {'metrics': {}}
         
-        self.log_execution("Calculando métricas...")
+        self.log_execution("Calculando métricas finales...", level="debug")
         
         paper_text = context['paper_text']
         red_flags = context['red_flags']
@@ -276,7 +269,7 @@ class MetadataAggregationSkill(BaseSkill):
         if not self.validate_context(context, ['red_flags']):
             return {'error': 'Contexto inválido'}
         
-        self.log_execution("Agregando metadatos y construyendo resultado final...")
+        self.log_execution("Finalizando auditoría...", level="debug")
         
         evaluation = context.get('evaluation', {})
         

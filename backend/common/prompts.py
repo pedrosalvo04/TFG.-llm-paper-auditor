@@ -40,7 +40,8 @@ ANALYSIS STRATEGY - Read the paper section by section:
 CRITICAL RULES:
 - Search APPENDIX and ALL tables (Table 1 through Table 10+) before marking NOT FOUND
 - Look specifically for "Data Availability Statement", "Dataset access", or URLs to model hubs (HuggingFace, etc.)
-- If paper says "standard settings" or "not disclosed" -> extract as vague_phrase, NOT as the actual value
+- If paper says "standard settings", "default parameters", or "following [Previous Work]" -> extract these as the values for hyperparameters.
+- Training duration can be optimization steps (e.g. 100k) or total tokens (e.g. 3.5T). Extract these in the 'epochs' field if epochs are not present.
 - For software, look for any mentions of frameworks (PyTorch, JAX), libraries (Transformers, DeepSpeed), or specific training protocols.
 {snippets_section}
 RED FLAGS DETECTED BY REGEX PRE-PROCESSING:
@@ -245,11 +246,28 @@ def get_evaluation_prompt(extracted_info: dict, red_flags: dict) -> str:
     # Signal for Item 7: large-scale training implicitly justifies no multiple runs
     gpu_hours = extracted_info.get('hardware', {}).get('time', 'NOT FOUND')
     num_gpus = extracted_info.get('hardware', {}).get('num_gpus', 'NOT FOUND')
+    has_compute_base = clean_flags.get('tiene_compute_base', False)
     stats_signal = (
-        f"DETECTED compute -> training_time: {gpu_hours}, num_gpus: {num_gpus}. "
-        "If training required significant compute (100+ GPU-hours, or 8+ GPUs for long runs), "
+        f"DETECTED compute -> training_time: {gpu_hours}, num_gpus: {num_gpus}, has_compute_base: {has_compute_base}. "
+        "If training required significant compute (100+ GPU-hours, or 8+ GPUs for long runs, or mentions 1B+ parameters / 1T+ tokens), "
         "the absence of multiple statistical runs is IMPLICITLY JUSTIFIED -> set is_no_justified: true "
         "and explain in justification field."
+    )
+
+    # Signal for Item 3: Theory and Proofs (Empirical papers)
+    has_theory = extracted_info.get('theory_and_proofs', {}).get('has_theoretical_results', 'no')
+    theory_signal = (
+        f"DETECTED theory -> {has_theory}. "
+        "If the paper is primarily empirical (proposing an architecture, benchmark, or system) and does NOT "
+        "claim new theorems, answer 'N/A' or 'No' with is_no_justified: true. "
+        "NeurIPS does NOT require proofs for purely empirical contributions."
+    )
+
+    # Signal for Item 8: Compute Resources
+    compute_signal = (
+        f"DETECTED -> compute_time: {gpu_hours}, has_compute_base: {has_compute_base}. "
+        "If the author provides the model size (e.g., 7B, 70B parameters) and dataset size (e.g., 2T tokens), "
+        "this counts as providing the base for compute estimation -> answer 'Yes'."
     )
 
     # Signal for Item 12: whether external assets were used and if licenses were named
@@ -282,6 +300,26 @@ def get_evaluation_prompt(extracted_info: dict, red_flags: dict) -> str:
         "If there is no trace of IRB approval, you MUST answer 'No' and state 'Riesgo de Desk Reject: Faltan aprobaciones del comité de ética (IRB).' in the justification."
     )
 
+    # Signal for Item 6: Hyperparameters (Inference)
+    hyper_vague = extracted_info.get('hyperparameters', {}).get('vague_phrase', 'NOT FOUND')
+    hyper_signal = (
+        f"DETECTED vague_phrase: {hyper_vague}. "
+        "IMPORTANT: If the author states that hyperparameters follow 'default values', 'standard settings', "
+        "or 'previous work (e.g. Qwen2)', this counts as a valid justification for Item 6. "
+        "Also, total tokens (e.g. 3.5T) or optimization steps (e.g. 100k steps) count as valid training duration (Item 6)."
+    )
+
+    # Signal for Item 16: Declaration of LLM Usage (The Negative Declaration Rule)
+    has_llm_section = clean_flags.get('tiene_seccion_declaracion', False)
+    has_llm_negative = clean_flags.get('tiene_declaracion_negativa', False)
+    has_llm_positive = bool(extracted_info.get('llm_usage_extraction', {}).get('models_used', []))
+    llm_signal = (
+        f"DETECTED -> has_explicit_section: {has_llm_section}, has_negative_declaration: {has_llm_negative}, has_positive_usage: {has_llm_positive}. "
+        "RULE: Authors MUST include a 'Declaration of LLM Usage' (either positive or negative). "
+        "If NO traces of such declaration are found (neither section nor explicit sentence) -> answer 'No' "
+        "and use justification: 'El documento no contiene la sección obligatoria de declaración de uso de LLMs, lo cual es un incumplimiento de las guías de autor de NeurIPS.'."
+    )
+
     return f"""
 Act as a Senior Area Chair for NeurIPS 2026. Your task is to VALIDATE the transparency of the NeurIPS 2026 Paper Checklist.
 DO NOT produce any numeric score. Your output is a transparency audit, not a grade.
@@ -295,12 +333,16 @@ RED FLAGS (automated regex pre-processing):
 =======================================================
 PRE-COMPUTED SIGNALS - USE THESE TO AVOID COMMON ERRORS
 =======================================================
+[Item 3 - Theory]           {theory_signal}
 [Item 4 - Reproducibility]   {reproducibility_signal}
 [Item 5 - Open Access]       {open_access_signal}
 [Item 7 - Statistics]        {stats_signal}
+[Item 8 - Compute]           {compute_signal}
 [Item 12 - Licenses]         {licenses_signal}
 [Item 14 - Crowdsourcing]    {crowdsourcing_signal}
 [Item 15 - IRB Approvals]    {irb_signal}
+[Item 6 - Hyperparameters]   {hyper_signal}
+[Item 16 - LLM Declaration]  {llm_signal}
 
 =======================================================
 OUTPUT RULES - MANDATORY FOR ALL 16 ITEMS
@@ -318,6 +360,10 @@ Item 2 (Limitations):
   NeurIPS EXPLICITLY INSTRUCTS reviewers NOT to penalize honesty about limitations.
   If ANY limitations are stated -- even briefly -- answer "Yes". Only "No" if LITERALLY NO limitations section exists.
 
+Item 3 (Theory, Assumptions & Proofs):
+  Use the [Item 3 - Theory] pre-computed signal. If the work is empirical, do not penalize the absence of proofs.
+  Answer "N/A" or "No" with is_no_justified: true.
+
 Item 4 (Experimental Result Reproducibility):
   NeurIPS accepts MULTIPLE reproducibility forms. Any of these count as "Yes":
   demo page, hosted model, GitHub repo, model checkpoint, HuggingFace model, detailed architecture description.
@@ -325,11 +371,17 @@ Item 4 (Experimental Result Reproducibility):
 
 Item 5 (Open Access to Data and Code):
   Use the [Item 5 - Open Access] pre-computed signal EXACTLY.
-  If ANY public URL exists (project page, demo, HuggingFace, GitHub) -> answer "Yes" with that URL as evidence.
-  NeurIPS considers a demo page or model card a valid form of open access.
+  If ANY public URL exists (project page, demo, HuggingFace, GitHub) OR the author explicitly promises future release (e.g., "we will release code") -> answer "Yes" with that evidence.
+  NeurIPS considers a demo page, model card, or a commitment to release as valid forms of transparency.
 
-Item 6 (Experimental Setting/Details):
-  Do NOT penalize for missing minor optimizer internals (betas, epsilon) when primary hyperparameters (LR, batch size, weight decay) are present.
+Item 8 (Experiments Compute Resource):
+  Use the [Item 8 - Compute] pre-computed signal.
+  Providing model size and token counts is sufficient for compute estimation. Answer "Yes" if these are present.
+
+Item 6 (Experimental Setting / Details):
+  Use the [Item 6 - Hyperparameters] pre-computed signal.
+  Do NOT penalize for missing specific values if the author states they use "default values" of a known optimizer (like AdamW) or follow a cited previous work.
+  Training duration can be expressed in epochs, optimization steps, or total tokens. Any of these count as "Yes".
 
 Item 7 (Statistical Significance):
   Search for error bars, +/-values, confidence intervals in results. If none found, answer "No".
@@ -345,7 +397,9 @@ Item 15 (IRB Approvals):
   Use the [Item 15 - IRB Approvals] pre-computed signal EXACTLY as instructed.
 
 Item 16 (Declaration of LLM Usage):
-  Only required if LLM is CENTRAL to the scientific method. If used only for writing/editing -> "N/A".
+  Use the [Item 16 - LLM Declaration] pre-computed signal EXACTLY.
+  It is NOT enough to assume No usage if not mentioned. A declaration (positive or negative) MUST be present.
+  If missing -> answer "No" with the administrative justification provided in the signal.
 
 =======================================================
 RETURN JSON ONLY. NO OTHER TEXT.

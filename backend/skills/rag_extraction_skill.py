@@ -28,7 +28,7 @@ class HybridHyperparameterExtractionSkill(BaseSkill):
         if not self.validate_context(context, ['paper_text']):
             return {'extracted_hyperparameters_hybrid': {}}
             
-        self.log_execution("🔍 Iniciando Hybrid RAG + Structured Extraction de Hyperparametros...")
+        self.log_execution("🔍 Iniciando Hybrid RAG + Structured Extraction de Hyperparametros...", level="notice")
         paper_text = context['paper_text']
         
         try:
@@ -83,7 +83,13 @@ class HybridHyperparameterExtractionSkill(BaseSkill):
                 n_results=25
             )
             
-            # Combinar fragmentos relevantes únicos
+            # Capturar el Top 1 de cada "Agente" (Query)
+            top_fragments = {}
+            for i, query in enumerate(queries):
+                if results['documents'] and len(results['documents']) > i and results['documents'][i]:
+                    top_fragments[query] = results['documents'][i][0] # El primer resultado es el más relevante
+            
+            # Combinar fragmentos relevantes únicos para el contexto final
             relevant_chunks = set()
             for doc_list in results['documents']:
                 for doc in doc_list:
@@ -109,7 +115,7 @@ class HybridHyperparameterExtractionSkill(BaseSkill):
             If a value is not explicitly stated after reviewing all excerpts, output 'NOT FOUND'. Do not guess or hallucinate.
             """
             
-            self.log_execution(f"🧠 Consultando a LLM ({RAG_MODEL_NAME}) para extracción estructurada...")
+            self.log_execution(f"🧠 Consultando a LLM ({RAG_MODEL_NAME}) para extracción estructurada...", level="notice")
             response = self.llm_client.client.models.generate_content(
                 model=RAG_MODEL_NAME,
                 contents=prompt,
@@ -126,8 +132,13 @@ class HybridHyperparameterExtractionSkill(BaseSkill):
             # 4. Regex Cleaning
             cleaned_data = self._clean_with_regex(extracted_json)
             
-            self.log_execution("✅ Hyperparametros extraídos exitosamente usando pipeline híbrido")
-            return {'extracted_hyperparameters_hybrid': cleaned_data}
+            self.log_execution("✅ Hyperparametros extraídos exitosamente usando pipeline híbrido", level="notice")
+            return {
+                'extracted_hyperparameters_hybrid': cleaned_data,
+                'rag_debug_context': rag_context,
+                'rag_top_fragments': top_fragments,
+                'final_rag_prompt': prompt
+            }
             
         except Exception as e:
             self.log_execution(f"❌ Error en la extracción híbrida: {str(e)}", level="error")

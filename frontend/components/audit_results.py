@@ -141,6 +141,36 @@ def render_audit_results(resultado, uploaded_file):
     row_height = max(900, len(health["items"]) * 58 + 60)
     st.iframe(table_html, height=row_height)
 
+    # ── EXPLORADOR DE DATOS DETALLADOS ───────────────────────────────────────
+    from frontend.components.data_explorer import render_data_explorer
+    render_data_explorer(resultado)
+
+    # ── DEBUG: RAG CONTEXT ───────────────────────────────────────────────────
+    if resultado.get("rag_debug_context"):
+        with st.expander("🛠️ Depuración Avanzada: Pipeline RAG (Agentes & Prompt)"):
+            tab1, tab2, tab3 = st.tabs(["🕵️ Top 1 por Agente", "📜 Prompt Final", "📑 Todos los fragmentos"])
+            
+            with tab1:
+                st.info("Mejor fragmento recuperado por cada una de las 13 queries de búsqueda.")
+                if resultado.get("rag_top_fragments"):
+                    for query, fragment in resultado["rag_top_fragments"].items():
+                        st.markdown(f"**🔍 Agente: {query}**")
+                        st.code(fragment, wrap_lines=True)
+                        st.markdown("---")
+                else:
+                    st.warning("No hay información de fragmentos individuales disponible.")
+
+            with tab2:
+                st.info("Este es el prompt exacto que se envió a Gemini 1.5 Pro con todo el contexto recuperado.")
+                if resultado.get("final_rag_prompt"):
+                    st.code(resultado["final_rag_prompt"], language="markdown")
+                else:
+                    st.warning("No se capturó el prompt final.")
+
+            with tab3:
+                st.info("Lista completa de todos los fragmentos únicos seleccionados por el RAG.")
+                st.markdown(resultado["rag_debug_context"])
+
     return health
 
 

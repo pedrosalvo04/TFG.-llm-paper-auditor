@@ -2,7 +2,9 @@
 from docling.document_converter import DocumentConverter
 from backend.utils.logger import get_logger
 
+import logging
 logger = get_logger(__name__)
+logging.getLogger("docling").setLevel(logging.ERROR)
 
 def convert_pdf_to_markdown(pdf_path):
     """
@@ -16,7 +18,7 @@ def convert_pdf_to_markdown(pdf_path):
         Texto en formato Markdown
     """
     try:
-        logger.info(f"Convirtiendo PDF a Markdown con Docling (Modo Robusto por Bloques): {pdf_path}")
+        logger.log(25, f"Convirtiendo PDF a Markdown con Docling (Modo Robusto por Bloques): {pdf_path}")
         from docling.datamodel.base_models import InputFormat
         from docling.document_converter import DocumentConverter, PdfFormatOption
         from docling.datamodel.pipeline_options import PdfPipelineOptions
@@ -53,7 +55,6 @@ def convert_pdf_to_markdown(pdf_path):
         for i in range(0, total_pages, chunk_size):
             start_page = i
             end_page = min(i + chunk_size, total_pages)
-            logger.info(f"⏳ Procesando bloque de páginas: {start_page+1} a {end_page}...")
             
             # Crear PDF temporal para el bloque
             writer = PdfWriter()
@@ -69,16 +70,16 @@ def convert_pdf_to_markdown(pdf_path):
                 result = converter.convert(tmp_path)
                 block_md = result.document.export_to_markdown()
                 full_md_text += block_md + "\n\n"
-                logger.info(f"✅ Bloque {start_page+1}-{end_page} completado.")
+                logger.info(f"  ⏳ Procesadas páginas {start_page+1}-{end_page} de {total_pages}")
             except Exception as block_error:
-                logger.error(f"❌ Error en bloque {start_page+1}-{end_page}: {str(block_error)}")
+                logger.error(f"  ❌ Error en páginas {start_page+1}-{end_page}: {str(block_error)}")
                 full_md_text += f"\n\n> [!ERROR] Error al procesar páginas {start_page+1}-{end_page}: {str(block_error)}\n\n"
             finally:
                 # Limpiar archivo temporal
                 if os.path.exists(tmp_path):
                     os.remove(tmp_path)
         
-        logger.info(f"🚀 Conversión total completada ({len(full_md_text)} caracteres)")
+        logger.log(25, f"🚀 Conversión total completada ({len(full_md_text)} caracteres)")
         return full_md_text
     except Exception as e:
         logger.error(f"❌ Error en la extracción del PDF: {str(e)}")

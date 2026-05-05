@@ -104,8 +104,9 @@ class HyperparameterDetectionSkill(BaseSkill):
         ],
         'epochs': [
             r"(?:trained?\s+for|over)\s+(\d+)\s*(?:epochs?|steps?|iterations?)",
-            r"(?:epochs?|training[\s_-]steps?)[\s:=]+(\d+)",
-            r"(\d+)\s*(?:epochs?|training\s+steps)",
+            r"(?:epochs?|training[\s_-]steps?|optimization[\s_-]steps?)[\s:=]+(\d+[\s\w]*)",
+            r"(\d+)\s*(?:epochs?|training\s+steps|optimization\s+steps)",
+            r"(\d+(?:\.\d+)?\s*[BT])\s*tokens?",
         ],
         'warmup': [
             r"warmup[\s:=]+(\d+)",
@@ -117,15 +118,18 @@ class HyperparameterDetectionSkill(BaseSkill):
             r"(?:weight[\s_-]decay|\$\\lambda\$|L2[\s_-]regularization)[\s:=,]+.{0,30}(\d+\.\d+)",
             r"(?:decay|wd)\s*[=:]\s*(\d+\.\d+)",
             r"(?:weight.decay|regularization)\s+(?:of|is|coefficient)\s+(\d+\.\d+)",
+            r"(?:weight[\s_-]decay|decay).{0,50}(?:default|following|standard|same\s+as)",
         ],
         'betas': [
             r"(?:\$\\beta_[12]\$|beta[\s_-]?[12]|betas?)[\s:=,]+.{0,30}\d+\.\d+",
             r"\(\s*(?:β|beta)?\s*0\.9\d*\s*,\s*0\.9\d*\s*\)",
             r"(?:momentum|beta)\s+(?:coefficients?|parameters?).{0,40}\d+\.\d+",
+            r"beta[s\s_-].{0,50}(?:default|standard|typical|following)",
         ],
         'epsilon': [
             r"(?:epsilon|\$\\epsilon\$|eps)[\s:=]+(\d+\.?\d*[eE][-+]?\d+)",
             r"(\d+\.\d+[eE][-+]?\d+).{0,20}(?:epsilon|numerical[\s_-]stability)",
+            r"epsilon.{0,50}(?:default|standard|typical|following)",
         ],
         'vague': [
             r"(?:standard\s+settings|default\s+parameters|typical\s+configuration|not\s+disclosed|internal\s+experimentation|cannot\s+be\s+disclosed|hyperparameters?\s+(?:were\s+)?(?:not\s+)?tuned)",
@@ -143,8 +147,8 @@ class HyperparameterDetectionSkill(BaseSkill):
         tables = TableExtractionHelper.extract_tables(text)
         table_text = '\n'.join(tables)
         
-        self.log_execution(f"=== HYPERPARAMETER DETECTION (NEGATION-AWARE) ===")
-        self.log_execution(f"📋 Extrajimos {len(tables)} tablas para búsqueda prioritaria")
+        self.log_execution(f"=== HYPERPARAMETER DETECTION ===", level="debug")
+        self.log_execution(f"📋 Extrajimos {len(tables)} tablas para búsqueda", level="debug")
         
         for key, patterns in self.PATTERNS.items():
             found = False
@@ -159,7 +163,7 @@ class HyperparameterDetectionSkill(BaseSkill):
                         found = True
                         matched_snippet = match.group(0)[:100]
                         search_location = "TABLE"
-                        self.log_execution(f"✅ {key} (p{i+1}) [TABLA]: '{matched_snippet}'")
+                        self.log_execution(f"✅ {key} (p{i+1}) [TABLA]: '{matched_snippet}'", level="debug")
                         break
                 
                 # PRIORIDAD 2: texto completo CON filtro de negación
@@ -168,11 +172,11 @@ class HyperparameterDetectionSkill(BaseSkill):
                     found = True
                     matched_snippet = match.group(0)[:100]
                     search_location = "TEXT"
-                    self.log_execution(f"✅ {key} (p{i+1}) [TEXTO]: '{matched_snippet}'")
+                    self.log_execution(f"✅ {key} (p{i+1}) [TEXTO]: '{matched_snippet}'", level="debug")
                     break
             
             if not found:
-                self.log_execution(f"❌ {key}: NOT FOUND ({len(patterns)} patterns, negation-filtered)")
+                self.log_execution(f"❌ {key}: NOT FOUND", level="debug")
             
             results[f'has_{key}'] = found
             if found and key != 'vague' and matched_snippet:
@@ -180,7 +184,7 @@ class HyperparameterDetectionSkill(BaseSkill):
                 results[f'{key}_location'] = search_location
         
         missing = [k.replace('has_', '') for k, v in results.items() if k.startswith('has_') and not v and k != 'has_vague']
-        self.log_execution(f"📊 RESUMEN: {len(missing)} hiperparámetros faltantes: {missing}")
+        self.log_execution(f"📊 Hiperparámetros faltantes: {missing}", level="debug")
         
         return {'hyperparameter_flags': results}
 
@@ -201,7 +205,7 @@ class DataAvailabilityDetectionSkill(BaseSkill):
         
         text = context['paper_text']
         
-        self.log_execution("=== DATA AVAILABILITY DETECTION ===")
+        self.log_execution("=== DATA AVAILABILITY DETECTION ===", level="debug")
         found_matches = {}
         for key, patterns in self.PATTERNS.items():
             if isinstance(patterns, str):
@@ -213,11 +217,11 @@ class DataAvailabilityDetectionSkill(BaseSkill):
                 if match:
                     found = True
                     snippet = match.group(0)[:80]
-                    self.log_execution(f"✅ {key}: FOUND - '{snippet}...'")
+                    self.log_execution(f"✅ {key}: FOUND - '{snippet}...' ", level="debug")
                     break
             
             if not found:
-                self.log_execution(f"❌ {key}: NOT FOUND")
+                self.log_execution(f"❌ {key}: NOT FOUND", level="debug")
             found_matches[key] = found
         
         results = {
@@ -227,7 +231,7 @@ class DataAvailabilityDetectionSkill(BaseSkill):
             'cannot_release_data': found_matches.get('cannot_release', False)
         }
         
-        self.log_execution(f"📊 RESUMEN: propietarios={results['datos_propietarios']}, sin_acceso={results['datos_sin_acceso']}")
+        self.log_execution(f"📊 DATA SUMMARY: propietarios={results['datos_propietarios']}, sin_acceso={results['datos_sin_acceso']}", level="debug")
         return {'data_flags': results}
 
 
@@ -245,7 +249,12 @@ class CodeAvailabilityDetectionSkill(BaseSkill):
             r"code\s+(?:available|released)\s+at\s+(https?://\S+)"
         ],
         'github': r"github\.com/[\w.-]+",
-        'cannot_release': r"cannot\s+(release|disclose|share)\s+.{0,30}(code|implementation)"
+        'cannot_release': r"cannot\s+(release|disclose|share)\s+.{0,30}(code|implementation)",
+        'will_release': [
+            r"will\s+(?:be\s+)?(?:open-source|release|make\s+available)\s+.{0,50}(?:code|models?|repository|implementation)",
+            r"releas\S+\s+(?:related\s+)?codes?\s+and\s+models?\s+to\s+facilitate",
+            r"codes?\s+and\s+models?\s+will\s+be\s+publicly\s+available"
+        ]
     }
     
     def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
@@ -254,7 +263,7 @@ class CodeAvailabilityDetectionSkill(BaseSkill):
         
         text = context['paper_text']
         
-        self.log_execution("=== CODE AVAILABILITY DETECTION ===")
+        self.log_execution("=== CODE AVAILABILITY DETECTION ===", level="debug")
         found_matches = {}
         for key, patterns in self.PATTERNS.items():
             if isinstance(patterns, str):
@@ -266,21 +275,22 @@ class CodeAvailabilityDetectionSkill(BaseSkill):
                 if match:
                     found = True
                     snippet = match.group(0)[:80]
-                    self.log_execution(f"✅ {key}: FOUND - '{snippet}...'")
+                    self.log_execution(f"✅ {key}: FOUND - '{snippet}...' ", level="debug")
                     break
             
             if not found:
-                self.log_execution(f"❌ {key}: NOT FOUND")
+                self.log_execution(f"❌ {key}: NOT FOUND", level="debug")
             found_matches[key] = found
         
         results = {
             'codigo_propietario': found_matches.get('proprietary', False),
-            'sin_repositorio': not found_matches.get('repository', False),
+            'sin_repositorio': not (found_matches.get('repository', False) or found_matches.get('will_release', False)),
             'tiene_github': found_matches.get('github', False),
-            'cannot_release_code': found_matches.get('cannot_release', False)
+            'cannot_release_code': found_matches.get('cannot_release', False),
+            'promesa_open_source': found_matches.get('will_release', False)
         }
         
-        self.log_execution(f"📊 RESUMEN: propietario={results['codigo_propietario']}, sin_repo={results['sin_repositorio']}")
+        self.log_execution(f"📊 CODE SUMMARY: sin_repo={results['sin_repositorio']}, promesa={results['promesa_open_source']}", level="debug")
         return {'code_flags': results}
 
 
@@ -301,7 +311,8 @@ class StatisticsDetectionSkill(BaseSkill):
             r"p\s*=\s*\d+\.\d+",
             r"statistically\s+significant",
             r"significance\s+test",
-            r"benchmarks?\s+(?:evaluation|results|performance).{0,50}(?:MMLU|GSM8K|HumanEval|ImageNet|COCO|Cityscapes|Atari|Gym|standard\s+benchmarks)"
+            r"benchmarks?\s+(?:evaluation|results|performance|comparison).{0,100}(?:MMLU|GSM8K|HumanEval|ImageNet|COCO|Cityscapes|Atari|Gym|standard\s+benchmarks|benchmark\s+variants)",
+            r"compared?.{0,30}(?:30|30\+)\s+variants"
         ],
         'multiple_runs': [
             r"(multiple\s+runs?|\d+\s+seeds?|random\s+seeds?|\d+\s+executions?|\d+\s+trials?)",
@@ -320,7 +331,7 @@ class StatisticsDetectionSkill(BaseSkill):
         tables = TableExtractionHelper.extract_tables(text)
         table_text = '\n'.join(tables)
         
-        self.log_execution("=== STATISTICS DETECTION (NEGATION-AWARE) ===")
+        self.log_execution("=== STATISTICS DETECTION ===", level="debug")
         found_flags = {}
         
         for key, patterns in self.PATTERNS.items():
@@ -330,15 +341,15 @@ class StatisticsDetectionSkill(BaseSkill):
                     match = re.search(pattern, table_text, re.IGNORECASE)
                     if match:
                         found = True
-                        self.log_execution(f"✅ {key} (p{i+1}) [TABLA]: '{match.group(0)[:80]}'")
+                        self.log_execution(f"✅ {key} (p{i+1}) [TABLA]: '{match.group(0)[:80]}'", level="debug")
                         break
                 match = _search_with_negation(pattern, text)
                 if match:
                     found = True
-                    self.log_execution(f"✅ {key} (p{i+1}) [TEXTO]: '{match.group(0)[:80]}'")
+                    self.log_execution(f"✅ {key} (p{i+1}) [TEXTO]: '{match.group(0)[:80]}'", level="debug")
                     break
             if not found:
-                self.log_execution(f"❌ {key}: NOT FOUND")
+                self.log_execution(f"❌ {key}: NOT FOUND", level="debug")
             found_flags[key] = found
         
         results = {
@@ -347,7 +358,7 @@ class StatisticsDetectionSkill(BaseSkill):
             'sin_multiple_runs': not found_flags.get('multiple_runs', False)
         }
         
-        self.log_execution(f"📊 RESUMEN: intervalos={not results['sin_intervalos_confianza']}, significancia={not results['sin_significancia']}, runs={not results['sin_multiple_runs']}")
+        self.log_execution(f"📊 STATS SUMMARY: CI={not results['sin_intervalos_confianza']}, sig={not results['sin_significancia']}", level="debug")
         return {'statistics_flags': results}
 
 
@@ -381,7 +392,7 @@ class EnvironmentalImpactDetectionSkill(BaseSkill):
         
         text = context['paper_text']
         
-        self.log_execution("=== ENVIRONMENTAL IMPACT DETECTION (MULTI-PATTERN) ===")
+        self.log_execution("=== ENVIRONMENTAL IMPACT DETECTION ===", level="debug")
         found_flags = {}
         
         for key, patterns in self.PATTERNS.items():
@@ -392,7 +403,7 @@ class EnvironmentalImpactDetectionSkill(BaseSkill):
                     if match:
                         found = True
                         snippet = match.group(0)[:80]
-                        self.log_execution(f"✅ {key} (pattern {i+1}/{len(patterns)}): FOUND - '{snippet}...'")
+                        self.log_execution(f"✅ {key}: FOUND ", level="debug")
                         break
             else:
                 match = re.search(patterns, text, re.IGNORECASE)
@@ -402,7 +413,7 @@ class EnvironmentalImpactDetectionSkill(BaseSkill):
                     self.log_execution(f"✅ {key}: FOUND - '{snippet}...'")
             
             if not found:
-                self.log_execution(f"❌ {key}: NOT FOUND (tried {len(patterns) if isinstance(patterns, list) else 1} patterns)")
+                self.log_execution(f"❌ {key}: NOT FOUND", level="debug")
             
             found_flags[key] = found
         
@@ -412,7 +423,7 @@ class EnvironmentalImpactDetectionSkill(BaseSkill):
             'tiene_pue': found_flags.get('pue', False)
         }
         
-        self.log_execution(f"📊 RESUMEN: carbon={results['tiene_carbon_footprint']}, energy={results['tiene_energy_consumption']}, pue={results['tiene_pue']}")
+        self.log_execution(f"📊 ENV SUMMARY: carbon={results['tiene_carbon_footprint']}", level="debug")
         return {'environmental_flags': results}
 
 
@@ -431,14 +442,14 @@ class ProblematicPhrasesDetectionSkill(BaseSkill):
         
         text = context['paper_text']
         
-        self.log_execution("=== PROBLEMATIC PHRASES DETECTION ===")
+        self.log_execution("=== PROBLEMATIC PHRASES DETECTION ===", level="debug")
         for key, pattern in self.PATTERNS.items():
             match = re.search(pattern, text, re.IGNORECASE)
             if match:
                 snippet = match.group(0)[:80]
                 self.log_execution(f"⚠️ {key}: FOUND - '{snippet}...'")
             else:
-                self.log_execution(f"✅ {key}: NOT FOUND (good)")
+                self.log_execution(f"✅ {key}: NOT FOUND", level="debug")
         
         results = {
             'competitive_concerns': bool(re.search(self.PATTERNS['competitive_concerns'], text, re.IGNORECASE)),
@@ -447,7 +458,7 @@ class ProblematicPhrasesDetectionSkill(BaseSkill):
         }
         
         count = sum(results.values())
-        self.log_execution(f"📊 RESUMEN: {count} frases problemáticas detectadas")
+        self.log_execution(f"📊 PROBLEMATIC SUMMARY: {count} detected", level="debug")
         return {'problematic_flags': results}
 
 
@@ -463,16 +474,29 @@ class LlmUsageDetectionSkill(BaseSkill):
             return {}
         
         text = context['paper_text']
-        self.log_execution("=== LLM USAGE DETECTION ===")
+        self.log_execution("=== LLM USAGE DETECTION ===", level="debug")
         
         match = re.search(self.PATTERNS['llm_usage'], text, re.IGNORECASE)
         found = bool(match)
+        
+        # Detectar declaración negativa explicita
+        neg_decl_pattern = r"(?:did\s+not\s+use|no\s+LLMs?\s+(?:were|was)\s+used|authors\s+did\s+not\s+use|without\s+the\s+use\s+of\s+LLMs?)"
+        has_negative_declaration = bool(re.search(neg_decl_pattern, text, re.IGNORECASE))
+        
+        # Detectar la sección como tal
+        section_pattern = r"(?:Declaration\s+of\s+LLM\s+Usage|AI\s+Usage\s+Statement|Use\s+of\s+AI\s+assistants)"
+        has_explicit_section = bool(re.search(section_pattern, text, re.IGNORECASE))
+        
         if found:
             self.log_execution(f"✅ LLM Usage: FOUND - '{match.group(0)[:80]}...'")
         else:
-            self.log_execution("❌ LLM Usage: NOT FOUND")
+            self.log_execution("❌ LLM Usage: NOT FOUND", level="debug")
             
-        return {'llm_usage_flags': {'usa_llm_como_herramienta': found}}
+        return {'llm_usage_flags': {
+            'usa_llm_como_herramienta': found,
+            'tiene_declaracion_negativa': has_negative_declaration,
+            'tiene_seccion_declaracion': has_explicit_section
+        }}
 
 
 class CrowdsourcingDetectionSkill(BaseSkill):
@@ -500,7 +524,7 @@ class CrowdsourcingDetectionSkill(BaseSkill):
             return {}
         
         text = context['paper_text']
-        self.log_execution("=== CROWDSOURCING DETECTION ===")
+        self.log_execution("=== CROWDSOURCING DETECTION ===", level="debug")
         
         # Verificar primero si hay negacion explicita
         has_negation = bool(re.search(self.NEGATION_CROWD, text, re.IGNORECASE))
@@ -516,7 +540,7 @@ class CrowdsourcingDetectionSkill(BaseSkill):
         )
         has_comp = bool(re.search(self.COMPENSATION, text, re.IGNORECASE))
         
-        self.log_execution(f"negation={has_negation}, active_crowd={has_active_crowd}, human_dataset={has_human_dataset}, compensation={has_comp}")
+        self.log_execution(f"active_crowd={has_active_crowd}, human_dataset={has_human_dataset}", level="debug")
         
         return {'crowdsourcing_flags': {
             'usa_crowdsourcing': has_active_crowd,
@@ -537,7 +561,7 @@ class LicenseDetectionSkill(BaseSkill):
             return {}
         
         text = context['paper_text']
-        self.log_execution("=== LICENSE DETECTION ===")
+        self.log_execution("=== LICENSE DETECTION ===", level="debug")
         
         license_match = re.search(self.EXPLICIT_LICENSE, text, re.IGNORECASE)
         dataset_match = re.search(self.KNOWN_DATASETS, text, re.IGNORECASE)
@@ -548,7 +572,7 @@ class LicenseDetectionSkill(BaseSkill):
         if found_license:
             self.log_execution(f"Explicit license FOUND: '{license_match.group(0)[:60]}'")
         else:
-            self.log_execution("Explicit license: NOT FOUND")
+            self.log_execution("Explicit license: NOT FOUND", level="debug")
         if uses_known_dataset:
             self.log_execution(f"Known dataset FOUND: '{dataset_match.group(0)[:60]}'")
         
@@ -572,7 +596,7 @@ class LimitationsQualityDetectionSkill(BaseSkill):
         if not self.validate_context(context, ['paper_text']):
             return {}
         text = context['paper_text']
-        self.log_execution("=== LIMITATIONS QUALITY DETECTION ===")
+        self.log_execution("=== LIMITATIONS QUALITY DETECTION ===", level="debug")
         
         has_section = bool(re.search(self.SECTION_PATTERN, text, re.IGNORECASE))
         specific_count = 0
@@ -581,7 +605,7 @@ class LimitationsQualityDetectionSkill(BaseSkill):
                 specific_count += 1
         
         is_vague = has_section and specific_count == 0
-        self.log_execution(f"📊 section={has_section}, specific_points={specific_count}, vague={is_vague}")
+        self.log_execution(f"📊 limitations_vague={is_vague}", level="debug")
         return {'limitations_flags': {
             'tiene_seccion_limitaciones': has_section,
             'limitaciones_vagas': is_vague,
@@ -603,16 +627,16 @@ class SoftwareVersionDetectionSkill(BaseSkill):
         if not self.validate_context(context, ['paper_text']):
             return {}
         text = context['paper_text']
-        self.log_execution("=== SOFTWARE VERSION DETECTION ===")
+        self.log_execution("=== SOFTWARE VERSION DETECTION ===", level="debug")
         
         found_count = 0
         for pat in self.PATTERNS:
             m = _search_with_negation(pat, text)
             if m:
                 found_count += 1
-                self.log_execution(f"✅ version: '{m.group(0)[:60]}'")
+                self.log_execution(f"✅ version: '{m.group(0)[:60]}'", level="debug")
         
-        self.log_execution(f"📊 {found_count} software version mentions found")
+        self.log_execution(f"📊 {found_count} software versions found", level="debug")
         return {'software_flags': {
             'tiene_versiones_software': found_count > 0,
             'cantidad_versiones': found_count,
@@ -639,13 +663,17 @@ class HardwareDetailDetectionSkill(BaseSkill):
             r"(?:train|took|required)\S*\s+(?:for\s+)?(?:approximately\s+)?\d+\s*(?:hours?|days?|weeks?|GPU[\s-]hours?)",
             r"\d+\s*(?:GPU[\s-]hours?|GPU[\s-]days?|node[\s-]hours?)",
         ],
+        'compute_base': [
+            r"(\d+(?:\.\d+)?)\s*(?:B|Billion|M|Million)\s*(?:parameters?|params?)",
+            r"(\d+(?:\.\d+)?)\s*(?:T|Trillion)\s*tokens?",
+        ]
     }
     
     def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
         if not self.validate_context(context, ['paper_text']):
             return {}
         text = context['paper_text']
-        self.log_execution("=== HARDWARE DETAIL DETECTION ===")
+        self.log_execution("=== HARDWARE DETAIL DETECTION ===", level="debug")
         
         results = {}
         for key, patterns in self.PATTERNS.items():
@@ -657,7 +685,7 @@ class HardwareDetailDetectionSkill(BaseSkill):
                     self.log_execution(f"✅ {key}: '{m.group(0)[:60]}'")
                     break
             if not found:
-                self.log_execution(f"❌ {key}: NOT FOUND")
+                self.log_execution(f"❌ {key}: NOT FOUND", level="debug")
             results[f'tiene_{key}'] = found
         
         return {'hardware_detail_flags': results}

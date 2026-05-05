@@ -20,7 +20,7 @@ class PaperChatbot:
         self.response_skill = ConversationalResponseSkill(llm_client=self.llm_client)
         self.validation_skill = ContextValidationSkill()
         
-        logger.info("✅ Módulo de Chatbot inicializado con arquitectura de skills")
+        logger.debug("✅ Módulo de Chatbot inicializado con arquitectura de skills")
 
     def preguntar(self, paper_text, question, history_text):
         """
