@@ -20,4 +20,7 @@ def get_logger(name):
             datefmt='%H:%M:%S'
         )
     
+    # Silenciar logs internos verbosos de google_genai (como AFC)
+    logging.getLogger("google_genai").setLevel(logging.WARNING)
+    
     return logger

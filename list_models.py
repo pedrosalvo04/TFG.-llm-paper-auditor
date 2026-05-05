@@ -13,9 +13,6 @@ client = genai.Client(api_key=GOOGLE_API_KEY)
 print("Modelos de embedding disponibles:")
 try:
     for m in client.models.list():
-        # En el SDK nuevo genai, las acciones se comprueban distinto, 
-        # pero podemos imprimir los que contengan 'embedding'
-        if 'embedding' in m.name.lower():
-            print(f"ID: {m.name} | Display Name: {m.display_name}")
+        print(f"ID: {m.name} | Display Name: {m.display_name}")
 except Exception as e:
     print(f"Error listando modelos: {e}")

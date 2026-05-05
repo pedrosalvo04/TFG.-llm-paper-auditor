@@ -6,14 +6,17 @@ def get_extraction_prompt(paper_text: str, red_flags: dict) -> str:
     Genera el prompt para la fase de extraccion de informacion.
     Incluye snippets detectados por regex para que el LLM los valide.
     """
-    hp_snippets = red_flags.get('_hp_snippets', {})
+    hp_snippets = red_flags.get('_hp_snippets', {}) if red_flags else {}
     snippets_section = ""
     if hp_snippets:
         snippets_section = "\nREGEX-DETECTED SNIPPETS (VALIDATE THESE - some may be false positives):\n"
         for k, v in hp_snippets.items():
             snippets_section += f"  - {k}: \"{v}\" -> Is this an actual reported value or a false positive?\n"
 
-    clean_flags = {k: v for k, v in red_flags.items() if not k.startswith('_')}
+    clean_flags = {k: v for k, v in red_flags.items() if not k.startswith('_')} if red_flags else {}
+    flags_section = ""
+    if clean_flags:
+        flags_section = f"\nRED FLAGS DETECTED BY REGEX PRE-PROCESSING:\n{json.dumps(clean_flags, indent=2)}\n"
 
     return f"""
 CRITICAL: This system ONLY evaluates ML/AI papers (neural networks, deep learning, machine learning).
@@ -42,8 +45,7 @@ CRITICAL RULES:
 - If paper says "standard settings" or "not disclosed" -> extract as vague_phrase, NOT as the actual value
 - For software, look for any mentions of frameworks (PyTorch, JAX), libraries (Transformers, DeepSpeed), or specific training protocols.
 {snippets_section}
-RED FLAGS DETECTED BY REGEX PRE-PROCESSING:
-{json.dumps(clean_flags, indent=2)}
+{flags_section}
 
 EXTRACT THE FOLLOWING (respond "NOT FOUND" ONLY after exhaustive search):
 
@@ -168,7 +170,10 @@ def get_evaluation_prompt(extracted_info: dict, red_flags: dict) -> str:
     Genera el prompt para evaluacion segun criterios NeurIPS 2026.
     Nuevo paradigma: validacion de transparencia, sin puntuacion numerica.
     """
-    clean_flags = {k: v for k, v in red_flags.items() if not k.startswith('_')}
+    clean_flags = {k: v for k, v in red_flags.items() if not k.startswith('_')} if red_flags else {}
+    flags_section = ""
+    if clean_flags:
+        flags_section = f"\nRED FLAGS (automated regex pre-processing):\n{json.dumps(clean_flags, indent=2)}\n"
 
     # --- Pre-compute explicit signals to guide the LLM and avoid common errors ---
 
@@ -220,11 +225,10 @@ def get_evaluation_prompt(extracted_info: dict, red_flags: dict) -> str:
     )
 
     # Signal for Item 14: was crowdsourcing/human subjects actually used?
-    uses_crowd = clean_flags.get('usa_crowdsourcing', False)
     human_annotation = extracted_info.get('human_subjects_extraction', {}).get('uses_human_annotation', 'no')
     crowdsourcing_signal = (
-        f"DETECTED -> regex_crowdsourcing_flag: {uses_crowd}, uses_human_annotation: {human_annotation}. "
-        "STRICT RULE: If both are false/no, the paper does NOT involve human subjects -> answer MUST be N/A. "
+        f"DETECTED -> uses_human_annotation: {human_annotation}. "
+        "STRICT RULE: If this is false/no, the paper does NOT involve human subjects -> answer MUST be N/A. "
         "Do NOT answer No just because compensation is unmentioned when there is no crowdsourcing at all. "
         "Only answer No/Yes if crowdsourcing or human annotation is CONFIRMED present."
     )
@@ -236,8 +240,7 @@ DO NOT produce any numeric score. Your output is a transparency audit, not a gra
 EXTRACTED INFORMATION:
 {json.dumps(extracted_info, indent=2, ensure_ascii=False)}
 
-RED FLAGS (automated regex pre-processing):
-{json.dumps(clean_flags, indent=2)}
+{flags_section}
 
 =======================================================
 PRE-COMPUTED SIGNALS - USE THESE TO AVOID COMMON ERRORS
@@ -252,14 +255,24 @@ PRE-COMPUTED SIGNALS - USE THESE TO AVOID COMMON ERRORS
 OUTPUT RULES - MANDATORY FOR ALL 16 ITEMS
 =======================================================
 For every item:
-- "answer" MUST be exactly one of: "Yes", "No", or "N/A" (never anything else).
-- If "Yes" -> "evidence" MUST contain the paper section or a verbatim fragment (e.g. "See Section 3.2"). NEVER leave evidence blank for a Yes.
-- If "No"  -> set "is_no_justified": true ONLY if the authors explicitly justified it OR the pre-computed signal above grants implicit justification.
-- If "N/A" -> "justification" must briefly state why it does not apply.
+- "answer" MUST be exactly one of: "Yes", "No", or "N/A".
+- If "Yes" -> "evidence" MUST contain the paper section AND a significant verbatim fragment (e.g. "Section 4.1: 'We use the AdamW optimizer with...'"). 
+  - PROVIDE AS MUCH CONTEXT AS POSSIBLE in the evidence.
+- If "No" -> "justification" MUST explain exactly what is missing and why it constitutes a transparency risk (e.g., "The authors mention training on H100s but provide no total training time or energy consumption details, which is required by Item 8.").
+- If "N/A" -> "justification" MUST explain clearly why the item is not applicable to this specific paper.
+- "is_no_justified" MUST be true only if explicit justification exists or pre-computed signals apply.
+- BE VERBOSE and TECHNICAL. Do not use generic phrases. Provide specific details found (or not found) in the provided information.
+- LENGTH REQUIREMENT: Every "evidence" and "justification" field should be at least 2-3 sentences long if possible, citing specific data points, section names, and verbatim quotes. Do not truncate information for brevity. We value depth over conciseness here.
 
 =======================================================
 CRITICAL PER-ITEM RULES
 =======================================================
+Item 1 (Claims):
+  STRICT VALIDATION: You MUST verify if the claims in the Abstract/Introduction (e.g., "our model outperforms SOTA", "competitiveness with LLaMA") are actually supported by the extracted results and baseline comparisons. 
+  - Cross-reference the "claims" found in the intro with the "baseline_comparison" results.
+  - DO NOT just cite the section. Explain IF the claim is supported by the data (e.g., "The claim of competitiveness with LLaMA3-8B is supported by Table 1, which shows LLaDA-8B achieving 65.2 vs 64.8 in MMLU").
+  - If a claim is unsupported or only partially supported, mark "No" or explain the nuance in the justification.
+
 Item 2 (Limitations):
   NeurIPS EXPLICITLY INSTRUCTS reviewers NOT to penalize honesty about limitations.
   If ANY limitations are stated -- even briefly -- answer "Yes". Only "No" if LITERALLY NO limitations section exists.

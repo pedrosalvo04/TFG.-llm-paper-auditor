@@ -5,9 +5,8 @@ from typing import Any, Dict
 from pydantic import BaseModel, Field
 from backend.skills.base_skill import BaseSkill
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from sentence_transformers import SentenceTransformer
 import chromadb
-from backend.common.config import RAG_MODEL_NAME
+from backend.common.config import MAP_MODEL_NAME, REDUCE_MODEL_NAME, EMBEDDING_MODEL_NAME
 
 class Hyperparameters(BaseModel):
     learning_rate: str = Field(description="Learning rate value, e.g., '1e-4', '0.001', '3 x 10^-4', or 'NOT FOUND'")
@@ -34,18 +33,43 @@ class HybridHyperparameterExtractionSkill(BaseSkill):
         try:
             # 1. Chunking
             self.log_execution("Fragmentando el texto de forma exhaustiva...")
-            splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=300)
+            splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=400)
             chunks = splitter.split_text(paper_text)
             self.log_execution(f"📄 Texto fragmentado en {len(chunks)} chunks.")
             
             # 2. Embedding & RAG
-            self.log_execution("Generando embeddings para RAG (SentenceTransformers local)...")
+            self.log_execution(f"Generando embeddings para RAG ({EMBEDDING_MODEL_NAME})...")
             
-            # Usamos SentenceTransformer local porque la API gratuita de Gemini 
-            # solo permite 100 peticiones por minuto para embeddings, lo que 
-            # rompe al procesar papers largos de +100 chunks.
-            model = SentenceTransformer('all-MiniLM-L6-v2')
-            embeddings = model.encode(chunks).tolist()
+            # Usamos Gemini API para embeddings en lugar de SentenceTransformer local
+            # Agrupamos en bloques pequeños y añadimos pausas para no exceder TPM (30K tokens/min).
+            import time
+            import os
+            import httpx
+            
+            embeddings = []
+            batch_size = 15 # Reducido a 15 para apuntar a 60 RPM (margen muy seguro frente al límite de 100)
+            api_key = os.getenv("GOOGLE_API_KEY")
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{EMBEDDING_MODEL_NAME}:batchEmbedContents?key={api_key}"
+            
+            for i in range(0, len(chunks), batch_size):
+                if i > 0:
+                    time.sleep(15) # Pausa de 15s (15 requests / 15s = 60 requests/min, un 60% del límite)
+                
+                batch = chunks[i:i+batch_size]
+                
+                # Bypasseamos el SDK usando httpx directo porque 'embed_content' fusionaba la lista en un único vector
+                requests = [{"model": f"models/{EMBEDDING_MODEL_NAME}", "content": {"parts": [{"text": c}]}} for c in batch]
+                
+                response = httpx.post(url, json={"requests": requests})
+                if response.status_code != 200:
+                    self.log_execution(f"❌ Error en API Embeddings: {response.text}", level="error")
+                    raise Exception(f"Error embeddings API: {response.text}")
+                    
+                data = response.json()
+                for emb in data.get("embeddings", []):
+                    embeddings.append(emb["values"])
+            
+            self.log_execution(f"✅ Embeddings generados para {len(chunks)} chunks.")
             
             chroma_client = chromadb.Client()
             try:
@@ -77,42 +101,73 @@ class HybridHyperparameterExtractionSkill(BaseSkill):
                 "hyperparameter tuning iterations schedule iterations iterations"
             ]
             
-            query_embeddings = model.encode(queries).tolist()
+            q_emb_res = self.llm_client.client.models.embed_content(
+                model=EMBEDDING_MODEL_NAME,
+                contents=queries
+            )
+            query_embeddings = [e.values for e in q_emb_res.embeddings]
+            
             results = collection.query(
                 query_embeddings=query_embeddings,
-                n_results=25
+                n_results=10 # Traemos menos por query para no abrumar, pero mapearemos sobre todos
             )
             
             # Combinar fragmentos relevantes únicos
-            relevant_chunks = set()
-            for doc_list in results['documents']:
-                for doc in doc_list:
-                    relevant_chunks.add(doc)
+            relevant_chunks = list(set([doc for doc_list in results['documents'] for doc in doc_list]))
             
-            rag_context = "\n\n...\n\n".join(relevant_chunks)
-            self.log_execution(f"🎯 Contexto filtrado por RAG: {len(relevant_chunks)} chunks únicos recuperados ({len(rag_context)} caracteres totales).")
+            self.log_execution(f"🎯 Contexto filtrado por RAG: {len(relevant_chunks)} chunks únicos recuperados.")
             
-            # 3. Structured Extraction using Gemini
-            prompt = f"""
-            You are a rigorous NeurIPS reviewer and an expert AI researcher. 
-            Your task is to comprehensively analyze the following relevant excerpts of a paper to extract EXACT hyperparameters and training details.
+            # 3. MAP Phase: Structured Extraction using Flash Lite
+            self.log_execution(f"🧠 [Fase MAP] Extrayendo de {len(relevant_chunks)} fragmentos con {MAP_MODEL_NAME}...")
             
-            IMPORTANT: Many modern papers have MULTIPLE training phases (e.g., Pre-training, SFT, RLHF, Fine-tuning). 
-            - Look for hyperparameters in ALL phases.
-            - If you find different values for different phases (e.g., Pre-training batch size is 1280 but SFT batch size is 256), extract the one that seems most representative of the main model or report the most prominent one.
-            - Be extremely careful with 'epochs' and 'learning rate' in the SFT/Fine-tuning sections, as they are often stated clearly there.
+            extracted_fragments = []
             
-            EXCERPTS:
-            {rag_context}
+            for idx, chunk in enumerate(relevant_chunks):
+                prompt = f"""
+                You are a rigorous NeurIPS reviewer. Look at this text fragment and extract hyperparameters.
+                TEXT:
+                {chunk}
+                """
+                try:
+                    response = self.llm_client.client.models.generate_content(
+                        model=MAP_MODEL_NAME,
+                        contents=prompt,
+                        config={
+                            'response_mime_type': 'application/json',
+                            'response_schema': Hyperparameters,
+                            'temperature': 0.0
+                        }
+                    )
+                    raw_text = response.text.strip()
+                    if raw_text.startswith("```"):
+                        raw_text = re.sub(r'^```(?:json)?\n?|```$', '', raw_text, flags=re.MULTILINE).strip()
+                    extracted_fragments.append(raw_text)
+                except Exception as e:
+                    self.log_execution(f"⚠️ Error extrayendo fragmento {idx}: {str(e)}", level="warning")
             
-            Extract the values and return them strictly matching the JSON schema. 
-            If a value is not explicitly stated after reviewing all excerpts, output 'NOT FOUND'. Do not guess or hallucinate.
+            # 4. REDUCE Phase: Consolidate with Gemma 4 31B
+            self.log_execution(f"🧠 [Fase REDUCE] Consolidando datos extraídos con {REDUCE_MODEL_NAME}...")
+            
+            reduce_prompt = f"""
+            You are a senior AI researcher reviewing a paper's hyperparameter extraction.
+            Below is a list of independent extractions from various parts of the paper (e.g., Pre-training, SFT, RLHF).
+            Your job is to consolidate them into a single definitive set of hyperparameters.
+            
+            RULES:
+            - If there are conflicts (e.g. SFT batch size is 256, Pre-training is 1280), prefer the final fine-tuning/SFT parameters if obvious, or pick the most representative one.
+            - If an extraction says 'NOT FOUND', ignore it if another extraction found a valid value.
+            - If no valid value is found across all fragments for a field, output 'NOT FOUND'.
+            - DO NOT guess or hallucinate.
+            
+            EXTRACTIONS:
+            {json.dumps(extracted_fragments, indent=2)}
             """
             
-            self.log_execution(f"🧠 Consultando a LLM ({RAG_MODEL_NAME}) para extracción estructurada...")
-            response = self.llm_client.client.models.generate_content(
-                model=RAG_MODEL_NAME,
-                contents=prompt,
+            self.log_execution(f"🚀 [REDUCE] Consolidando datos con {REDUCE_MODEL_NAME} (TPM Ilimitado)...")
+            
+            reduce_response = self.llm_client.client.models.generate_content(
+                model=REDUCE_MODEL_NAME,
+                contents=reduce_prompt,
                 config={
                     'response_mime_type': 'application/json',
                     'response_schema': Hyperparameters,
@@ -120,10 +175,21 @@ class HybridHyperparameterExtractionSkill(BaseSkill):
                 }
             )
             
-            extracted_json = json.loads(response.text)
-            self.log_execution(f"📥 Respuesta cruda del LLM:\n{json.dumps(extracted_json, indent=2)}")
+            raw_reduce_text = reduce_response.text.strip()
+            # Intento de extraer el bloque JSON limpio si hay texto extra alrededor
+            json_match = re.search(r'(\{.*\})', raw_reduce_text, re.DOTALL)
+            if json_match:
+                raw_reduce_text = json_match.group(1)
             
-            # 4. Regex Cleaning
+            try:
+                extracted_json = json.loads(raw_reduce_text)
+            except json.JSONDecodeError:
+                # Intento de reparación de comas extra si falla
+                fixed_text = re.sub(r',\s*([\]}])', r'\1', raw_reduce_text)
+                extracted_json = json.loads(fixed_text)
+            self.log_execution(f"📥 Respuesta consolidada del LLM:\n{json.dumps(extracted_json, indent=2)}")
+            
+            # 5. Regex Cleaning
             cleaned_data = self._clean_with_regex(extracted_json)
             
             self.log_execution("✅ Hyperparametros extraídos exitosamente usando pipeline híbrido")

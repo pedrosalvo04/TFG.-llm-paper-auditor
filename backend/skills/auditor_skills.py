@@ -1,122 +1,20 @@
 """Skills específicos para el auditor de papers - Versión refactorizada"""
 import json
+import re
 from typing import Any, Dict
 from backend.skills.base_skill import BaseSkill
 from backend.common.prompts import get_extraction_prompt, get_evaluation_prompt
-from backend.skills.regex_detection_skills import (
-    HyperparameterDetectionSkill,
-    DataAvailabilityDetectionSkill,
-    CodeAvailabilityDetectionSkill,
-    StatisticsDetectionSkill,
-    EnvironmentalImpactDetectionSkill,
-    ProblematicPhrasesDetectionSkill,
-    LimitationsQualityDetectionSkill,
-    SoftwareVersionDetectionSkill,
-    HardwareDetailDetectionSkill,
-    LlmUsageDetectionSkill,
-    CrowdsourcingDetectionSkill,
-    LicenseDetectionSkill,
-)
 
-
-class RedFlagDetectionSkill(BaseSkill):
-    """Skill coordinador que ejecuta todos los detectores especializados"""
-    
-    def __init__(self):
-        super().__init__()
-        self.hyperparameter_skill = HyperparameterDetectionSkill()
-        self.data_skill = DataAvailabilityDetectionSkill()
-        self.code_skill = CodeAvailabilityDetectionSkill()
-        self.statistics_skill = StatisticsDetectionSkill()
-        self.environmental_skill = EnvironmentalImpactDetectionSkill()
-        self.problematic_skill = ProblematicPhrasesDetectionSkill()
-        self.limitations_skill = LimitationsQualityDetectionSkill()
-        self.software_skill = SoftwareVersionDetectionSkill()
-        self.hardware_detail_skill = HardwareDetailDetectionSkill()
-        self.llm_usage_skill = LlmUsageDetectionSkill()
-        self.crowdsourcing_skill = CrowdsourcingDetectionSkill()
-        self.license_skill = LicenseDetectionSkill()
-    
-    def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        if not self.validate_context(context, ['paper_text']):
-            return {'red_flags': {}}
-        
-        self.log_execution("=== CONSOLIDANDO RED FLAGS ===")
-        
-        # Ejecutar todos los detectores
-        hyper_result = self.hyperparameter_skill.execute(context)
-        data_result = self.data_skill.execute(context)
-        code_result = self.code_skill.execute(context)
-        stats_result = self.statistics_skill.execute(context)
-        env_result = self.environmental_skill.execute(context)
-        prob_result = self.problematic_skill.execute(context)
-        limits_result = self.limitations_skill.execute(context)
-        sw_result = self.software_skill.execute(context)
-        hw_detail_result = self.hardware_detail_skill.execute(context)
-        llm_usage_result = self.llm_usage_skill.execute(context)
-        crowdsourcing_result = self.crowdsourcing_skill.execute(context)
-        license_result = self.license_skill.execute(context)
-        
-        # Consolidar resultados
-        red_flags = {}
-        
-        # Hiperparámetros
-        hyper_flags = hyper_result.get('hyperparameter_flags', {})
-        red_flags['hiperparametros_vacios'] = hyper_flags.get('has_vague', False)
-        red_flags['sin_learning_rate'] = not hyper_flags.get('has_learning_rate', False)
-        red_flags['sin_batch_size'] = not hyper_flags.get('has_batch_size', False)
-        red_flags['sin_optimizer'] = not hyper_flags.get('has_optimizer', False)
-        red_flags['sin_weight_decay'] = not hyper_flags.get('has_weight_decay', False)
-        # NeurIPS 2026: betas y epsilon se consideran secundarios y no generan red flags
-        red_flags['sin_epochs'] = not hyper_flags.get('has_epochs', False)
-        red_flags['sin_warmup'] = not hyper_flags.get('has_warmup', False)
-        
-        # Guardar snippets de hiperparámetros encontrados para validación LLM
-        hp_snippets = {}
-        for key in ['optimizer', 'learning_rate', 'batch_size', 'epochs', 'warmup', 'weight_decay']:
-            val = hyper_flags.get(f'{key}_value')
-            if val:
-                hp_snippets[key] = val
-        red_flags['_hp_snippets'] = hp_snippets
-        
-        # Datos, código, estadística, ambiental, tablas, reproducibilidad
-        red_flags.update(data_result.get('data_flags', {}))
-        red_flags.update(code_result.get('code_flags', {}))
-        red_flags.update(stats_result.get('statistics_flags', {}))
-        red_flags.update(env_result.get('environmental_flags', {}))
-        red_flags.update(prob_result.get('problematic_flags', {}))
-        red_flags.update(limits_result.get('limitations_flags', {}))
-        red_flags.update(sw_result.get('software_flags', {}))
-        red_flags.update(hw_detail_result.get('hardware_detail_flags', {}))
-        red_flags.update(llm_usage_result.get('llm_usage_flags', {}))
-        red_flags.update(crowdsourcing_result.get('crowdsourcing_flags', {}))
-        red_flags.update(license_result.get('license_flags', {}))
-        
-        critical_flags = [
-            k for k, v in red_flags.items() 
-            if v and not k.startswith("tiene_") and not k.startswith("menciona_") 
-            and not k.startswith("_") and not k.startswith("cantidad_")
-            and not k.startswith("puntos_")
-        ]
-        
-        self.log_execution("\n" + "="*60)
-        self.log_execution(f"🚩 RED FLAGS FINALES: {len(critical_flags)} detectadas")
-        if critical_flags:
-            for flag in critical_flags:
-                self.log_execution(f"  ⚠️ {flag}")
-        else:
-            self.log_execution("✅ No se detectaron red flags críticas")
-        self.log_execution("="*60 + "\n")
-        
-        return {'red_flags': red_flags}
 
 
 class InformationExtractionSkill(BaseSkill):
     """Skill para extraer información estructurada del paper usando LLM"""
     
     def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        if not self.validate_context(context, ['paper_text', 'red_flags']):
+        if not self.validate_context(context, ['paper_text']):
             return {'extracted_info': {}}
+        
+        red_flags = context.get('red_flags', {})
         
         if not self.llm_client:
             self.log_execution("No hay cliente LLM configurado", level="error")
@@ -130,7 +28,26 @@ class InformationExtractionSkill(BaseSkill):
                 context['red_flags']
             )
             response = self.llm_client.generate(extraction_prompt)
-            extracted_info = json.loads(response.text)
+            raw_text = response.text.strip()
+            # Limpiar posibles backticks de markdown si el modelo los añade
+            if raw_text.startswith("```"):
+                raw_text = re.sub(r'^```(?:json)?\n?|```$', '', raw_text, flags=re.MULTILINE).strip()
+                
+            try:
+                extracted_info = json.loads(raw_text)
+            except json.JSONDecodeError as e:
+                # Intento básico de reparación (comas al final)
+                fixed_text = re.sub(r',\s*([\]}])', r'\1', raw_text)
+                try:
+                    extracted_info = json.loads(fixed_text)
+                    self.log_execution("⚠️ JSON reparado automáticamente (comas extra eliminadas).")
+                except:
+                    self.log_execution(f"❌ Error parseando JSON: {str(e)}", level="error")
+                    return {'extracted_info': {}, 'invalid_paper': False, 'extraction_error': str(e)}
+            
+            # Si el modelo devuelve una lista, tomamos el primer elemento (aunque no debería)
+            if isinstance(extracted_info, list):
+                extracted_info = extracted_info[0] if extracted_info else {}
             
             # Validar si el paper es ML/AI
             if extracted_info.get('paper_type', '').startswith('INVALID'):
@@ -144,7 +61,7 @@ class InformationExtractionSkill(BaseSkill):
             self.log_execution("✅ Información extraída correctamente")
             return {'extracted_info': extracted_info, 'invalid_paper': False}
         except Exception as e:
-            self.log_execution(f"❌ Error en extracción: {str(e)}", level="error")
+            self.log_execution(f"❌ Error en extracción general: {str(e)}", level="error")
             return {'extracted_info': {}, 'extraction_error': str(e)}
 
 
@@ -152,8 +69,10 @@ class ReproducibilityEvaluationSkill(BaseSkill):
     """Skill para evaluar la reproducibilidad del paper usando LLM"""
     
     def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        if not self.validate_context(context, ['extracted_info', 'red_flags']):
+        if not self.validate_context(context, ['extracted_info']):
             return {'evaluation': {}}
+        
+        red_flags = context.get('red_flags', {})
         
         if not self.llm_client:
             self.log_execution("No hay cliente LLM configurado", level="error")
@@ -167,15 +86,28 @@ class ReproducibilityEvaluationSkill(BaseSkill):
                 context['red_flags']
             )
             response = self.llm_client.generate(evaluation_prompt)
-            evaluation = json.loads(response.text)
+            raw_text = response.text.strip()
+            if raw_text.startswith("```"):
+                raw_text = re.sub(r'^```(?:json)?\n?|```$', '', raw_text, flags=re.MULTILINE).strip()
+                
+            try:
+                evaluation = json.loads(raw_text)
+            except json.JSONDecodeError as e:
+                fixed_text = re.sub(r',\s*([\]}])', r'\1', raw_text)
+                try:
+                    evaluation = json.loads(fixed_text)
+                    self.log_execution("⚠️ JSON de evaluación reparado automáticamente.")
+                except Exception as ex:
+                    self.log_execution(f"❌ Error parseando JSON de evaluación: {str(e)}", level="error")
+                    return {'evaluation': {}, 'evaluation_error': f'JSON parse error: {str(e)}'}
+            
+            if isinstance(evaluation, list):
+                evaluation = evaluation[0] if evaluation else {}
             self.log_execution("✅ Evaluación completada")
             return {'evaluation': evaluation}
-        except json.JSONDecodeError as e:
-            self.log_execution(f"❌ Error parseando JSON: {str(e)}", level="error")
-            return {'evaluation': {}, 'evaluation_error': f'JSON parse error: {str(e)}'}
         except Exception as e:
             error_msg = str(e)
-            self.log_execution(f"❌ Error en evaluación: {error_msg}", level="error")
+            self.log_execution(f"❌ Error general en evaluación: {error_msg}", level="error")
             
             if '503' in error_msg or 'UNAVAILABLE' in error_msg:
                 return {'evaluation': {}, 'evaluation_error': 'El modelo LLM está experimentando alta demanda. Intenta nuevamente en unos momentos.'}
@@ -187,13 +119,13 @@ class MetricsCalculationSkill(BaseSkill):
     """Skill para calcular métricas de la auditoría"""
     
     def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        if not self.validate_context(context, ['paper_text', 'red_flags']):
+        if not self.validate_context(context, ['paper_text']):
             return {'metrics': {}}
         
         self.log_execution("Calculando métricas...")
         
         paper_text = context['paper_text']
-        red_flags = context['red_flags']
+        red_flags = context.get('red_flags', {})
         
         critical_flags = [
             k for k, v in red_flags.items() 
@@ -216,9 +148,6 @@ class MetadataAggregationSkill(BaseSkill):
     """Skill para agregar metadatos de la auditoría"""
     
     def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        if not self.validate_context(context, ['red_flags']):
-            return {'error': 'Contexto inválido'}
-        
         self.log_execution("Agregando metadatos y construyendo resultado final...")
         
         evaluation = context.get('evaluation', {})
@@ -241,7 +170,7 @@ class MetadataAggregationSkill(BaseSkill):
             "irb_approvals": evaluation.get('irb_approvals', {}),
             "declaration_llm_usage": evaluation.get('declaration_llm_usage', {}),
             "informacion_extraida": context.get('extracted_info', {}),
-            "red_flags": context['red_flags'],
+            "red_flags": context.get('red_flags', {}),
             "metricas": context.get('metrics', {})
         }
         

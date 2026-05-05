@@ -5,7 +5,6 @@ from backend.skills.base_skill import BaseSkill
 
 # Auditor Skills
 from backend.skills.auditor_skills import (
-    RedFlagDetectionSkill,
     InformationExtractionSkill,
     ReproducibilityEvaluationSkill,
     MetricsCalculationSkill,
@@ -36,7 +35,6 @@ from backend.skills.regex_detection_skills import (
 
 __all__ = [
     'BaseSkill',
-    'RedFlagDetectionSkill',
     'InformationExtractionSkill',
     'ReproducibilityEvaluationSkill',
     'MetricsCalculationSkill',
