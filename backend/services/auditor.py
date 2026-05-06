@@ -1,13 +1,22 @@
 """Servicio de auditoría de papers refactorizado con arquitectura de skills"""
 import time
 from backend.common.llm_client import LLMClient
-from backend.common.config import AUDIT_CONFIG
+from backend.common.config import (
+    AUDIT_CONFIG, 
+    EXTRACTION_MODEL_NAME, 
+    EVALUATION_MODEL_NAME,
+    MAP_MODEL_NAME,
+    REDUCE_MODEL_NAME,
+    EMBEDDING_MODEL_NAME,
+    VERIFICATION_MODEL_NAME
+)
 from backend.utils.logger import get_logger
 from backend.skills.auditor_skills import (
     InformationExtractionSkill,
     ReproducibilityEvaluationSkill,
     MetricsCalculationSkill,
-    MetadataAggregationSkill
+    MetadataAggregationSkill,
+    ChecklistVerificationSkill
 )
 from backend.skills.rag_extraction_skill import HybridHyperparameterExtractionSkill
 
@@ -18,16 +27,34 @@ class PaperAuditor:
     
     def __init__(self):
         """Inicializa el auditor con configuración determinista y skills especializados"""
-        self.llm_client = LLMClient(generation_config=AUDIT_CONFIG)
+        # Cliente para extracción inicial
+        self.extraction_llm = LLMClient(model_name=EXTRACTION_MODEL_NAME, generation_config=AUDIT_CONFIG)
+        
+        # Cliente para evaluación final
+        self.evaluation_llm = LLMClient(model_name=EVALUATION_MODEL_NAME, generation_config=AUDIT_CONFIG)
+        
+        # Cliente para RAG/Triage (Fase Map)
+        self.rag_map_llm = LLMClient(model_name=MAP_MODEL_NAME, generation_config=AUDIT_CONFIG)
+        
+        # Cliente para RAG/Reduce (Gemma 4)
+        self.rag_reduce_llm = LLMClient(model_name=REDUCE_MODEL_NAME, generation_config=AUDIT_CONFIG)
+        
+        # Cliente para Verificación Estricta (Auditor 2)
+        self.verification_llm = LLMClient(model_name=VERIFICATION_MODEL_NAME, generation_config=AUDIT_CONFIG)
         
         # Inicializar skills especializados
-        self.extraction_skill = InformationExtractionSkill(llm_client=self.llm_client)
-        self.hybrid_hp_skill = HybridHyperparameterExtractionSkill(llm_client=self.llm_client)
-        self.evaluation_skill = ReproducibilityEvaluationSkill(llm_client=self.llm_client)
+        self.extraction_skill = InformationExtractionSkill(llm_client=self.extraction_llm)
+        self.hybrid_hp_skill = HybridHyperparameterExtractionSkill(llm_client=self.rag_map_llm)
+        self.evaluation_skill = ReproducibilityEvaluationSkill(llm_client=self.evaluation_llm)
+        
+        # Para la verificación estricta usamos el cliente específico (Auditor 2)
+        self.verification_skill = ChecklistVerificationSkill(llm_client=self.verification_llm)
+        
         self.metrics_skill = MetricsCalculationSkill()
         self.metadata_skill = MetadataAggregationSkill()
         
-        logger.info("✅ Auditor de papers inicializado correctamente")
+        logger.info(f"✅ Motor de Embeddings inicializado: {EMBEDDING_MODEL_NAME}")
+        logger.info(f"✅ Auditor inicializado respetando la configuración técnica.")
     
     
     def audit(self, paper_text):
@@ -52,7 +79,17 @@ class PaperAuditor:
             
             # FASE 1: Extracción de información (con LLM general)
             extraction_result = self.extraction_skill.execute(context)
+            if 'extraction_error' in extraction_result:
+                logger.error(f"❌ Abortando: Error en extracción: {extraction_result['extraction_error']}")
+                return {'error': extraction_result['extraction_error']}
+            
             context.update(extraction_result)
+            
+            # Guardar pasos intermedios para el frontend (Map-Reduce + CoT)
+            if 'map_steps' in extraction_result:
+                context['general_analysis_map'] = extraction_result['map_steps']
+            if 'reduce_step' in extraction_result:
+                context['general_analysis_reduce'] = extraction_result['reduce_step']
             
             # Guardar copia del original para comparativa en el frontend
             if 'extracted_info' in extraction_result:
@@ -70,7 +107,16 @@ class PaperAuditor:
             
             # FASE 1.5: Extracción estructurada híbrida (RAG + Pydantic)
             hybrid_hp_result = self.hybrid_hp_skill.execute(context)
+            # Si hay error en RAG, loggeamos pero intentamos seguir con la extracción general 
+            # a menos que sea un error crítico que no devuelva nada
+            if 'error' in hybrid_hp_result and not hybrid_hp_result.get('extracted_hyperparameters_hybrid'):
+                logger.warning(f"⚠️ Error en extracción híbrida RAG: {hybrid_hp_result['error']}")
+            
             context.update(hybrid_hp_result)
+            
+            # Guardar fragmentos de triage para el frontend
+            if 'triage_fragments' in hybrid_hp_result:
+                context['hybrid_triage_fragments'] = hybrid_hp_result['triage_fragments']
             
             # Reemplazar hiperparámetros y hardware con los más precisos de la extracción híbrida
             if 'extracted_hyperparameters_hybrid' in context and 'extracted_info' in context:
@@ -93,7 +139,19 @@ class PaperAuditor:
             
             # FASE 2: Evaluación de reproducibilidad (con LLM)
             evaluation_result = self.evaluation_skill.execute(context)
+            if 'evaluation_error' in evaluation_result:
+                logger.error(f"❌ Abortando: Error en evaluación: {evaluation_result['evaluation_error']}")
+                return {'error': evaluation_result['evaluation_error']}
+                
             context.update(evaluation_result)
+            
+            # Guardar señales de evaluación para el frontend
+            if 'evaluation_signals' in evaluation_result:
+                context['evaluation_signals'] = evaluation_result['evaluation_signals']
+            
+            # FASE 2.5: Verificación Estricta (Auditoría de Falsos Negativos)
+            verification_result = self.verification_skill.execute(context)
+            context.update(verification_result)
             
             # FASE 3: Cálculo de métricas
             end_time = time.time()

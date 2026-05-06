@@ -9,6 +9,7 @@ import chromadb
 from backend.common.config import MAP_MODEL_NAME, REDUCE_MODEL_NAME, EMBEDDING_MODEL_NAME
 
 class Hyperparameters(BaseModel):
+    thought_process: str = Field(description="Internal reasoning about the technical details found in this fragment, specifically comparing reported values like compute hours vs efficiency claims.")
     learning_rate: str = Field(description="Learning rate value, e.g., '1e-4', '0.001', '3 x 10^-4', or 'NOT FOUND'")
     batch_size: str = Field(description="Batch size value, e.g., '32', '256', or 'NOT FOUND'")
     epochs: str = Field(description="Number of epochs, e.g., '100', '10', or 'NOT FOUND'")
@@ -18,7 +19,10 @@ class Hyperparameters(BaseModel):
     random_seed: str = Field(description="Random seed value, e.g., '42', or 'NOT FOUND'")
     betas: str = Field(description="Adam betas, e.g., '(0.9, 0.999)', or 'NOT FOUND'")
     epsilon: str = Field(description="Adam epsilon, e.g., '1e-8', or 'NOT FOUND'")
+    training_steps: str = Field(description="Total optimization steps, e.g., '100k', '50000', or 'NOT FOUND'")
+    total_tokens: str = Field(description="Total tokens trained on, e.g., '3T', '100B', or 'NOT FOUND'")
     hardware: str = Field(description="Hardware details, e.g., '8x NVIDIA A100', '1 TPU v4', or 'NOT FOUND'")
+    latency_metrics: str = Field(description="Performance metrics like latency or throughput, e.g., '2% increase', '100 tokens/sec', or 'NOT FOUND'")
 
 class HybridHyperparameterExtractionSkill(BaseSkill):
     """Extrae hiperparámetros usando un pipeline híbrido (RAG + Pydantic/Gemini + Regex)"""
@@ -109,11 +113,22 @@ class HybridHyperparameterExtractionSkill(BaseSkill):
             
             results = collection.query(
                 query_embeddings=query_embeddings,
-                n_results=10 # Traemos menos por query para no abrumar, pero mapearemos sobre todos
+                n_results=10
             )
             
-            # Combinar fragmentos relevantes únicos
-            relevant_chunks = list(set([doc for doc_list in results['documents'] for doc in doc_list]))
+            # Combinar fragmentos relevantes únicos manteniendo la mejor distancia (menor score es mejor en Chroma)
+            chunk_relevance = {}
+            for i in range(len(results['documents'])):
+                docs = results['documents'][i]
+                dists = results['distances'][i]
+                for doc, dist in zip(docs, dists):
+                    if doc not in chunk_relevance or dist < chunk_relevance[doc]:
+                        chunk_relevance[doc] = dist
+            
+            # Ordenar por relevancia (distancia ascendente)
+            sorted_chunks = sorted(chunk_relevance.items(), key=lambda x: x[1])
+            relevant_chunks = [c[0] for c in sorted_chunks]
+            chunk_distances = {c[0]: c[1] for c in sorted_chunks}
             
             self.log_execution(f"🎯 Contexto filtrado por RAG: {len(relevant_chunks)} chunks únicos recuperados.")
             
@@ -123,30 +138,63 @@ class HybridHyperparameterExtractionSkill(BaseSkill):
             extracted_fragments = []
             
             for idx, chunk in enumerate(relevant_chunks):
+                # Incluir metadatos de relevancia en el objeto final
+                distance = chunk_distances.get(chunk, 1.0)
+                # Convertir distancia a score de confianza (0-100)
+                # Escala recalibrada: distancias < 0.4 son excelentes (85%+), distancias > 0.7 son ruido (<30%)
+                if distance < 0.4:
+                    relevance_score = int(95 - (distance * 25)) # 0.0 -> 95%, 0.4 -> 85%
+                elif distance < 0.7:
+                    relevance_score = int(85 - ((distance - 0.4) * 180)) # 0.4 -> 85%, 0.7 -> 31%
+                else:
+                    relevance_score = max(5, int(31 - ((distance - 0.7) * 50))) # >0.7 -> degradación lenta
+                
                 prompt = f"""
-                You are a rigorous NeurIPS reviewer. Look at this text fragment and extract hyperparameters.
-                TEXT:
+                You are a rigorous NeurIPS reviewer performing technical triage on a paper fragment.
+                Extract all hyperparameters, scale metrics, and performance data found in this text.
+                
+                FIELDS TO EXTRACT:
+                - learning_rate, batch_size, epochs, training_steps, total_tokens, optimizer, warmup_steps, weight_decay, hardware, latency_metrics.
+                
+                REASONING INSTRUCTIONS:
+                - If the fragment contains optimization steps (e.g. "100k steps") or total tokens (e.g. "2 trillion tokens"), extract them as training_steps and total_tokens.
+                - Capture any performance data like "latency was less than 2%" or "throughput of 500 tokens/s" under latency_metrics.
+                - Be smart about noisy table text (e.g., if columns are misaligned, try to reconstruct the key-value pair logically).
+                
+                TEXT FRAGMENT:
                 {chunk}
+                
+                RETURN ONLY A VALID JSON OBJECT WITH THE FIELDS ABOVE. Use "NOT FOUND" if missing.
                 """
                 try:
-                    response = self.llm_client.client.models.generate_content(
-                        model=MAP_MODEL_NAME,
-                        contents=prompt,
-                        config={
-                            'response_mime_type': 'application/json',
-                            'response_schema': Hyperparameters,
-                            'temperature': 0.0
-                        }
-                    )
+                    # Usar el método generate con reintentos para evitar 503
+                    response = self.llm_client.generate(prompt)
                     raw_text = response.text.strip()
-                    if raw_text.startswith("```"):
-                        raw_text = re.sub(r'^```(?:json)?\n?|```$', '', raw_text, flags=re.MULTILINE).strip()
-                    extracted_fragments.append(raw_text)
+                    
+                    # Extracción balanceada de JSON (evita el error "Extra data")
+                    start_idx = raw_text.find('{')
+                    if start_idx != -1:
+                        stack = 0
+                        for i in range(start_idx, len(raw_text)):
+                            if raw_text[i] == '{': stack += 1
+                            elif raw_text[i] == '}':
+                                stack -= 1
+                                if stack == 0:
+                                    raw_text = raw_text[start_idx:i+1]
+                                    break
+                    
+                    fragment_data = json.loads(raw_text)
+                    fragment_data['_relevance_score'] = relevance_score
+                    fragment_data['_chunk_text'] = chunk
+                    extracted_fragments.append(fragment_data)
+                    
+                    # Pausa para evitar 503
+                    time.sleep(1)
                 except Exception as e:
                     self.log_execution(f"⚠️ Error extrayendo fragmento {idx}: {str(e)}", level="warning")
             
-            # 4. REDUCE Phase: Consolidate with Gemma 4 31B
-            self.log_execution(f"🧠 [Fase REDUCE] Consolidando datos extraídos con {REDUCE_MODEL_NAME}...")
+            # 4. REDUCE Phase: Consolidate with Gemma 4
+            self.log_execution("🧠 [Fase REDUCE] Consolidando datos extraídos con Gemma 4...")
             
             reduce_prompt = f"""
             You are a senior AI researcher reviewing a paper's hyperparameter extraction.
@@ -157,29 +205,46 @@ class HybridHyperparameterExtractionSkill(BaseSkill):
             - If there are conflicts (e.g. SFT batch size is 256, Pre-training is 1280), prefer the final fine-tuning/SFT parameters if obvious, or pick the most representative one.
             - If an extraction says 'NOT FOUND', ignore it if another extraction found a valid value.
             - If no valid value is found across all fragments for a field, output 'NOT FOUND'.
+            - Use the 'thought_process' from each fragment to build a final synthesis.
+            - TABLE VALIDATION: If multiple fragments cite different tables for the same value, verify which table title and headers match the target hyperparameter (e.g., differentiate between a 'Model Architecture' table and a 'Training Hyperparameters' table).
             - DO NOT guess or hallucinate.
             
             EXTRACTIONS:
             {json.dumps(extracted_fragments, indent=2)}
             """
             
-            self.log_execution(f"🚀 [REDUCE] Consolidando datos con {REDUCE_MODEL_NAME} (TPM Ilimitado)...")
+            self.log_execution("🚀 [REDUCE] Consolidando datos con Gemma 4 (TPM Ilimitado)...")
             
-            reduce_response = self.llm_client.client.models.generate_content(
-                model=REDUCE_MODEL_NAME,
-                contents=reduce_prompt,
-                config={
-                    'response_mime_type': 'application/json',
-                    'response_schema': Hyperparameters,
-                    'temperature': 0.0
-                }
-            )
+            from backend.common.config import EVALUATION_MODEL_NAME
             
-            raw_reduce_text = reduce_response.text.strip()
-            # Intento de extraer el bloque JSON limpio si hay texto extra alrededor
-            json_match = re.search(r'(\{.*\})', raw_reduce_text, re.DOTALL)
-            if json_match:
-                raw_reduce_text = json_match.group(1)
+            try:
+                # Usar el método generate con reintentos para la consolidación
+                reduce_response = self.llm_client.generate(reduce_prompt)
+                raw_reduce_text = reduce_response.text.strip()
+            except Exception as e:
+                self.log_execution(f"⚠️ Error con Gemma 4 en RAG, reintentando con {EVALUATION_MODEL_NAME}: {str(e)}", level="warning")
+                # Fallback manual con Pydantic si el general falla
+                reduce_response = self.llm_client.client.models.generate_content(
+                    model=EVALUATION_MODEL_NAME,
+                    contents=reduce_prompt,
+                    config={
+                        'response_mime_type': 'application/json',
+                        'response_schema': Hyperparameters,
+                        'temperature': 0.0
+                    }
+                )
+                raw_reduce_text = reduce_response.text.strip()
+            # Extracción balanceada de JSON (evita el error "Extra data")
+            start_idx = raw_reduce_text.find('{')
+            if start_idx != -1:
+                stack = 0
+                for i in range(start_idx, len(raw_reduce_text)):
+                    if raw_reduce_text[i] == '{': stack += 1
+                    elif raw_reduce_text[i] == '}':
+                        stack -= 1
+                        if stack == 0:
+                            raw_reduce_text = raw_reduce_text[start_idx:i+1]
+                            break
             
             try:
                 extracted_json = json.loads(raw_reduce_text)
@@ -193,7 +258,10 @@ class HybridHyperparameterExtractionSkill(BaseSkill):
             cleaned_data = self._clean_with_regex(extracted_json)
             
             self.log_execution("✅ Hyperparametros extraídos exitosamente usando pipeline híbrido")
-            return {'extracted_hyperparameters_hybrid': cleaned_data}
+            return {
+                'extracted_hyperparameters_hybrid': cleaned_data,
+                'triage_fragments': extracted_fragments # Para visualización en el frontend
+            }
             
         except Exception as e:
             self.log_execution(f"❌ Error en la extracción híbrida: {str(e)}", level="error")

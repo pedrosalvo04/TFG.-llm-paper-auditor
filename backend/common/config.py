@@ -21,6 +21,8 @@ class CleanNetworkLogs(logging.Filter):
 
 logging.getLogger("httpx").addFilter(CleanNetworkLogs())
 logging.getLogger("RapidOCR").setLevel(logging.WARNING)
+logging.getLogger("docling").setLevel(logging.WARNING)
+logging.getLogger("onnxruntime").setLevel(logging.ERROR)
 
 load_dotenv()
 
@@ -31,12 +33,16 @@ SEMANTIC_SCHOLAR_API_KEY = os.getenv("SEMANTIC_SCHOLAR_API_KEY")
 # Configuración de modelos
 # Modelo para Embeddings (RAG)
 EMBEDDING_MODEL_NAME = "gemini-embedding-2"
-# Modelo rápido y ligero para Triage y Extracción Masiva (Fase Map / Fuerza Bruta)
+# Modelo rápido y con razonamiento para Triage y Extracción Masiva (Fase Map)
 MAP_MODEL_NAME = "gemini-3.1-flash-lite-preview"
-# Modelo pesado y analítico para Orquestación y Consolidación (Fase Reduce)
-REDUCE_MODEL_NAME = "gemma-4-31b-it"
-# Modelo para Evaluación Final (Senior Area Chair) - Usamos 3.1 Flash Lite para mayor cuota
+# Modelo pesado y analítico para Orquestación y Consolidación (Fase Reduce) - Flash Lite para mayor velocidad
+REDUCE_MODEL_NAME = "gemini-3.1-flash-lite-preview"
+# Modelo para Extracción Inicial (General Analysis) - Flash Live
+EXTRACTION_MODEL_NAME = "gemini-3.1-flash-lite-preview"
+# Modelo para Evaluación Final (Senior Area Chair) - Flash Lite para mayor cuota
 EVALUATION_MODEL_NAME = "gemini-3.1-flash-lite-preview"
+# Modelo para Verificación Estricta (Auditor 2) - Pro para máxima precisión
+VERIFICATION_MODEL_NAME = "gemini-3.1-flash-lite-preview"
 
 #resto de modelos:
 """
@@ -98,7 +104,7 @@ Name: models/gemini-2.5-flash-native-audio-preview-12-2025, Display Name: Gemini
 Name: models/gemini-3.1-flash-live-preview, Display Name: Gemini 3.1 Flash Live Preview
 """
 # Variables por compatibilidad o uso por defecto si no se especifica
-MODEL_NAME = EVALUATION_MODEL_NAME
+MODEL_NAME = EXTRACTION_MODEL_NAME
 RAG_MODEL_NAME = MAP_MODEL_NAME
 
 # Temperaturas por servicio

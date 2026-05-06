@@ -25,6 +25,12 @@ FIRST: Determine if this paper involves ML/AI training. If NO:
 RETURN ONLY: {{"paper_type": "INVALID - Not ML/AI", "invalid_reason": "explanation"}}
 
 If YES, continue with EXHAUSTIVE extraction below.
+    
+REASONING INSTRUCTIONS:
+- Analyze technical ratios (e.g., if the paper mentions 0.13 million H800 hours, evaluate if that reflects the reported training efficiency).
+- Look for hidden hyperparameters in tables or parenthetical remarks.
+- Differentiate between pre-training and fine-tuning settings.
+- Use the 'thought_process' field to document your reasoning step-by-step before filling the structured fields.
 
 You are an expert information extractor for ML/AI papers. Your job is to extract
 SPECIFIC factual information - not opinions - from every section of the paper.
@@ -51,8 +57,8 @@ EXTRACT THE FOLLOWING (respond "NOT FOUND" ONLY after exhaustive search):
 
 1. CODE: repository_url, negative_phrase (quote if code cannot be released), dependencies, instructions (yes/no), release_mention
 2. DATA: dataset_name, access_url, negative_phrase, preprocessing, splits, release_mention
-3. HYPERPARAMETERS: optimizer, learning_rate, batch_size, epochs, warmup, weight_decay, betas, epsilon, vague_phrase (quote if uses "standard settings" etc), table_reference
-4. HARDWARE: gpu_cpu (specific model), num_gpus, memory, time, carbon_footprint, energy_consumption, pue
+3. HYPERPARAMETERS: optimizer, learning_rate, batch_size, epochs, training_steps, total_tokens, warmup, weight_decay, betas, epsilon, vague_phrase (quote if uses "standard settings" etc), table_reference
+4. HARDWARE: gpu_cpu (specific model), num_gpus, memory, time, carbon_footprint, energy_consumption, pue, throughput (tokens/sec), latency_metrics
 5. STATISTICS: confidence_intervals (yes/no), significance_tests (yes/no), num_runs
 6. ARCHITECTURE: description (layers, dims, heads), weights_available, release_mention
 7. BASELINE COMPARISON: compared_models (list), has_comparative_tables (yes/no), same_metrics (yes/no), results_section
@@ -61,12 +67,15 @@ EXTRACT THE FOLLOWING (respond "NOT FOUND" ONLY after exhaustive search):
 10. PROBLEMATIC PHRASES: Extract TEXTUALLY any phrase with "cannot release", "proprietary", "confidential", "not available", "restricted", "competitive concerns". NOTE: Ignore phrases regarding "restricted compute", "restricted budget", or "restricted resources".
 11. THEORY_AND_PROOFS: explicitly state if there are theoretical derivations, mathematical formulations, proof sketches, or assumptions detailed in the main text or the APPENDIX. Mention specifically if an appendix contains proofs.
 12. BROADER_IMPACTS: explicitly check for an "Impact Statement", "Broader Impacts", or "Societal Impact" section. This is OFTEN in the APPENDIX. Note any discussions about environmental impact, bias, privacy, security, or misuse.
-13. LLM_USAGE: explicitly state if any language models (e.g., BERT, GPT, LLaMA) were used for automated data annotation, filtering, evaluation, or as part of the core methodology.
-14. HUMAN_SUBJECTS_AND_CROWDSOURCING: explicitly state if the paper uses human annotators, crowdsourcing, or human-annotated datasets (e.g. SFT datasets with human labels). Look for compensation details or instructions.
-15. LICENSES: explicitly extract any mentioned licenses (e.g., CC-BY, MIT, Apache) for datasets, code, or models USED or RELEASED. If external datasets are used, note if their specific licenses are named.
+13. AI_ASSISTANTS_IN_WRITING: explicitly check for a declaration regarding the use of AI tools (ChatGPT, Claude, etc.) for writing, editing, or preparing the paper (usually in Appendix or Acknowledgments).
+14. LLM_IN_METHODOLOGY: explicitly state if any language models (e.g., BERT, GPT, LLaMA) were used for automated data annotation, filtering, evaluation, or as part of the core methodology.
+15. HUMAN_SUBJECTS_AND_CROWDSOURCING: explicitly state if the paper uses human annotators, crowdsourcing, or human-annotated datasets (e.g. SFT datasets with human labels). Look for compensation details or instructions.
+16. LICENSES: explicitly extract any mentioned licenses (e.g., CC-BY, MIT, Apache) for datasets, code, or models USED or RELEASED. If external datasets are used, note if their specific licenses are named.
+17. CODE_OF_ETHICS: explicitly search for a "Code of Ethics", "Ethics Statement", or "Ethical Considerations" section or mention.
 
 RETURN JSON:
 {{
+  "thought_process": "Internal reasoning about the technical details found in the paper. Specifically analyze technical ratios (e.g., if the paper mentions 0.13 million H800 hours, evaluate if that reflects the reported training efficiency). Identify hidden hyperparameters in tables or parenthetical remarks. Differentiate between pre-training and fine-tuning settings.",
   "paper_type": "ML/AI or INVALID - Not ML/AI",
   "invalid_reason": "",
   "code": {{
@@ -89,6 +98,8 @@ RETURN JSON:
     "learning_rate": "value or NOT FOUND",
     "batch_size": "value or NOT FOUND",
     "epochs": "value or NOT FOUND",
+    "training_steps": "value or NOT FOUND",
+    "total_tokens": "value or NOT FOUND",
     "warmup": "value or NOT FOUND",
     "weight_decay": "value or NOT FOUND",
     "betas": "values or NOT FOUND",
@@ -103,7 +114,9 @@ RETURN JSON:
     "time": "duration or NOT FOUND",
     "carbon_footprint": "value or NOT FOUND",
     "energy_consumption": "value or NOT FOUND",
-    "pue": "value or NOT FOUND"
+    "pue": "value or NOT FOUND",
+    "throughput": "value or NOT FOUND",
+    "latency_metrics": "verbatim details or NOT FOUND"
   }},
   "statistics": {{
     "confidence_intervals": "yes/no",
@@ -145,8 +158,10 @@ RETURN JSON:
     "concerns_discussed": ["list of concerns like bias, environment, etc."]
   }},
   "llm_usage_extraction": {{
-    "models_used": ["list"],
-    "purpose": "description or NOT FOUND"
+    "models_used_in_methodology": ["list"],
+    "purpose_in_methodology": "description or NOT FOUND",
+    "used_for_writing": "yes/no/not mentioned",
+    "writing_declaration_quote": "textual quote or NOT FOUND"
   }},
   "human_subjects_extraction": {{
     "uses_human_annotation": "yes/no",
@@ -154,15 +169,180 @@ RETURN JSON:
     "instructions_provided": "yes/no"
   }},
   "licenses_extraction": {{
-    "assets_used": ["list of datasets/code"],
+    "assets_used": ["list of datasets/code, including benchmarks like MMLU, GSM8k, etc."],
     "licenses_named": ["list of explicit licenses"],
     "missing_licenses_for_some_assets": "yes/no"
-  }}
+  }},
+  "context_mapping": ["Abstract", "Methodology", "Experiments", "Appendix"]
 }}
 
 PAPER TEXT:
 {paper_text}
 """
+
+
+def get_map_extraction_prompt(fragment_text: str) -> str:
+    """Prompt para la fase MAP del analisis general."""
+    return f"""
+    You are a Senior ML Researcher performing a deep technical extraction on a FRAGMENT of a scientific paper.
+    
+    TASK:
+    Extract EVERY technical detail, hyperparameter, architectural choice, and experimental result found in this fragment.
+    
+    REASONING INSTRUCTIONS:
+    - Identify specific architectural components (e.g., "Gated Attention", "MoE configuration", "Normalization layers").
+    - Capture ALL hyperparameters even if they seem minor (betas, epsilon, warmup steps, weight decay).
+    - Note specific benchmarks and their corresponding results if present in tables or text.
+    - Document your 'thought_process' specifically for this fragment.
+    
+    FRAGMENT:
+    {fragment_text}
+    
+    STRUCTURE:
+    Return a structured JSON with the following standard keys (add more if needed to preserve detail):
+    - "paper_title"
+    - "authors"
+    - "context_mapping" (list of sections in this fragment)
+    - "code"
+    - "data"
+    - "hyperparameters" (optimizer, LR, batch size, and technical variants)
+    - "hardware"
+    - "statistics"
+    - "architecture" (layers, gating, MoE, dims)
+    - "baseline_comparison"
+    - "software_versions"
+    - "limitations_quality"
+    - "problematic_phrases"
+    - "theory_and_proofs"
+    - "broader_impacts_extraction"
+    - "llm_usage_extraction"
+    - "human_subjects_extraction"
+    - "licenses_extraction"
+    - "thought_process"
+    
+    If a field is not mentioned in this fragment, use "NOT FOUND" or an empty list [].
+    BE EXHAUSTIVE. Do not summarize; extract verbatim data where possible.
+    """
+
+
+def get_reduce_extraction_prompt(map_results: list) -> str:
+    """Prompt para la fase REDUCE del analisis general."""
+    return f"""
+    You are a Senior AI Researcher and Meta-Reviewer. Your task is to CONSOLIDATE multiple partial extractions (MAP phase) from a scientific paper into a single DEFINITIVE MASTER JSON.
+    
+    INPUT DATA:
+    {json.dumps(map_results, indent=2)}
+    
+    CRITICAL OBJECTIVE: 
+    ZERO INFORMATION LOSS. You must synthesize a master database that preserves EVERY unique technical detail found across all fragments.
+    
+    CONSOLIDATION RULES:
+    1. RESOLVE CONFLICTS: If fragments conflict (e.g., different LR values), prioritize the most specific one or the one explicitly stated in a 'Hyperparameters' table.
+    2. ARCHITECTURE MERGE: Combine all architectural details (layers, heads, gating mechanisms, MoE configs). If Fragment A describes the gating mechanism and Fragment B describes the MoE expert count, the final 'model_architecture' MUST contain both.
+    3. HYPERPARAMETER SYNTHESIS: Aggregate all training settings. If different phases (Pre-training vs SFT) have different parameters, list them clearly or provide them as lists/objects.
+    4. DATA & HARDWARE: Combine token counts, dataset names, GPU types, and total compute hours.
+    5. EXPERIMENTAL RESULTS: Perform a union of all benchmarks and metrics. Preserve specific numbers from tables (e.g., MMLU: 70.2, HumanEval: 45.1).
+    6. CONTEXT MAPPING: Create a deduplicated, ordered list of ALL sections identified across all fragments.
+    7. THOUGHT PROCESS: Build a final synthesis of the paper's technical rigor and reproducibility based on the consolidated evidence.
+    
+    FINAL STRUCTURE (Consolidate into these standard keys, preserving all sub-details):
+    - "paper_title"
+    - "authors"
+    - "context_mapping"
+    - "code" (repository_url, release_mention, etc.)
+    - "data" (dataset_name, access_url, preprocessing, etc.)
+    - "hyperparameters" (optimizer, learning_rate, batch_size, training_steps, total_tokens, and ALL technical variants)
+    - "hardware" (gpu_cpu, num_gpus, time, energy, latency, throughput, etc.)
+    - "statistics" (runs, intervals)
+    - "architecture" (detailed description of layers, gating, MoE, etc.)
+    - "baseline_comparison" (compared_models, tables)
+    - "software_versions"
+    - "limitations_quality"
+    - "problematic_phrases"
+    - "theory_and_proofs"
+    - "broader_impacts_extraction"
+    - "llm_usage_extraction"
+    - "human_subjects_extraction"
+    - "licenses_extraction"
+    - "thought_process"
+    
+    RETURN THE CONSOLIDATED MASTER JSON ONLY. Ensure the JSON is perfectly formatted and valid.
+    """
+
+
+def get_evaluation_signals(extracted_info: dict) -> dict:
+    """Calcula las señales explícitas para guiar al LLM y para visualización."""
+    if not extracted_info:
+        return {}
+        
+    code_info = extracted_info.get('code') if isinstance(extracted_info.get('code'), dict) else {}
+    data_info = extracted_info.get('data') if isinstance(extracted_info.get('data'), dict) else {}
+    hw_info = extracted_info.get('hardware') if isinstance(extracted_info.get('hardware'), dict) else {}
+    lic_info = extracted_info.get('licenses_extraction') if isinstance(extracted_info.get('licenses_extraction'), dict) else {}
+    human_info = extracted_info.get('human_subjects_extraction') if isinstance(extracted_info.get('human_subjects_extraction'), dict) else {}
+
+    code_url = code_info.get('repository_url', 'NOT FOUND')
+    data_url = data_info.get('access_url', 'NOT FOUND')
+    code_negative = code_info.get('negative_phrase', 'NOT FOUND')
+    code_release = code_info.get('release_mention', 'NOT FOUND')
+    has_any_url = (code_url != 'NOT FOUND') or (data_url != 'NOT FOUND')
+    has_release_intent = code_release != 'NOT FOUND' and any(word in code_release.lower() for word in ['release', 'open-source', 'available', 'github', 'provide'])
+
+    signals = {}
+    
+    signals['reproducibility'] = (
+        f"DETECTED URLS -> code_repo: {code_url}, data_access: {data_url}. "
+        "Any public URL (demo page, model checkpoint, GitHub repo, HuggingFace) "
+        "counts as a valid reproducibility mechanism per NeurIPS guidelines. "
+        "Only answer No if the paper explicitly states code/data/model are restricted AND no alternative is offered."
+    )
+
+    signals['open_access'] = (
+        f"DETECTED -> code_url: {code_url}, data_url: {data_url}, "
+        f"negative_phrase: {code_negative}, release_intent: {code_release}. "
+        "RULE FOR ITEM 5: "
+        "- If a public URL (demo page, project page, GitHub, HuggingFace) is present -> answer 'Yes'. "
+        "- If NO URL is found but there is a CLEAR intent to release (e.g., 'we will release our code', 'code will be made available') -> answer 'Yes' and cite the intent as evidence. "
+        "  Do NOT penalize as 'No' if the authors explicitly commit to a future release. "
+        "- If negative_phrase is present (e.g., 'code is proprietary', 'cannot release') AND no URL exists -> answer 'No'. "
+        "- If no URL and no release intent and no negative phrase -> answer 'No' with is_no_justified: false."
+    )
+
+    gpu_hours = hw_info.get('time', 'NOT FOUND')
+    num_gpus = hw_info.get('num_gpus', 'NOT FOUND')
+    total_tokens = extracted_info.get('hyperparameters', {}).get('total_tokens', 'NOT FOUND')
+    model_params = extracted_info.get('architecture', {}).get('description', '')
+    
+    signals['statistics'] = (
+        f"DETECTED compute -> training_time: {gpu_hours}, num_gpus: {num_gpus}, total_tokens: {total_tokens}. "
+        "LARGE SCALE JUSTIFICATION: "
+        "If the paper involves Large Language Models (LLMs) trained on billions/trillions of tokens or with billions of parameters (e.g., 15B+), "
+        "performing multiple statistical runs is computationally prohibitive. "
+        "In these cases, answer 'No' but set is_no_justified: true, stating that the massive scale of training justifies the lack of multiple runs."
+    )
+
+    assets_used = lic_info.get('assets_used', [])
+    licenses_named = lic_info.get('licenses_named', [])
+    # Check if common benchmarks are mentioned in assets_used even if lic_info missed them
+    has_external_assets = bool(assets_used and assets_used not in [[], ['NOT FOUND'], ['list of datasets/code']])
+    
+    signals['licenses'] = (
+        f"DETECTED -> assets_used: {assets_used}, licenses_named: {licenses_named}. "
+        "CRITICAL RULE FOR ITEM 12/13: "
+        "- If the paper mentions standard benchmarks (e.g., MMLU, GSM8k, Hellaswag, HumanEval, C-Eval) in any section -> HAS_EXTERNAL_ASSETS is TRUE. "
+        "- If external assets are used but their specific licenses (e.g., MIT, Apache 2.0, CC-BY) are NOT mentioned -> answer 'No' (NOT N/A). "
+        "- Only answer 'N/A' if the paper is purely theoretical or uses ONLY new, proprietary data that they created themselves."
+    )
+
+    human_annotation = human_info.get('uses_human_annotation', 'no')
+    signals['crowdsourcing'] = (
+        f"DETECTED -> uses_human_annotation: {human_annotation}. "
+        "STRICT RULE: If this is false/no, the paper does NOT involve human subjects -> answer MUST be N/A. "
+        "Do NOT answer No just because compensation is unmentioned when there is no crowdsourcing at all. "
+        "Only answer No/Yes if crowdsourcing or human annotation is CONFIRMED present."
+    )
+    
+    return signals
 
 
 def get_evaluation_prompt(extracted_info: dict, red_flags: dict) -> str:
@@ -175,63 +355,7 @@ def get_evaluation_prompt(extracted_info: dict, red_flags: dict) -> str:
     if clean_flags:
         flags_section = f"\nRED FLAGS (automated regex pre-processing):\n{json.dumps(clean_flags, indent=2)}\n"
 
-    # --- Pre-compute explicit signals to guide the LLM and avoid common errors ---
-
-    # Signals for Items 4 and 5: URL detection
-    code_url = extracted_info.get('code', {}).get('repository_url', 'NOT FOUND')
-    data_url = extracted_info.get('data', {}).get('access_url', 'NOT FOUND')
-    code_negative = extracted_info.get('code', {}).get('negative_phrase', 'NOT FOUND')
-    has_any_url = (code_url != 'NOT FOUND') or (data_url != 'NOT FOUND')
-
-    reproducibility_signal = (
-        f"DETECTED URLS -> code_repo: {code_url}, data_access: {data_url}. "
-        "Any public URL (demo page, model checkpoint, GitHub repo, HuggingFace) "
-        "counts as a valid reproducibility mechanism per NeurIPS guidelines. "
-        "Only answer No if the paper explicitly states code/data/model are restricted AND no alternative is offered."
-    )
-
-    # Item 5 signal: distinguish 'demo only' from 'code not released'
-    open_access_signal = (
-        f"DETECTED -> code_url: {code_url}, data_url: {data_url}, "
-        f"negative_phrase: {code_negative}, has_any_public_url: {has_any_url}. "
-        "RULE FOR ITEM 5: "
-        "- If a public URL (demo page, project page, GitHub, HuggingFace) is present -> answer 'Yes'. "
-        "  NeurIPS accepts demo pages and model cards as forms of open access. "
-        "  Use the URL as the evidence. "
-        "- If negative_phrase is present (e.g., 'code is proprietary', 'cannot release') AND no URL exists -> answer 'No'. "
-        "- If no URL and no negative phrase -> answer 'No' with is_no_justified: false."
-    )
-
-    # Signal for Item 7: large-scale training implicitly justifies no multiple runs
-    gpu_hours = extracted_info.get('hardware', {}).get('time', 'NOT FOUND')
-    num_gpus = extracted_info.get('hardware', {}).get('num_gpus', 'NOT FOUND')
-    stats_signal = (
-        f"DETECTED compute -> training_time: {gpu_hours}, num_gpus: {num_gpus}. "
-        "If training required significant compute (100+ GPU-hours, or 8+ GPUs for long runs), "
-        "the absence of multiple statistical runs is IMPLICITLY JUSTIFIED -> set is_no_justified: true "
-        "and explain in justification field."
-    )
-
-    # Signal for Item 12: whether external assets were used and if licenses were named
-    assets_used = extracted_info.get('licenses_extraction', {}).get('assets_used', [])
-    licenses_named = extracted_info.get('licenses_extraction', {}).get('licenses_named', [])
-    has_external_assets = bool(assets_used and assets_used not in [[], ['NOT FOUND'], ['list of datasets/code']])
-    licenses_signal = (
-        f"DETECTED -> assets_used: {assets_used}, licenses_named: {licenses_named}, "
-        f"has_external_assets (computed): {has_external_assets}. "
-        "RULE: If has_external_assets is False -> answer N/A. "
-        "If has_external_assets is True but licenses_named is empty -> answer No. "
-        "If license names are explicitly stated -> answer Yes with evidence."
-    )
-
-    # Signal for Item 14: was crowdsourcing/human subjects actually used?
-    human_annotation = extracted_info.get('human_subjects_extraction', {}).get('uses_human_annotation', 'no')
-    crowdsourcing_signal = (
-        f"DETECTED -> uses_human_annotation: {human_annotation}. "
-        "STRICT RULE: If this is false/no, the paper does NOT involve human subjects -> answer MUST be N/A. "
-        "Do NOT answer No just because compensation is unmentioned when there is no crowdsourcing at all. "
-        "Only answer No/Yes if crowdsourcing or human annotation is CONFIRMED present."
-    )
+    signals = get_evaluation_signals(extracted_info)
 
     return f"""
 Act as a Senior Area Chair for NeurIPS 2026. Your task is to VALIDATE the transparency of the NeurIPS 2026 Paper Checklist.
@@ -245,11 +369,11 @@ EXTRACTED INFORMATION:
 =======================================================
 PRE-COMPUTED SIGNALS - USE THESE TO AVOID COMMON ERRORS
 =======================================================
-[Item 4 - Reproducibility]   {reproducibility_signal}
-[Item 5 - Open Access]       {open_access_signal}
-[Item 7 - Statistics]        {stats_signal}
-[Item 12 - Licenses]         {licenses_signal}
-[Item 14 - Crowdsourcing]    {crowdsourcing_signal}
+[Item 4 - Reproducibility]   {signals['reproducibility']}
+[Item 5 - Open Access]       {signals['open_access']}
+[Item 7 - Statistics]        {signals['statistics']}
+[Item 12 - Licenses]         {signals['licenses']}
+[Item 14 - Crowdsourcing]    {signals['crowdsourcing']}
 
 =======================================================
 OUTPUT RULES - MANDATORY FOR ALL 16 ITEMS
@@ -294,6 +418,13 @@ Item 7 (Statistical Significance):
   Search for error bars, +/-values, confidence intervals in results. If none found, answer "No".
   Use the [Item 7] pre-computed signal for is_no_justified decision.
 
+Item 9 (Code of Ethics):
+  NeurIPS 2026 REQUIRES a Code of Ethics statement. 
+  - If a dedicated "Code of Ethics", "Ethics Statement", or "Ethical Considerations" section exists, OR if the authors provide a technical and serious discussion of ethical implications (e.g., bias mitigation, safety protocols, dual-use concerns) -> answer "Yes".
+  - CRITICAL: Superficial or unrelated mentions (e.g., "we care about the environment" or "we followed local laws") are NOT sufficient for a "Yes". If the statement is too vague or lacks technical depth, answer "No" and justify.
+  - If LITERALLY NOTHING is found -> answer "No".
+  - NEVER answer "N/A" for this item. A lack of a serious statement is a "No" (missing transparency).
+
 Item 12 (Licenses):
   Use the [Item 12] pre-computed signal EXACTLY as instructed.
 
@@ -301,7 +432,10 @@ Item 14 (Crowdsourcing and Human Subjects):
   Use the [Item 14] pre-computed signal EXACTLY as instructed. When in doubt, N/A is correct for non-human-subject papers.
 
 Item 16 (Declaration of LLM Usage):
-  Only required if LLM is CENTRAL to the scientific method. If used only for writing/editing -> "N/A".
+  NeurIPS 2026 requires a declaration if AI assistants (like ChatGPT, Claude, etc.) were used for writing, editing, or preparing the paper.
+  - If the authors explicitly state they used AI for writing/editing -> "Yes".
+  - If there is NO mention of AI usage for paper preparation -> "N/A" (standard practice for papers not using AI for writing).
+  - CRITICAL: DO NOT confuse the paper's topic (e.g., "Gated Attention for LLMs" or "Training LLMs") with the authors' usage of AI tools for WRITING. A paper ABOUT Large Language Models does NOT count as using AI to WRITE the paper. Only answer "Yes" if the authors explicitly declare using tools like ChatGPT/Claude for the MANUSCRIPT preparation.
 
 =======================================================
 RETURN JSON ONLY. NO OTHER TEXT.
@@ -325,3 +459,50 @@ RETURN JSON ONLY. NO OTHER TEXT.
   "declaration_llm_usage": {{ "answer": "Yes/No/N/A", "evidence": "Section/fragment if Yes", "justification": "...", "is_no_justified": false }}
 }}
 """
+
+def get_verification_prompt(item_key: str, item_data: dict, paper_context: str) -> str:
+    """
+    Prompt para la fase de 'Auditor Estricto' (Self-Correction).
+    Realiza una verificacion OBJETIVA para confirmar si la evaluacion inicial es correcta,
+    detectando tanto Falsos Negativos como Falsos Positivos.
+    """
+    answer = item_data.get('answer', 'N/A')
+    justification = item_data.get('justification', '')
+    evidence = item_data.get('evidence', '')
+    
+    return f"""
+    You are an OBJECTIVE NEURIPS AUDITOR. Your task is to VERIFY the accuracy of an initial evaluation of a scientific paper.
+    
+    CRITICAL INSTRUCTIONS:
+    - If initial answer is 'No' or 'N/A': Search for FALSE NEGATIVES (evidence that was missed).
+    - If initial answer is 'Yes': Search for FALSE POSITIVES (claiming compliance when evidence is weak, generic, or incorrect).
+    - Your goal is the TRUTH. Do not change the answer unless you are 100% sure the initial one is wrong.
+
+    ITEM TO VERIFY: {item_key}
+    INITIAL ANSWER: {answer}
+    INITIAL JUSTIFICATION: {justification}
+    INITIAL EVIDENCE: {evidence}
+
+    PAPER CONTEXT (Excerpts or Full Text):
+    {paper_context}
+
+    INSTRUCTIONS:
+    1. Review the initial evaluation and the paper context.
+    2. STRICT SEMANTIC VALIDATION: You MUST verify that the 'evidence' quote is actually RELEVANT to the item. Hallucination check: sometimes the initial auditor picks a random technical quote from the correct section that has NOTHING to do with the checklist item (e.g., citing latency numbers for an LLM Usage declaration). If the evidence is irrelevant, mark it as a FALSE POSITIVE.
+    3. Item 16 (AI Usage for Writing) CRITICAL DISTINCTION: You MUST differentiate between the "Object of Study" (e.g., a paper researching Gated Attention for LLMs) and the "Tool for Preparation" (e.g., using ChatGPT to write the abstract). 
+       - Mentions of "LLM", "GPT", or "LLaMA" in the methodology or architecture are research topics, NOT declarations of AI-assisted writing. 
+       - Answering "Yes" for Item 16 based on methodology text is a CRITICAL HALLUCINATION. Only "Yes" if there is an explicit statement about using AI to assist in the manuscript preparation.
+    4. For 'Yes' answers: Verify the verbatim quote in 'evidence' actually exists and directly supports the 'Yes' answer.
+    5. For Item 7 (Statistics): Beware of tables that show performance results but NO variance (std dev, intervals). A table of results is NOT statistical significance unless it includes error metrics.
+    6. Search for explicit section headers like "Data Availability", "Ethical Statement", or "Limitations" that might have been missed.
+    7. If you change the answer, provide a detailed 'justification' explaining exactly why the initial reference was incorrect (e.g., "The cited quote discusses model latency, which is irrelevant to the declaration of LLM usage for writing").
+
+    RETURN JSON ONLY:
+    {{
+      "answer": "Yes/No/N/A",
+      "evidence": "Detailed verbatim quote and section",
+      "justification": "Technical explanation of why the answer is correct or why it was corrected",
+      "is_no_justified": true/false,
+      "was_corrected": true/false
+    }}
+    """

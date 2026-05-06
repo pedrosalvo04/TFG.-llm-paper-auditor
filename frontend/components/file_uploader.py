@@ -45,6 +45,15 @@ def process_uploaded_file(uploaded_file):
         with st.spinner("🧠 Analizando el documento..."):
             st.session_state.resultado = st.session_state.auditor.audit(st.session_state.md_text)
         
+        # Si hubo un error en la auditoría, mostramos mensaje y detenemos la ejecución de esta parte
+        if st.session_state.resultado and "error" in st.session_state.resultado:
+            st.error(f"❌ La auditoría ha fallado: {st.session_state.resultado['error']}")
+            # Limpiar resultados anteriores para no mostrar datos inconsistentes
+            st.session_state.resultado = {"error": st.session_state.resultado['error']}
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+            st.stop()
+            
         st.success("✅ Análisis completado")
         
         if os.path.exists(temp_path):

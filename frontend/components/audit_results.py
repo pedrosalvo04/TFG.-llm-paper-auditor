@@ -172,23 +172,114 @@ def render_audit_results(resultado, uploaded_file):
     )
 
     table_html = _build_table_html(health["items"])
-    # Altura: 16 filas x 58px + cabecera + margen
-    row_height = max(900, len(health["items"]) * 58 + 60)
-    st.components.v1.html(table_html, height=row_height, scrolling=False)
+    st.html(table_html)
 
     # ── EXPLORADOR DE DATOS TÉCNICOS ──────────────────────────────────────────
     st.markdown("---")
-    with st.expander("🔍 Explorador de Datos Técnicos (Generalista vs RAG Specialist)"):
-        st.write("Compara la extracción inicial del modelo (Generalista) con el refinamiento realizado por el pipeline RAG (Especialista).")
+    with st.expander("🔍 Pipeline de Análisis Profundo (Map-Reduce + CoT + Context Mapping)"):
+        st.write("Visualiza el razonamiento interno y la reconstrucción del paper por parte de la IA.")
+        
+        # 1. Chain of Thought Final
+        st.markdown("### 🧠 Chain-of-Thought (Razonamiento de Consolidación)")
+        cot = resultado.get("informacion_extraida", {}).get("thought_process", "No disponible")
+        st.info(cot)
+        
+        # 2. Context Mapping
+        st.markdown("### 📍 Context Mapping (Secciones Identificadas)")
+        mapping = resultado.get("informacion_extraida", {}).get("context_mapping", [])
+        if mapping:
+            cols = st.columns(len(mapping) if len(mapping) < 5 else 5)
+            for i, section in enumerate(mapping):
+                cols[i % 5].markdown(f"✅ `{section}`")
+        else:
+            st.warning("No se ha podido mapear la estructura de secciones.")
+            
+        st.markdown("---")
+        
+        # 3. Comparativa Map vs Reduce
         col_map, col_rag = st.columns(2)
         with col_map:
-            st.markdown("### 🗺️ Extracción General (Fase Map)")
-            st.caption("Extracción de primer nivel del paper completo.")
-            st.json(resultado.get("original_extraction_raw", {}))
+            st.markdown("### 🗺️ Fase MAP (Extracción Segmentada)")
+            st.caption("Extracción en paralelo de fragmentos del paper.")
+            map_steps = resultado.get("general_analysis_map", [])
+            if map_steps:
+                for i, step in enumerate(map_steps):
+                    with st.expander(f"📦 Fragmento {i+1}"):
+                        st.json(step)
+            else:
+                st.json(resultado.get("original_extraction_raw", {}))
+                
         with col_rag:
-            st.markdown("### 🎯 Refinamiento RAG (Fase Reduce)")
-            st.caption("Datos técnicos ultra-precisos recuperados mediante búsqueda semántica.")
+            st.markdown("### 🎯 Fase REDUCE (Consolidación Final)")
+            st.caption("Datos finales refinados y validados.")
+            st.json(resultado.get("informacion_extraida", {}))
+
+    # ── PIPELINE RAG HÍBRIDO ────────────────────────────────────────────────
+    with st.expander("🔍 Pipeline de Extracción Híbrida (RAG Specialist)"):
+        st.write("Proceso de recuperación semántica y extracción técnica de precisión para hiperparámetros.")
+        
+        c_triage, c_reduce = st.columns(2)
+        with c_triage:
+            st.markdown("### 🛠️ Fase de Triage (MAP)")
+            st.caption("Extracción estructurada de fragmentos recuperados por ChromaDB.")
+            triage_steps = resultado.get("hybrid_triage_fragments", [])
+            if triage_steps:
+                for i, fragment in enumerate(triage_steps):
+                    relevance = fragment.get("_relevance_score", "N/A")
+                    color = "#065f46" if isinstance(relevance, int) and relevance > 70 else "#1e3a5f"
+                    with st.expander(f"📄 Fragmento Técnico {i+1} (Relevancia: {relevance}%)"):
+                        st.markdown(f'<div style="background:{color};padding:2px 10px;border-radius:10px;font-size:0.7rem;display:inline-block;margin-bottom:10px;">Confianza RAG: {relevance}%</div>', unsafe_allow_html=True)
+                        st.markdown("**Texto del Chunk:**")
+                        st.caption(fragment.get("_chunk_text", "Texto no disponible"))
+                        st.markdown("**Datos Extraídos:**")
+                        st.json({k: v for k, v in fragment.items() if not k.startswith('_')})
+            else:
+                st.warning("No hay datos de triage disponibles.")
+                
+        with c_reduce:
+            st.markdown("### 💎 Fase de Consolidación (REDUCE)")
+            st.caption("Fusión de datos técnicos con Gemma 4 31B.")
             st.json(resultado.get("extracted_hyperparameters_hybrid", {}))
+
+    # ── PIPELINE DE EVALUACIÓN ──────────────────────────────────────────────
+    with st.expander("🔍 Pipeline de Evaluación (Senior Area Chair + Self-Correction)"):
+        st.write("Validación final de cumplimiento basada en señales pre-computadas y auditoría de falsos negativos.")
+        
+        # 1. Señales Pre-computadas
+        st.markdown("### 🚦 Señales de Juicio (Signals)")
+        signals = resultado.get("evaluation_signals", {})
+        if signals:
+            for key, msg in signals.items():
+                st.markdown(f"**Item {key.replace('_', ' ').title()}:**")
+                st.info(msg)
+        else:
+            st.warning("No se generaron señales dinámicas para esta evaluación.")
+            
+        st.markdown("---")
+        
+        # 2. Detalles de Verificación (Self-Correction / Auditor 2)
+        st.markdown("### 🛡️ Auditoría de Falsos Negativos (Self-Correction - Auditor 2)")
+        st.caption("Re-evaluación crítica de ítems realizada por Gemini 3.1 Pro para detectar omisiones o errores de interpretación.")
+        
+        # Filtrar ítems que fueron verificados
+        verification_details = {k: v for k, v in resultado.items() if isinstance(v, dict) and v.get('verified')}
+        if not verification_details:
+             # Si no están directos, buscarlos dentro de las secciones
+             for k, v in resultado.items():
+                 if isinstance(v, dict) and v.get('answer'):
+                     if v.get('verified'):
+                         verification_details[k] = v
+                         
+        if verification_details:
+            for item, data in verification_details.items():
+                status = "✨ Corregido" if data.get('was_corrected') else "✅ Confirmado"
+                with st.expander(f"{status}: {item}"):
+                    st.write(f"**Respuesta:** {data.get('answer')}")
+                    st.write(f"**Justificación Técnica:** {data.get('justification')}")
+                    st.markdown("**Evidencia Verificada:**")
+                    st.code(data.get('evidence'))
+        else:
+            st.warning("La fase de verificación no reportó cambios o no está disponible.")
 
     return health
 

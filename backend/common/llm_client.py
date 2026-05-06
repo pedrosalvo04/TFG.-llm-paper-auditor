@@ -8,11 +8,12 @@ logger = get_logger(__name__)
 class LLMClient:
     """Cliente reutilizable para interactuar con Gemini"""
     
-    def __init__(self, generation_config=None):
+    def __init__(self, model_name=None, generation_config=None):
         """
         Inicializa el cliente LLM con configuración personalizada
         
         Args:
+            model_name: Nombre del modelo a usar
             generation_config: Diccionario con configuración de generación
         """
         if not GOOGLE_API_KEY:
@@ -21,7 +22,7 @@ class LLMClient:
         
         self.client = genai.Client(api_key=GOOGLE_API_KEY)
         
-        self.model_name = MODEL_NAME
+        self.model_name = model_name or MODEL_NAME
         self.generation_config = generation_config or {}
         
         logger.info(f"✅ Cliente LLM inicializado: {self.model_name}")
@@ -46,7 +47,7 @@ class LLMClient:
             except Exception as e:
                 error_msg = str(e)
                 if attempt < max_retries:
-                    logger.warning(f"⚠️ Error API Gemini: {error_msg}. Reintentando ({attempt + 1}/{max_retries})...")
+                    logger.warning(f"⚠️ Error API Gemini [{self.model_name}]: {error_msg}. Reintentando ({attempt + 1}/{max_retries})...")
                     # Mostrar el aviso visual en el frontend sin bloquear la interfaz
                     try:
                         st.toast(f"⚠️ Gemini saturado (Alta demanda). Reintentando ({attempt + 1}/{max_retries})...", icon="⏳")
