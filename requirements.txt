@@ -3,3 +3,8 @@ google-generativeai # Gratis (API Free) - Para usar Gemini 1.5 Flash
 python-dotenv       # Gratis - Para leer tu API Key de forma segura
 streamlit           # Gratis - Para la interfaz web
 pydantic            # Gratis - Para que la IA responda con datos estructurados
+tenacity            # LLMOps - Exponential Backoff y reintentos automáticos (reemplaza time.sleep manual)
+chromadb            # RAG - Vectorstore en memoria para hiperparámetros
+langchain-text-splitters  # RAG - Chunking del texto del paper
+httpx               # RAG - Cliente HTTP async para la API de Embeddings
+google-genai        # SDK moderno de Google Generative AI (genai.Client)
