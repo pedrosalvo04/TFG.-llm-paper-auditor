@@ -1,29 +1,10 @@
-"""Punto de entrada principal de la aplicación"""
+# -*- coding: utf-8 -*-
+"""Aplicación principal del Auditor de Papers - Frontend Modular"""
 import streamlit as st
-import warnings
-import logging
-import os
-
-# iniciar env: .\.venv\Scripts\Activate.ps1
-# ejecutar app: streamlit run app.py
-
-#******************************************
-
-# Eliminar logs molestos de transformers y huggingface
-os.environ["TRANSFORMERS_VERBOSITY"] = "error"
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-warnings.filterwarnings("ignore", message=".*Accessing.*__path__.*")
-warnings.filterwarnings("ignore", category=FutureWarning)
-warnings.filterwarnings("ignore", category=UserWarning)
-logging.getLogger("transformers").setLevel(logging.ERROR)
-
-# Desactivar telemetría de ChromaDB y OpenTelemetry para evitar conflictos en Streamlit
-os.environ["ANONYMIZED_TELEMETRY"] = "False"
-os.environ["OTEL_SDK_DISABLED"] = "true"
 
 # IMPORTANTE: configure_page() debe ser lo primero
 st.set_page_config(
-    page_title="Nature Auditor Pro",
+    page_title="NeurIPS 2026 Checklist Auditor",
     layout="wide",
     page_icon="🔬"
 )
@@ -44,42 +25,49 @@ initialize_session_state()
 st.title(TITLE)
 st.markdown("---")
 
-# Carga de archivo
-uploaded_file = st.file_uploader(
-    "Sube el artículo científico (PDF, TXT o Markdown)", 
-    type=["pdf", "txt", "md"]
-)
+# Limpiar estado
+if st.button("🔄 Limpiar y subir nuevo archivo"):
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.rerun()
+
+uploaded_file = st.file_uploader("Sube el PDF del artículo científico", type=["pdf", "txt", "md"])
 
 if uploaded_file:
-    process_uploaded_file(uploaded_file)
-    
-    # Acceder directamente desde session_state como en el original
-    resultado = st.session_state.get('resultado')
-    md_text = st.session_state.get('md_text')
-    
+    md_text, resultado = process_uploaded_file(uploaded_file)
+
+    # Verificar errores primero
     if resultado and "error" in resultado:
-        st.error(f"❌ Error en la auditoría: {resultado['error']}")
+        err = resultado["error"]
+        if err == "INVALID_PAPER_TYPE":
+            st.error(f"❌ Paper no válido: {resultado.get('message', 'Solo se evalúan papers de ML/AI')}")
+        else:
+            st.error(f"❌ Error en la auditoría: {err}")
     elif resultado and "evaluation_error" in resultado:
         st.error(f"❌ Error del LLM: {resultado['evaluation_error']}")
         st.warning("🔄 El modelo está experimentando alta demanda. Intenta nuevamente.")
+        st.info("💡 Tip: Recarga la página o sube el archivo nuevamente.")
     elif resultado and resultado.get("claims"):
-        puntuacion = render_audit_results(resultado, uploaded_file)
+        # Resultado válido: tiene al menos el ítem 'claims' del checklist
+        health = render_audit_results(resultado, uploaded_file)
         render_sota_analysis(md_text)
         render_chatbot(md_text)
-        
+
         # Descarga del informe
         st.markdown("---")
         st.subheader("📄 Descargar Informe")
-        reporte = generate_report(resultado, uploaded_file, puntuacion)
+        reporte = generate_report(resultado, uploaded_file, health)
         st.download_button(
             label="📥 Descargar Informe Completo (.md)",
             data=reporte,
-            file_name=f"auditoria_{uploaded_file.name.replace('.pdf', '')}.md",
+            file_name=f"auditoria_neurips_{uploaded_file.name.replace('.pdf', '').replace('.md', '')}.md",
             mime="text/markdown"
         )
     elif resultado:
         st.error("⚠️ La auditoría no generó resultados válidos.")
-        st.json(resultado)
+        st.info("Posibles causas: respuesta vacía del LLM o JSON inválido.")
+    else:
+        st.warning("⚠️ No hay resultado disponible.")
 
 # Barra lateral
 with st.sidebar:
