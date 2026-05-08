@@ -11,7 +11,6 @@ print("\n1. Probando importaciones...")
 try:
     from backend.skills import (
         BaseSkill,
-        RedFlagDetectionSkill,
         InformationExtractionSkill,
         ReproducibilityEvaluationSkill,
         MetricsCalculationSkill,
@@ -24,9 +23,15 @@ try:
         CoverageGapAnalysisSkill,
         CrossValidationSkill
     )
-    print("   ✅ Todas las importaciones de skills exitosas")
+    # Importar skills de detección por regex
+    from backend.skills.regex_detection_skills import (
+        LimitationsQualityDetectionSkill,
+        SoftwareVersionDetectionSkill,
+        HardwareDetailDetectionSkill
+    )
+    print("   [OK] Todas las importaciones de skills exitosas")
 except Exception as e:
-    print(f"   ❌ Error en importaciones: {e}")
+    print(f"   [ERROR] Error en importaciones: {e}")
     sys.exit(1)
 
 # Test 2: Importar servicios refactorizados
@@ -35,24 +40,24 @@ try:
     from backend.services.auditor import PaperAuditor
     from backend.services.chatbot import Chatbot
     from backend.services.sota_analyzer import SotaAnalyzer
-    print("   ✅ Importaciones de servicios exitosas")
+    print("   [OK] Importaciones de servicios exitosas")
 except Exception as e:
-    print(f"   ❌ Error importando servicios: {e}")
+    print(f"   [ERROR] Error importando servicios: {e}")
     sys.exit(1)
 
 # Test 3: Inicializar servicios
 print("\n3. Inicializando servicios...")
 try:
     auditor = PaperAuditor()
-    print("   ✅ PaperAuditor inicializado con skills")
+    print("   [OK] PaperAuditor inicializado con skills")
     
     chatbot = Chatbot()
-    print("   ✅ Chatbot inicializado con skills")
+    print("   [OK] Chatbot inicializado con skills")
     
     sota = SotaAnalyzer()
-    print("   ✅ SotaAnalyzer inicializado con skills")
+    print("   [OK] SotaAnalyzer inicializado con skills")
 except Exception as e:
-    print(f"   ❌ Error inicializando servicios: {e}")
+    print(f"   [ERROR] Error inicializando servicios: {e}")
     import traceback
     traceback.print_exc()
     sys.exit(1)
@@ -60,14 +65,15 @@ except Exception as e:
 # Test 4: Verificar estructura de skills en PaperAuditor
 print("\n4. Verificando estructura de PaperAuditor...")
 try:
-    assert hasattr(auditor, 'red_flag_skill'), "Falta red_flag_skill"
     assert hasattr(auditor, 'extraction_skill'), "Falta extraction_skill"
+    assert hasattr(auditor, 'hybrid_hp_skill'), "Falta hybrid_hp_skill"
     assert hasattr(auditor, 'evaluation_skill'), "Falta evaluation_skill"
+    assert hasattr(auditor, 'verification_skill'), "Falta verification_skill"
     assert hasattr(auditor, 'metrics_skill'), "Falta metrics_skill"
     assert hasattr(auditor, 'metadata_skill'), "Falta metadata_skill"
-    print("   ✅ Todos los skills del auditor presentes")
+    print("   [OK] Todos los skills del auditor presentes")
 except AssertionError as e:
-    print(f"   ❌ {e}")
+    print(f"   [ERROR] {e}")
     sys.exit(1)
 
 # Test 5: Verificar estructura de skills en Chatbot
@@ -75,9 +81,9 @@ print("\n5. Verificando estructura de Chatbot...")
 try:
     assert hasattr(chatbot, 'response_skill'), "Falta response_skill"
     assert hasattr(chatbot, 'validation_skill'), "Falta validation_skill"
-    print("   ✅ Todos los skills del chatbot presentes")
+    print("   [OK] Todos los skills del chatbot presentes")
 except AssertionError as e:
-    print(f"   ❌ {e}")
+    print(f"   [ERROR] {e}")
     sys.exit(1)
 
 # Test 6: Verificar estructura de skills en SotaAnalyzer
@@ -88,33 +94,33 @@ try:
     assert hasattr(sota, 'search_skill'), "Falta search_skill"
     assert hasattr(sota, 'gap_skill'), "Falta gap_skill"
     assert hasattr(sota, 'validation_skill'), "Falta validation_skill"
-    print("   ✅ Todos los skills de SOTA presentes")
+    print("   [OK] Todos los skills de SOTA presentes")
 except AssertionError as e:
-    print(f"   ❌ {e}")
+    print(f"   [ERROR] {e}")
     sys.exit(1)
 
 # Test 7: Verificar herencia de BaseSkill
 print("\n7. Verificando herencia de BaseSkill...")
 try:
-    assert isinstance(auditor.red_flag_skill, BaseSkill)
+    assert isinstance(auditor.extraction_skill, BaseSkill)
     assert isinstance(chatbot.response_skill, BaseSkill)
     assert isinstance(sota.thematic_skill, BaseSkill)
-    print("   ✅ Todos los skills heredan correctamente de BaseSkill")
+    print("   [OK] Todos los skills heredan correctamente de BaseSkill")
 except AssertionError:
-    print("   ❌ Error en herencia de BaseSkill")
+    print("   [ERROR] Error en herencia de BaseSkill")
     sys.exit(1)
 
 # Test 8: Verificar métodos de BaseSkill
 print("\n8. Verificando métodos de BaseSkill...")
 try:
-    skill = auditor.red_flag_skill
+    skill = auditor.extraction_skill
     assert hasattr(skill, 'execute'), "Falta método execute"
     assert hasattr(skill, 'validate_context'), "Falta método validate_context"
     assert hasattr(skill, 'log_execution'), "Falta método log_execution"
     assert callable(skill.execute), "execute no es callable"
-    print("   ✅ Todos los métodos base presentes")
+    print("   [OK] Todos los métodos base presentes")
 except AssertionError as e:
-    print(f"   ❌ {e}")
+    print(f"   [ERROR] {e}")
     sys.exit(1)
 
 # Test 9: Test simple de ejecución (sin LLM real)
@@ -127,9 +133,9 @@ try:
     # Context vacío, debería retornar lista vacía
     result = search_skill.execute({'search_queries': []})
     assert 'sota_papers' in result
-    print("   ✅ Skill ejecutado correctamente")
+    print("   [OK] Skill ejecutado correctamente")
 except Exception as e:
-    print(f"   ❌ Error ejecutando skill: {e}")
+    print(f"   [ERROR] Error ejecutando skill: {e}")
     import traceback
     traceback.print_exc()
     sys.exit(1)
@@ -140,13 +146,13 @@ try:
     from backend.utils.logger import get_logger
     logger = get_logger("test_skill")
     logger.info("Test de logging")
-    print("   ✅ Sistema de logging funcional")
+    print("   [OK] Sistema de logging funcional")
 except Exception as e:
-    print(f"   ❌ Error en logging: {e}")
+    print(f"   [ERROR] Error en logging: {e}")
     sys.exit(1)
 
 print("\n" + "=" * 70)
-print("✅ TODOS LOS TESTS PASARON EXITOSAMENTE")
+print("[OK] TODOS LOS TESTS PASARON EXITOSAMENTE")
 print("=" * 70)
 print("\nArquitectura basada en skills implementada correctamente:")
 print("  • BaseSkill: Clase base para todos los skills")

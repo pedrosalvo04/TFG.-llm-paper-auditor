@@ -57,19 +57,25 @@ class PaperAuditor:
         logger.info(f"✅ Auditor inicializado respetando la configuración técnica.")
     
     
-    def audit(self, paper_text):
+    def audit(self, paper_text, status_callback=None):
         """
         Analiza el paper usando arquitectura de skills en 3 fases:
         Pre-procesamiento, Extracción y Evaluación
         
         Args:
             paper_text: Texto del paper en formato markdown
+            status_callback: Función opcional para reportar el progreso (logs)
             
         Returns:
             Diccionario con resultados de la auditoría
         """
+        def log_status(msg):
+            logger.info(msg)
+            if status_callback:
+                status_callback(msg)
+
         caracteres = len(paper_text)
-        logger.info(f"🚀 Iniciando auditoría con skills. Tamaño: {caracteres} caracteres")
+        log_status(f"🚀 Iniciando auditoría con skills. Tamaño: {caracteres} caracteres")
         
         start_time = time.time()
         
@@ -78,6 +84,7 @@ class PaperAuditor:
             context = {'paper_text': paper_text, 'red_flags': {}} # Mantenemos red_flags vacío por compatibilidad interna momentánea
             
             # FASE 1: Extracción de información (con LLM general)
+            log_status("🔍 Fase 1: Extracción inicial de información clave...")
             extraction_result = self.extraction_skill.execute(context)
             if 'extraction_error' in extraction_result:
                 logger.error(f"❌ Abortando: Error en extracción: {extraction_result['extraction_error']}")
@@ -106,6 +113,7 @@ class PaperAuditor:
                 }
             
             # FASE 1.5: Extracción estructurada híbrida (RAG + Pydantic)
+            log_status("🧠 Fase 1.5: Profundización técnica con RAG y Pydantic...")
             hybrid_hp_result = self.hybrid_hp_skill.execute(context)
             # Si hay error en RAG, loggeamos pero intentamos seguir con la extracción general 
             # a menos que sea un error crítico que no devuelva nada
@@ -132,12 +140,21 @@ class PaperAuditor:
                         if mapped_key in hybrid_hps and str(hybrid_hps[mapped_key]).strip() and hybrid_hps[mapped_key] != 'NOT FOUND':
                             context['extracted_info']['hyperparameters'][key] = hybrid_hps[mapped_key]
                     
-                    if 'hardware' in hybrid_hps and str(hybrid_hps['hardware']).strip() and hybrid_hps['hardware'] != 'NOT FOUND':
-                        if 'hardware' not in context['extracted_info']:
+                    # Handle hardware info more robustly
+                    hybrid_hw = hybrid_hps.get('hardware')
+                    if hybrid_hw and str(hybrid_hw).strip() and hybrid_hw != 'NOT FOUND':
+                        # Ensure 'hardware' key exists and is a dictionary
+                        if 'hardware' not in context['extracted_info'] or not isinstance(context['extracted_info']['hardware'], dict):
+                            # If it was a list or string, preserve it as 'raw_info' before resetting
+                            old_hw = context['extracted_info'].get('hardware')
                             context['extracted_info']['hardware'] = {}
-                        context['extracted_info']['hardware']['gpu_cpu'] = hybrid_hps['hardware']
+                            if old_hw:
+                                context['extracted_info']['hardware']['original_info'] = str(old_hw)
+                        
+                        context['extracted_info']['hardware']['gpu_cpu'] = hybrid_hw
             
             # FASE 2: Evaluación de reproducibilidad (con LLM)
+            log_status("⚖️ Fase 2: Evaluación de criterios de reproducibilidad...")
             evaluation_result = self.evaluation_skill.execute(context)
             if 'evaluation_error' in evaluation_result:
                 logger.error(f"❌ Abortando: Error en evaluación: {evaluation_result['evaluation_error']}")
@@ -150,10 +167,12 @@ class PaperAuditor:
                 context['evaluation_signals'] = evaluation_result['evaluation_signals']
             
             # FASE 2.5: Verificación Estricta (Auditoría de Falsos Negativos)
+            log_status("🛡️ Fase 2.5: Verificación estricta de cumplimiento (Auditor 2)...")
             verification_result = self.verification_skill.execute(context)
             context.update(verification_result)
             
             # FASE 3: Cálculo de métricas
+            log_status("📊 Fase 3: Consolidación de métricas y puntuaciones...")
             end_time = time.time()
             execution_time = round(end_time - start_time, 2)
             
@@ -166,6 +185,7 @@ class PaperAuditor:
             context.update(metrics_result)
             
             # FASE 4: Agregación de metadatos
+            log_status("🏁 Fase 4: Generación de informe final y metadatos...")
             final_result = self.metadata_skill.execute(context)
             
             # Asegurar que se exponga el resultado híbrido y el original para el frontend
@@ -174,7 +194,7 @@ class PaperAuditor:
             if 'original_extraction_raw' in context:
                 final_result['original_extraction_raw'] = context['original_extraction_raw']
             
-            logger.info(f"✅ Auditoría completada en {execution_time} segundos")
+            log_status(f"✅ Auditoría completada en {execution_time} segundos")
             
             return final_result
 

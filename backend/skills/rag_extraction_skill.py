@@ -35,11 +35,18 @@ class HybridHyperparameterExtractionSkill(BaseSkill):
         paper_text = context['paper_text']
         
         try:
-            # 1. Chunking
-            self.log_execution("Fragmentando el texto de forma exhaustiva...")
-            splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=400)
-            chunks = splitter.split_text(paper_text)
-            self.log_execution(f"📄 Texto fragmentado en {len(chunks)} chunks.")
+            # 1. Chunking Lógico (basado en bloques identificados por Docling)
+            self.log_execution("Fragmentando el texto por bloques lógicos (párrafos/tablas)...")
+            
+            # Split por doble salto de línea (estándar de Docling para separar elementos)
+            import re
+            paper_text_norm = paper_text.replace('\r\n', '\n')
+            raw_chunks = re.split(r'\n\n+', paper_text_norm)
+            
+            # Limpiar y filtrar chunks vacíos o extremadamente irrelevantes
+            chunks = [c.strip() for c in raw_chunks if len(c.strip()) > 10]
+            
+            self.log_execution(f"📄 Texto fragmentado en {len(chunks)} bloques lógicos (sin cortes arbitrarios).")
             
             # 2. Embedding & RAG
             self.log_execution(f"Generando embeddings para RAG ({EMBEDDING_MODEL_NAME})...")

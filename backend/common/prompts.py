@@ -308,17 +308,47 @@ def get_evaluation_signals(extracted_info: dict) -> dict:
         "- If no URL and no release intent and no negative phrase -> answer 'No' with is_no_justified: false."
     )
 
-    gpu_hours = hw_info.get('time', 'NOT FOUND')
-    num_gpus = hw_info.get('num_gpus', 'NOT FOUND')
     total_tokens = extracted_info.get('hyperparameters', {}).get('total_tokens', 'NOT FOUND')
-    model_params = extracted_info.get('architecture', {}).get('description', '')
-    
+    hw_data = extracted_info.get('hardware', {})
+    hw_summary = "NOT FOUND"
+    gpu_model = "NOT FOUND"
+    num_gpus = "NOT FOUND"
+    training_time = "NOT FOUND"
+
+    if isinstance(hw_data, list):
+        hw_summary = ", ".join([str(x) for x in hw_data])
+    elif isinstance(hw_data, str) and hw_data.strip() != "":
+        hw_summary = hw_data
+    elif isinstance(hw_data, dict):
+        gpu_model = hw_data.get('gpu_cpu', 'NOT FOUND')
+        num_gpus = hw_data.get('num_gpus', 'NOT FOUND')
+        training_time = hw_data.get('time', 'NOT FOUND')
+        
+        parts = []
+        if gpu_model != 'NOT FOUND': parts.append(f"Model: {gpu_model}")
+        if num_gpus != 'NOT FOUND': parts.append(f"Count: {num_gpus}")
+        if training_time != 'NOT FOUND': parts.append(f"Time: {training_time}")
+        if parts:
+            hw_summary = " | ".join(parts)
+        elif 'NOT FOUND' not in str(hw_data): # Fallback for unknown dict keys
+            hw_summary = str(hw_data)
+
     signals['statistics'] = (
-        f"DETECTED compute -> training_time: {gpu_hours}, num_gpus: {num_gpus}, total_tokens: {total_tokens}. "
+        f"DETECTED compute -> training_time: {training_time}, num_gpus: {num_gpus}, hardware_summary: {hw_summary}. "
+        f"total_tokens: {total_tokens}. "
         "LARGE SCALE JUSTIFICATION: "
         "If the paper involves Large Language Models (LLMs) trained on billions/trillions of tokens or with billions of parameters (e.g., 15B+), "
         "performing multiple statistical runs is computationally prohibitive. "
         "In these cases, answer 'No' but set is_no_justified: true, stating that the massive scale of training justifies the lack of multiple runs."
+    )
+
+    signals['compute_resource'] = (
+        f"DETECTED hardware/cluster: {hw_summary}. "
+        "CRITICAL RULE FOR ITEM 8: "
+        "If ANY hardware, internal cluster (e.g., 'Compute Canada', 'Calcul Québec'), or cloud provider is mentioned -> answer 'Yes' for the resource part. "
+        "If total training time is ALSO mentioned -> 'Yes' with full evidence. "
+        "If ONLY cluster/hardware is mentioned but NOT time -> answer 'No' but set is_no_justified: false, "
+        "and EXPLICITLY MENTION the cluster found in the justification so the user knows it was detected but is insufficient."
     )
 
     assets_used = lic_info.get('assets_used', [])
@@ -372,6 +402,7 @@ PRE-COMPUTED SIGNALS - USE THESE TO AVOID COMMON ERRORS
 [Item 4 - Reproducibility]   {signals['reproducibility']}
 [Item 5 - Open Access]       {signals['open_access']}
 [Item 7 - Statistics]        {signals['statistics']}
+[Item 8 - Compute Resource]  {signals['compute_resource']}
 [Item 12 - Licenses]         {signals['licenses']}
 [Item 14 - Crowdsourcing]    {signals['crowdsourcing']}
 

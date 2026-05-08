@@ -30,15 +30,49 @@ class InformationExtractionSkill(BaseSkill):
         paper_text = context['paper_text']
         
         try:
-            # 1. Fase MAP (Extracción Segmentada)
-            self.log_execution("🧠 [Fase MAP] Segmentando paper en bloques...")
-            # Chunks más manejables para asegurar que el modelo no se pierda y respete el JSON
-            splitter = RecursiveCharacterTextSplitter(chunk_size=20000, chunk_overlap=2000)
-            fragments = splitter.split_text(paper_text)
+            # 1. Fase MAP (Extracción Segmentada por Secciones)
+            self.log_execution("🧠 [Fase MAP] Segmentando paper por secciones lógicas...")
             
-            # Ampliamos a 5 bloques para mayor cobertura (100k caracteres aprox)
-            fragments = fragments[:5]
-            self.log_execution(f"📄 Paper dividido en {len(fragments)} bloques para análisis profundo.")
+            # Identificar secciones (líneas que empiezan con #) generadas por Docling
+            # Usamos una expresión regular que busque el inicio de línea con #
+            import re
+            paper_text_norm = paper_text.replace('\r\n', '\n')
+            sections = re.split(r'\n(?=#+ )', '\n' + paper_text_norm)
+            sections = [s.strip() for s in sections if s.strip()]
+            
+            if len(sections) > 1:
+                total_chars = sum(len(s) for s in sections)
+                target = total_chars / 4
+                fragments = []
+                current_fragment = ""
+                
+                for section in sections:
+                    # Si añadir la siguiente sección supera el objetivo y aún no tenemos 3 fragmentos
+                    if len(current_fragment) + len(section) > target and len(fragments) < 3:
+                        if current_fragment:
+                            fragments.append(current_fragment)
+                            current_fragment = section
+                        else:
+                            # Caso borde: una sola sección es gigante
+                            fragments.append(section)
+                            current_fragment = ""
+                    else:
+                        if current_fragment:
+                            current_fragment += "\n\n" + section
+                        else:
+                            current_fragment = section
+                            
+                if current_fragment:
+                    fragments.append(current_fragment)
+                
+                self.log_execution(f"📄 Paper dividido en {len(fragments)} secciones lógicas (basadas en Docling).")
+            else:
+                # Fallback: Chunks más manejables si no hay estructura de secciones clara
+                self.log_execution("⚠️ No se detectaron secciones claras. Usando fallback de segmentación por caracteres.")
+                splitter = RecursiveCharacterTextSplitter(chunk_size=25000, chunk_overlap=2000)
+                fragments = splitter.split_text(paper_text)
+                fragments = fragments[:4] # Forzar a 4 partes como pide el usuario
+                self.log_execution(f"📄 Paper dividido en {len(fragments)} bloques (fallback).")
             
             map_results = []
             import time
