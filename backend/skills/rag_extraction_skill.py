@@ -178,22 +178,13 @@ class HybridHyperparameterExtractionSkill(BaseSkill):
                     response = self.llm_client.generate(prompt)
                     raw_text = response.text.strip()
                     
-                    # Extracción balanceada de JSON (evita el error "Extra data")
-                    start_idx = raw_text.find('{')
-                    if start_idx != -1:
-                        stack = 0
-                        for i in range(start_idx, len(raw_text)):
-                            if raw_text[i] == '{': stack += 1
-                            elif raw_text[i] == '}':
-                                stack -= 1
-                                if stack == 0:
-                                    raw_text = raw_text[start_idx:i+1]
-                                    break
-                    
-                    fragment_data = json.loads(raw_text)
-                    fragment_data['_relevance_score'] = relevance_score
-                    fragment_data['_chunk_text'] = chunk
-                    extracted_fragments.append(fragment_data)
+                    try:
+                        fragment_data = self.parse_json_response(raw_text)
+                        fragment_data['_relevance_score'] = relevance_score
+                        fragment_data['_chunk_text'] = chunk
+                        extracted_fragments.append(fragment_data)
+                    except Exception as e:
+                        self.log_execution(f"⚠️ Error parseando fragmento {idx}: {str(e)}", level="warning")
                     
                     # Pausa para evitar 503
                     time.sleep(1)
@@ -241,24 +232,12 @@ class HybridHyperparameterExtractionSkill(BaseSkill):
                     }
                 )
                 raw_reduce_text = reduce_response.text.strip()
-            # Extracción balanceada de JSON (evita el error "Extra data")
-            start_idx = raw_reduce_text.find('{')
-            if start_idx != -1:
-                stack = 0
-                for i in range(start_idx, len(raw_reduce_text)):
-                    if raw_reduce_text[i] == '{': stack += 1
-                    elif raw_reduce_text[i] == '}':
-                        stack -= 1
-                        if stack == 0:
-                            raw_reduce_text = raw_reduce_text[start_idx:i+1]
-                            break
-            
             try:
-                extracted_json = json.loads(raw_reduce_text)
-            except json.JSONDecodeError:
-                # Intento de reparación de comas extra si falla
-                fixed_text = re.sub(r',\s*([\]}])', r'\1', raw_reduce_text)
-                extracted_json = json.loads(fixed_text)
+                extracted_json = self.parse_json_response(raw_reduce_text)
+            except Exception as e:
+                self.log_execution(f"❌ Error parseando consolidación final: {str(e)}", level="error")
+                # Intento de recuperación si es posible, o devolver vacío
+                extracted_json = {}
             self.log_execution(f"📥 Respuesta consolidada del LLM:\n{json.dumps(extracted_json, indent=2)}")
             
             # 5. Regex Cleaning

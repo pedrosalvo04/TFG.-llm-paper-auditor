@@ -8,7 +8,14 @@ from backend.skills.auditor_skills import (
     InformationExtractionSkill,
     ReproducibilityEvaluationSkill,
     MetricsCalculationSkill,
-    MetadataAggregationSkill
+    MetadataAggregationSkill,
+    ChecklistVerificationSkill
+)
+
+# RAG Skills
+from backend.skills.rag_extraction_skill import (
+    HybridHyperparameterExtractionSkill,
+    Hyperparameters
 )
 
 # Chatbot Skills
@@ -26,11 +33,20 @@ from backend.skills.sota_skills import (
     CrossValidationSkill
 )
 
-# Regex Detection Skills (new)
+# Regex Detection Skills
 from backend.skills.regex_detection_skills import (
     LimitationsQualityDetectionSkill,
     SoftwareVersionDetectionSkill,
     HardwareDetailDetectionSkill,
+    HyperparameterDetectionSkill,
+    DataAvailabilityDetectionSkill,
+    CodeAvailabilityDetectionSkill,
+    StatisticsDetectionSkill,
+    EnvironmentalImpactDetectionSkill,
+    ProblematicPhrasesDetectionSkill,
+    LlmUsageDetectionSkill,
+    CrowdsourcingDetectionSkill,
+    LicenseDetectionSkill
 )
 
 __all__ = [
@@ -39,6 +55,9 @@ __all__ = [
     'ReproducibilityEvaluationSkill',
     'MetricsCalculationSkill',
     'MetadataAggregationSkill',
+    'ChecklistVerificationSkill',
+    'HybridHyperparameterExtractionSkill',
+    'Hyperparameters',
     'ConversationalResponseSkill',
     'ContextValidationSkill',
     'ThematicCoverageSkill',
@@ -49,4 +68,13 @@ __all__ = [
     'LimitationsQualityDetectionSkill',
     'SoftwareVersionDetectionSkill',
     'HardwareDetailDetectionSkill',
+    'HyperparameterDetectionSkill',
+    'DataAvailabilityDetectionSkill',
+    'CodeAvailabilityDetectionSkill',
+    'StatisticsDetectionSkill',
+    'EnvironmentalImpactDetectionSkill',
+    'ProblematicPhrasesDetectionSkill',
+    'LlmUsageDetectionSkill',
+    'CrowdsourcingDetectionSkill',
+    'LicenseDetectionSkill',
 ]

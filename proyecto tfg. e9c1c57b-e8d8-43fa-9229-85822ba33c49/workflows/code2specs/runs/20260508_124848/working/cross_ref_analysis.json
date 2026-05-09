@@ -1,0 +1,214 @@
+{
+  "total_gaps": 73,
+  "resolved": 3,
+  "unresolved": 14,
+  "malformed": 56,
+  "unresolved_details": [
+    {
+      "source_file": "extracted_backend_core_01.md",
+      "line": 821,
+      "marker": "GAP: potential `NameError` if exception raised before `end_time = time.time()` at line 176",
+      "detail": "potential `NameError` if exception raised before `end_time = time.time()` at line 176"
+    },
+    {
+      "source_file": "extracted_backend_skills_01.md",
+      "line": 138,
+      "marker": "CROSS-REFERENCE: `backend.common.prompts`)",
+      "detail": "`backend.common.prompts`)"
+    },
+    {
+      "source_file": "extracted_backend_skills_01.md",
+      "line": 147,
+      "marker": "CROSS-REFERENCE: `backend.common.prompts`)",
+      "detail": "`backend.common.prompts`)"
+    },
+    {
+      "source_file": "extracted_backend_skills_01.md",
+      "line": 149,
+      "marker": "CROSS-REFERENCE: `backend.common.config.REDUCE_MODEL_NAME`)",
+      "detail": "`backend.common.config.REDUCE_MODEL_NAME`)"
+    },
+    {
+      "source_file": "extracted_backend_skills_01.md",
+      "line": 187,
+      "marker": "CROSS-REFERENCE: `backend.common.prompts`)",
+      "detail": "`backend.common.prompts`)"
+    },
+    {
+      "source_file": "extracted_backend_skills_01.md",
+      "line": 188,
+      "marker": "CROSS-REFERENCE: `backend.common.prompts`)",
+      "detail": "`backend.common.prompts`)"
+    },
+    {
+      "source_file": "extracted_backend_skills_01.md",
+      "line": 282,
+      "marker": "CROSS-REFERENCE: `backend.common.prompts`)",
+      "detail": "`backend.common.prompts`)"
+    },
+    {
+      "source_file": "extracted_backend_skills_01.md",
+      "line": 419,
+      "marker": "CROSS-REFERENCE: `EMBEDDING_MODEL_NAME` from `backend.common.config`)",
+      "detail": "`EMBEDDING_MODEL_NAME` from `backend.common.config`)"
+    },
+    {
+      "source_file": "extracted_backend_skills_01.md",
+      "line": 502,
+      "marker": "CROSS-REFERENCE: `EVALUATION_MODEL_NAME` from `backend.common.config`)",
+      "detail": "`EVALUATION_MODEL_NAME` from `backend.common.config`)"
+    },
+    {
+      "source_file": "extracted_backend_skills_01.md",
+      "line": 545,
+      "marker": "CROSS-REFERENCE: `backend.common.config`)",
+      "detail": "`backend.common.config`)"
+    },
+    {
+      "source_file": "extracted_backend_skills_01.md",
+      "line": 1196,
+      "marker": "CROSS-REFERENCE: `backend.common.config`)",
+      "detail": "`backend.common.config`)"
+    },
+    {
+      "source_file": "extracted_frontend_01.md",
+      "line": 504,
+      "marker": "CROSS-REFERENCE: `analyze_sota()` is in `backend/services/sota_analyzer.py` \u2014 not in this cluster)",
+      "detail": "`analyze_sota()` is in `backend/services/sota_analyzer.py` \u2014 not in this cluster)"
+    },
+    {
+      "source_file": "extracted_frontend_01.md",
+      "line": 1009,
+      "marker": "CROSS-REFERENCE: implemented in backend/services/pdf_parser.py",
+      "detail": "implemented in backend/services/pdf_parser.py"
+    },
+    {
+      "source_file": "extracted_root_tests_scratch_01.md",
+      "line": 1479,
+      "marker": "CROSS-REFERENCE: backend/common/audit_state.py)",
+      "detail": "backend/common/audit_state.py)"
+    }
+  ],
+  "malformed_details": [
+    {
+      "source_file": "extracted_backend_core_01.md",
+      "line": 978,
+      "marker": "CROSS-REFERENCE: outside cluster",
+      "detail": "outside cluster"
+    },
+    {
+      "source_file": "extracted_backend_core_01.md",
+      "line": 996,
+      "marker": "GAP_ID: GAP-cluster_backend_core_01-001",
+      "detail": "GAP-cluster_backend_core_01-001"
+    },
+    {
+      "source_file": "extracted_backend_core_01.md",
+      "line": 1004,
+      "marker": "GAP_ID: GAP-cluster_backend_core_01-002",
+      "detail": "GAP-cluster_backend_core_01-002"
+    },
+    {
+      "source_file": "extracted_backend_core_01.md",
+      "line": 1012,
+      "marker": "GAP_ID: GAP-cluster_backend_core_01-003",
+      "detail": "GAP-cluster_backend_core_01-003"
+    },
+    {
+      "source_file": "extracted_backend_core_01.md",
+      "line": 1020,
+      "marker": "GAP_ID: GAP-cluster_backend_core_01-004",
+      "detail": "GAP-cluster_backend_core_01-004"
+    },
+    {
+      "source_file": "extracted_backend_core_01.md",
+      "line": 1028,
+      "marker": "GAP_ID: GAP-cluster_backend_core_01-005",
+      "detail": "GAP-cluster_backend_core_01-005"
+    },
+    {
+      "source_file": "extracted_backend_core_01.md",
+      "line": 1036,
+      "marker": "GAP_ID: GAP-cluster_backend_core_01-006",
+      "detail": "GAP-cluster_backend_core_01-006"
+    },
+    {
+      "source_file": "extracted_backend_core_01.md",
+      "line": 1044,
+      "marker": "GAP_ID: GAP-cluster_backend_core_01-007",
+      "detail": "GAP-cluster_backend_core_01-007"
+    },
+    {
+      "source_file": "extracted_backend_core_01.md",
+      "line": 1052,
+      "marker": "GAP_ID: GAP-cluster_backend_core_01-008",
+      "detail": "GAP-cluster_backend_core_01-008"
+    },
+    {
+      "source_file": "extracted_backend_core_01.md",
+      "line": 1060,
+      "marker": "GAP_ID: GAP-cluster_backend_core_01-009",
+      "detail": "GAP-cluster_backend_core_01-009"
+    },
+    {
+      "source_file": "extracted_backend_core_01.md",
+      "line": 1068,
+      "marker": "GAP_ID: GAP-cluster_backend_core_01-010",
+      "detail": "GAP-cluster_backend_core_01-010"
+    },
+    {
+      "source_file": "extracted_backend_core_01.md",
+      "line": 1076,
+      "marker": "GAP_ID: GAP-cluster_backend_core_01-011",
+      "detail": "GAP-cluster_backend_core_01-011"
+    },
+    {
+      "source_file": "extracted_backend_core_01.md",
+      "line": 1084,
+      "marker": "GAP_ID: GAP-cluster_backend_core_01-012",
+      "detail": "GAP-cluster_backend_core_01-012"
+    },
+    {
+      "source_file": "extracted_backend_skills_01.md",
+      "line": 1490,
+      "marker": "GAP_ID: GAP-cluster_backend_skills_01-001",
+      "detail": "GAP-cluster_backend_skills_01-001"
+    },
+    {
+      "source_file": "extracted_backend_skills_01.md",
+      "line": 1498,
+      "marker": "GAP_ID: GAP-cluster_backend_skills_01-002",
+      "detail": "GAP-cluster_backend_skills_01-002"
+    },
+    {
+      "source_file": "extracted_backend_skills_01.md",
+      "line": 1506,
+      "marker": "GAP_ID: GAP-cluster_backend_skills_01-003",
+      "detail": "GAP-cluster_backend_skills_01-003"
+    },
+    {
+      "source_file": "extracted_backend_skills_01.md",
+      "line": 1514,
+      "marker": "GAP_ID: GAP-cluster_backend_skills_01-004",
+      "detail": "GAP-cluster_backend_skills_01-004"
+    },
+    {
+      "source_file": "extracted_backend_skills_01.md",
+      "line": 1522,
+      "marker": "GAP_ID: GAP-cluster_backend_skills_01-005",
+      "detail": "GAP-cluster_backend_skills_01-005"
+    },
+    {
+      "source_file": "extracted_backend_skills_01.md",
+      "line": 1530,
+      "marker": "GAP_ID: GAP-cluster_backend_skills_01-006",
+      "detail": "GAP-cluster_backend_skills_01-006"
+    },
+    {
+      "source_file": "extracted_backend_skills_01.md",
+      "line": 1538,
+      "marker": "GAP_ID: GAP-cluster_backend_skills_01-007",
+      "detail": "GAP-cluster_backend_skills_01-007"
+    }
+  ]
+}

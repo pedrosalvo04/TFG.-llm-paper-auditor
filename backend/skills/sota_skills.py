@@ -71,7 +71,7 @@ class ThematicCoverageSkill(BaseSkill):
         
         try:
             response = self.llm_client.generate(prompt)
-            thematic_data = json.loads(response.text)
+            thematic_data = self.parse_json_response(response.text)
             
             year = thematic_data.get("año_paper")
             if year:
@@ -143,7 +143,7 @@ class QueryGenerationSkill(BaseSkill):
         
         try:
             response = self.llm_client.generate(prompt)
-            queries = json.loads(response.text).get("queries", [])
+            queries = self.parse_json_response(response.text).get("queries", [])
             self.log_execution(f"✅ Queries generadas: {queries}")
             return {'search_queries': queries}
         except Exception as e:
@@ -290,7 +290,7 @@ class CoverageGapAnalysisSkill(BaseSkill):
         
         try:
             response = self.llm_client.generate(prompt)
-            coverage_gaps = json.loads(response.text)
+            coverage_gaps = self.parse_json_response(response.text)
             self.log_execution(f"✅ Gaps identificados: {len(coverage_gaps.get('areas_debiles', []))}")
             return {'coverage_gaps': coverage_gaps}
         except Exception as e:
@@ -398,7 +398,7 @@ class CrossValidationSkill(BaseSkill):
         
         try:
             response = self.llm_client.generate(prompt)
-            validation_results = json.loads(response.text)
+            validation_results = self.parse_json_response(response.text)
             
             self.log_execution(
                 f"✅ Papers omitidos identificados: {len(validation_results.get('papers_omitidos', []))}"

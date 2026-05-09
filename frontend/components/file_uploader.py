@@ -3,8 +3,8 @@ import streamlit as st
 import os
 from backend.services.pdf_parser import convert_pdf_to_markdown
 
-def process_uploaded_file(uploaded_file):
-    """Procesa el archivo subido (PDF, TXT, MD) y guarda el resultado en session_state"""
+def extract_text_from_file(uploaded_file):
+    """Extrae el texto del archivo subido (PDF, TXT, MD) y lo guarda en session_state"""
     import hashlib
     
     # Calcular hash del contenido para detectar cambios
@@ -19,6 +19,8 @@ def process_uploaded_file(uploaded_file):
         st.session_state.archivo_actual = uploaded_file.name
         st.session_state.file_hash = file_hash
         st.session_state.messages = []
+        st.session_state.resultado = None # Resetear resultado al subir nuevo archivo
+        st.session_state.md_text = None
         
         if not os.path.exists("temp"):
             os.makedirs("temp")
@@ -39,16 +41,43 @@ def process_uploaded_file(uploaded_file):
                     st.session_state.md_text = f.read()
             else:
                 st.error(f"❌ Formato no soportado: {file_extension}")
-                return None, {'error': f'Formato no soportado: {file_extension}'}
+                return None
         
-        # Auditar con logs de progreso
-        with st.status("🧠 Analizando el documento...", expanded=True) as status:
-            def update_status(msg):
-                st.write(msg)
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
             
+    return st.session_state.get('md_text')
+
+def run_audit(md_text, use_rag=True):
+    """Ejecuta el proceso de auditoría sobre el texto proporcionado"""
+    if not md_text:
+        st.error("⚠️ No hay texto para auditar.")
+        return None
+
+    # Auditar con logs de progreso
+    with st.status("🧠 Analizando el documento...", expanded=True) as status:
+        from frontend.components.phase_tracker import get_phase_tracker_html
+        
+        # El tracker se queda fijo arriba de los logs dentro del status
+        tracker_placeholder = st.empty()
+        st.markdown("---") # Separador visual
+        
+        def update_status(msg, phase_index=None):
+            # Escribir el log
+            st.write(msg)
+            
+            # Actualizar el tracker en la parte superior
+            if phase_index is not None:
+                tracker_placeholder.markdown(get_phase_tracker_html(phase_index), unsafe_allow_html=True)
+        
+        # Inicializar el tracker
+        tracker_placeholder.markdown(get_phase_tracker_html(0), unsafe_allow_html=True)
+            
+        try:
             st.session_state.resultado = st.session_state.auditor.audit(
-                st.session_state.md_text, 
-                status_callback=update_status
+                md_text, 
+                status_callback=update_status,
+                use_rag=use_rag
             )
             
             # Si hubo un error en la auditoría, verificamos si es por saturación
@@ -56,7 +85,7 @@ def process_uploaded_file(uploaded_file):
             if resultado and "error" in resultado:
                 error_msg = str(resultado['error'])
                 
-                # Detectar errores de saturación/demanda (503, 429, etc)
+                # Detectar errores de saturación/demanda
                 is_saturation = any(x in error_msg.upper() for x in ["503", "UNAVAILABLE", "SATURAD", "DEMAND", "QUOTA", "LIMIT"])
                 
                 if is_saturation:
@@ -64,8 +93,7 @@ def process_uploaded_file(uploaded_file):
                     st.error("### ⚠️ El servicio de IA está saturado")
                     
                     with st.expander("🔍 Detalles técnicos y solución", expanded=True):
-                        st.write("El modelo Gemini está experimentando una demanda extremadamente alta en este momento y no ha podido completar la tarea tras 5 reintentos automáticos.")
-                        st.info("Este es un problema temporal de Google. Puedes esperar unos minutos e intentar reanudar, o cancelar la ejecución actual.")
+                        st.write("El modelo Gemini está experimentando una demanda extremadamente alta. Intentos fallidos tras 5 reintentos.")
                     
                     col1, col2 = st.columns(2)
                     with col1:
@@ -73,29 +101,27 @@ def process_uploaded_file(uploaded_file):
                             st.rerun()
                     with col2:
                         if st.button("🚫 Cancelar ejecución", use_container_width=True):
-                            st.session_state.resultado = {"error": "Ejecución cancelada por el usuario debido a saturación de API."}
+                            st.session_state.resultado = {"error": "Ejecución cancelada por el usuario."}
                             st.stop()
                     
-                    st.stop() # Detener flujo normal si hay error de saturación
+                    st.stop()
                 else:
-                    # Otros errores generales
                     status.update(label="❌ La auditoría ha fallado", state="error", expanded=True)
                     st.error(f"❌ Error crítico: {error_msg}")
-                    # Limpiar resultados anteriores para no mostrar datos inconsistentes
                     st.session_state.resultado = {"error": error_msg}
-                    if os.path.exists(temp_path):
-                        os.remove(temp_path)
                     st.stop()
             
+            # Forzar actualización final del tracker
+            tracker_placeholder.markdown(get_phase_tracker_html(7), unsafe_allow_html=True)
+                
             status.update(label="✅ Análisis completado", state="complete", expanded=False)
-            
-        st.success("✅ Análisis completado")
-        
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
-    
-    # Siempre retornar desde session_state
-    md_text = st.session_state.get('md_text', '')
-    resultado = st.session_state.get('resultado', {})
-    
-    return md_text, resultado
+            st.success("✅ Análisis completado")
+            return st.session_state.resultado
+
+        except Exception as e:
+            # Solo capturamos si no es una interrupción de Streamlit
+            status.update(label="❌ Error inesperado", state="error", expanded=True)
+            st.error(f"❌ Error inesperado: {str(e)}")
+            st.session_state.resultado = {"error": str(e)}
+            return st.session_state.resultado
+

@@ -3,3 +3,11 @@ google-generativeai # Gratis (API Free) - Para usar Gemini 1.5 Flash
 python-dotenv       # Gratis - Para leer tu API Key de forma segura
 streamlit           # Gratis - Para la interfaz web
 pydantic            # Gratis - Para que la IA responda con datos estructurados
+reportlab           # Para generación de PDFs
+chromadb            # Base de datos vectorial para RAG
+httpx               # Para llamadas asíncronas a la API de embeddings
+pypdf               # Para manipulación de PDFs
+requests            # Para llamadas a la API de Semantic Scholar
+torch               # Para detección de GPU en Docling
+pymupdf4llm         # Para conversión de PDF a Markdown (pdf_to_md.py)
+langchain-text-splitters # Para segmentación de texto

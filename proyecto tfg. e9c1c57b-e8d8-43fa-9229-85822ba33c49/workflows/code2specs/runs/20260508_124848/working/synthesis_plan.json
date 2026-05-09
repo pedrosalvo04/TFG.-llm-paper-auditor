@@ -1,0 +1,410 @@
+{
+  "analysis": {
+    "total_extraction_bytes": 375041,
+    "bytes_by_category": {
+      "functional": 212022,
+      "technical": 58220,
+      "look_and_feel": 37941,
+      "test": 40996,
+      "data_model": 7639,
+      "glossary_candidates": 12376,
+      "cross_ref": 65432
+    },
+    "modules_detected": [
+      "backend_core",
+      "backend_skills",
+      "frontend",
+      "root"
+    ],
+    "has_ui": true,
+    "cross_ref_files": [
+      "cross_ref_resolution_cross_ref_root_to_backend.md",
+      "cross_ref_resolution_cross_ref_root_to_frontend.md"
+    ],
+    "notes": [
+      "Application is a Streamlit-based AI paper auditing tool (NeurIPS 2026 reproducibility checklist). No relational DB; data model consists of Python dataclasses/Pydantic models (AuditState, ExtractedInfo, ChecklistItem).",
+      "Functional category (212K bytes) exceeds 200K splitting threshold → split into functional_writer_backend and functional_writer_frontend, with a consolidator.",
+      "All writers use engine=cli per mandatory rule.",
+      "Total writers including consolidator: 10 (within 15-writer cap)."
+    ]
+  },
+  "writers": [
+    {
+      "id": "data_model_writer",
+      "type": "data_model",
+      "output_file": "01_data_model.md",
+      "engine": "cli",
+      "skills": ["re-generic"],
+      "scope": "Complete data model: all Python dataclasses and Pydantic models (AuditState, ExtractedInfo, ChecklistItem and sub-fields), all configuration structures (AUDIT_CONFIG, CHAT_CONFIG, SOTA_CONFIG dicts with exact field values), all named constants (API keys, model name constants, temperature constants, Semantic Scholar API constants), all enum-like string sets (CHECKLIST_KEYS, checklist answers), all session_state keys with types and lifecycle. This application has no SQL database — the data model is the full set of structured Python types that flow through the audit pipeline. Every field name, type annotation, default value, and constraint must be specified.",
+      "sections": [
+        "Pydantic / Dataclass Models",
+        "Configuration Structures",
+        "Named Constants",
+        "Session State Schema",
+        "LLM Response JSON Schemas"
+      ],
+      "source_categories": ["data_model"],
+      "consumes_extractions": [
+        "extracted_backend_core_01.md",
+        "extracted_backend_skills_01.md",
+        "extracted_root_tests_scratch_01.md"
+      ],
+      "consumes_cross_refs": [
+        "cross_ref_resolution_cross_ref_root_to_backend.md"
+      ],
+      "writer_guidance": [
+        "SKIP ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG sections at top of extraction files — these are audit metadata, not spec content.",
+        "Preserve [GAP: ...] markers verbatim. Do NOT invent field values.",
+        "For each model/dataclass: name, all fields with types, defaults, constraints, and the extraction source file:line.",
+        "For LLM response JSON schemas (extraction_prompt return schema, evaluation_prompt return schema, etc.): reproduce the full field list as documented in extracted_backend_core_01.md § 2.2.",
+        "The audit result dict ('resultado') has 16 top-level keys matching CHECKLIST_KEYS plus optional keys ('metricas', 'informacion_extraida', 'general_analysis_map', 'original_extraction_raw', 'hybrid_triage_fragments', 'extracted_hyperparameters_hybrid', 'evaluation_signals') — document this as a virtual schema.",
+        "AuditState, ExtractedInfo, ChecklistItem: these appear in test files (test_audit_state.py) — recover their full contracts from the cross_ref_root_to_backend.md resolution or mark as [GAP] if unresolved."
+      ]
+    },
+    {
+      "id": "functional_writer_backend",
+      "type": "functional",
+      "output_file": "02_functional_backend.md",
+      "engine": "cli",
+      "skills": ["re-generic"],
+      "scope": "Backend functional specification: (1) The 6-phase audit pipeline (PaperAuditor.audit): FASE 1 InformationExtraction, FASE 1.5 HybridHyperparameterExtraction, FASE 2 ReproducibilityEvaluation, FASE 2.5 ChecklistVerification, FASE 3 MetricsCalculation, FASE 4 MetadataAggregation — each phase with exact trigger condition, input context keys, output context keys, error handling, and side effects. (2) All 15 exported skills plus non-exported skills (ChecklistVerificationSkill, HybridHyperparameterExtractionSkill, all regex detection skills not in __init__) — each skill with execute() signature, input context keys required, output keys, guard conditions, and exact error return shapes. (3) PaperChatbot: preguntar() method with conversation history handling. (4) SotaAnalyzer: 5-step SOTA pipeline with SemanticScholar API integration. (5) PDF parser: convert_pdf_to_markdown chunked Docling flow. (6) All business rules: retry logic (LLMClient: 6 total attempts with exact sleep durations), JSON repair patterns, MAP/REDUCE consolidation, fragment sizing formula, balanced JSON extraction algorithm.",
+      "sections": [
+        "Audit Pipeline Overview (6 phases)",
+        "FASE 1 — Information Extraction Skill (MAP/REDUCE)",
+        "FASE 1.5 — Hybrid Hyperparameter Extraction",
+        "FASE 2 — Reproducibility Evaluation Skill",
+        "FASE 2.5 — Checklist Verification Skill",
+        "FASE 3 — Metrics Calculation Skill",
+        "FASE 4 — Metadata Aggregation Skill",
+        "CompositeSkill Orchestration",
+        "BaseSkill Interface and Lifecycle",
+        "Regex Detection Skills (all 9)",
+        "SOTA Analysis Pipeline (5 steps)",
+        "Chatbot (preguntar flow + history)",
+        "PDF Parser (Docling chunked flow)",
+        "LLM Client (retry + backoff logic)",
+        "Prompt Template Functions (all 6)"
+      ],
+      "source_categories": ["functional", "business_rules"],
+      "consumes_extractions": [
+        "extracted_backend_core_01.md",
+        "extracted_backend_skills_01.md",
+        "extracted_root_tests_scratch_01.md"
+      ],
+      "consumes_cross_refs": [
+        "cross_ref_resolution_cross_ref_root_to_backend.md"
+      ],
+      "writer_guidance": [
+        "SKIP ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG at top of files.",
+        "Preserve all RULE/TRIGGER/CONDITION/ACTION/ERROR structured markers — do NOT flatten to prose.",
+        "Preserve [GAP: ...] markers verbatim (e.g. _preprocess_paper is UNRESOLVED — keep as GAP).",
+        "For each phase: specify the exact context keys read/written, the skill(s) invoked, error handling paths, and what is returned on success vs failure.",
+        "For LLMClient.generate(): document all 6 retry attempts, sleep intervals between retries, and which exception types trigger retry vs immediate fail.",
+        "For fragment sizing in InformationExtractionSkill: document the exact formula (total_chars/4, max 3 cuts, fallback to RecursiveCharacterTextSplitter chunk_size=25000, chunk_overlap=2000, first 4 items).",
+        "For the balanced JSON extraction loop: document the algorithm (find first '{', stack-count '{'/'}', extract when stack==0).",
+        "For SemanticScholarSearchSkill: document the execute({'search_queries': []}) -> {'sota_papers': ...} contract fully."
+      ]
+    },
+    {
+      "id": "functional_writer_frontend",
+      "type": "functional",
+      "output_file": "02_functional_frontend.md",
+      "engine": "cli",
+      "skills": ["re-generic"],
+      "scope": "Frontend functional specification: (1) Application bootstrap flow (app.py): exact order of operations — set_page_config → apply_custom_styles → initialize_session_state → sidebar render → file upload → conditional audit results render → chatbot render. (2) File upload flow (process_uploaded_file): deduplication by MD5 hash, file type branching (PDF via Docling / TXT-MD via open()), auditor.audit() invocation with status_callback, session_state writes, temp file lifecycle. (3) Audit results rendering (render_audit_results): full page layout — success banner, health verdict, 4-column metrics, RAG ficha técnica, compliance table (_build_table_html), three expander sections (Pipeline Análisis Profundo, Extracción Híbrida, Evaluación), download button. (4) Report generation (generate_report): exact Markdown output structure with all 16 checklist row formats including risk annotations. (5) Scoring logic (get_checklist_health): full item evaluation algorithm with pending_justification and missing_evidence flags, alert_msg logic, crowdsourcing special-case suffix. (6) SOTA analysis UI flow (render_sota_analysis). (7) Chatbot UI flow (render_chatbot): message history, submit action, st.rerun(). (8) Session state initialization (initialize_session_state): all 5 keys with guards.",
+      "sections": [
+        "Application Bootstrap Sequence",
+        "Session State Schema and Initialization",
+        "File Upload Flow (process_uploaded_file)",
+        "Audit Results Rendering (render_audit_results)",
+        "Compliance Scoring (get_checklist_health + 16 item evaluation rules)",
+        "Report Generation (generate_report)",
+        "SOTA Analysis UI Flow",
+        "Chatbot UI Flow (render_chatbot)",
+        "Gauge Chart (create_gauge_chart NeurIPS quality tiers)"
+      ],
+      "source_categories": ["functional", "user_flows_ui"],
+      "consumes_extractions": [
+        "extracted_frontend_01.md",
+        "extracted_root_tests_scratch_01.md"
+      ],
+      "consumes_cross_refs": [
+        "cross_ref_resolution_cross_ref_root_to_frontend.md"
+      ],
+      "writer_guidance": [
+        "SKIP ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG at top of files.",
+        "Preserve [GAP: ...] markers verbatim. Do NOT invent UI behavior.",
+        "For get_checklist_health: document EVERY rule exactly — pending_justification condition ('no' in answer AND (not is_no_justified OR not justification)), missing_evidence condition ('yes' in answer AND not evidence AND not justification), crowdsourcing special-case alert suffix.",
+        "For generate_report: document the exact Markdown template structure including all risk annotation formats.",
+        "For process_uploaded_file: document the MD5 deduplication logic, temp/ directory lifecycle, and status_callback pattern.",
+        "For render_audit_results: document the 16 CHECKLIST_KEYS and their CHECKLIST_LABELS as presented in the UI.",
+        "Cross-reference g_004 through g_008, g_013, g_026, g_027 resolutions from cross_ref_root_to_frontend.md — these fill in the function signatures originally missing from the root cluster."
+      ]
+    },
+    {
+      "id": "functional_consolidator",
+      "type": "consolidator",
+      "output_file": "02_functional_specs.md",
+      "engine": "cli",
+      "skills": ["re-generic"],
+      "scope": "Merge 02_functional_backend.md and 02_functional_frontend.md into a single coherent functional specification. Add a top-level section map with cross-references between backend phases/skills and the frontend flows that trigger them (e.g. file_uploader → auditor.audit() → render_audit_results). Resolve any duplicate definitions by keeping the more detailed version and citing both sources. Add cross-module interface section documenting how frontend calls backend (session_state.auditor, session_state.chatbot, session_state.sota_analyzer). Preserve all [GAP: ...] markers from both inputs.",
+      "sections": [
+        "Functional Overview and Module Interaction Map",
+        "Backend Functional Spec (from 02_functional_backend.md)",
+        "Frontend Functional Spec (from 02_functional_frontend.md)",
+        "Cross-Module Interface Contracts"
+      ],
+      "source_categories": ["functional"],
+      "consumes_extractions": [
+        "02_functional_backend.md",
+        "02_functional_frontend.md"
+      ],
+      "consumes_cross_refs": []
+    },
+    {
+      "id": "technical_writer",
+      "type": "technical",
+      "output_file": "03_technical_specs.md",
+      "engine": "cli",
+      "skills": ["re-generic"],
+      "scope": "Technical specification: (1) External API contracts — Google Gemini API (all 6 model constants, generation_config dicts with exact parameter values, response_mime_type, temperature, top_k, top_p, max_output_tokens), Semantic Scholar API (base URL, year range, limit, fields param, auth header). (2) LLMClient internals — constructor params, generate() retry loop (6 attempts, sleep intervals), client.models.generate_content fallback call signature. (3) All configuration parameters from config.py with exact values and environment variable mappings. (4) Logging infrastructure (get_logger, ColoredFormatter, Colors class, CleanNetworkLogs filter). (5) Dependency declarations — requirements.txt (5 declared packages with roles), missing declared dependencies (reportlab — undeclared hard dep for md_to_pdf.py and create_test_pdf.py; pymupdf4llm — undeclared dep for pdf_to_md.py; markdown2 — optional unlisted dep; GAP markers for these). (6) Module-level side effects in config.py (env var suppression, log level overrides). (7) PDF conversion pipeline technical details (Docling chunked processing). (8) Environment variable loading (.env via python-dotenv, GOOGLE_API_KEY, SEMANTIC_SCHOLAR_API_KEY).",
+      "sections": [
+        "External API Contracts (Google Gemini, Semantic Scholar)",
+        "LLM Client Configuration and Retry Policy",
+        "Configuration Parameters (all constants with values)",
+        "Dependency Declarations and Missing Deps",
+        "Logging Infrastructure",
+        "Environment Variable Schema",
+        "Module-Level Side Effects",
+        "PDF Conversion Technical Details"
+      ],
+      "source_categories": ["technical"],
+      "consumes_extractions": [
+        "extracted_backend_core_01.md",
+        "extracted_root_tests_scratch_01.md"
+      ],
+      "consumes_cross_refs": [
+        "cross_ref_resolution_cross_ref_root_to_backend.md"
+      ],
+      "writer_guidance": [
+        "SKIP ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG sections.",
+        "Preserve [GAP: ...] markers verbatim (e.g. GAP-025 reportlab undeclared, GAP-026 markdown2 unlisted).",
+        "For each generation_config dict: reproduce all keys and values exactly as extracted.",
+        "For LLMClient retry: document exact attempt count (6), sleep durations, and exception types that trigger retry.",
+        "For Semantic Scholar: document the full URL, all query parameter names, and field string value exactly.",
+        "Include the CleanNetworkLogs filter algorithm (huggingface.co HEAD/GET suppression)."
+      ]
+    },
+    {
+      "id": "look_and_feel_writer",
+      "type": "look_and_feel",
+      "output_file": "04_look_and_feel.md",
+      "engine": "cli",
+      "skills": ["re-generic"],
+      "scope": "Look and feel specification: (1) Page layout — wide layout, page title 'NeurIPS 2026 Checklist Auditor', page icon '🔬'. (2) Sidebar — SIDEBAR_IMAGE (ACM logo URL), SIDEBAR_DESCRIPTION text, width=150. (3) Main title display — TITLE constant text. (4) File uploader widget — accepted extensions (pdf, txt, md), label, spinner/status/success/error widget sequence during processing. (5) Audit results page — success banner, health verdict block (valid/risk states), 4-column metrics row (tiempo_segundos, caracteres_leidos, red_flags_detectadas, plus score from gauge), RAG ficha técnica section, compliance table HTML (_build_table_html with all column headers and risk annotation formats), three expander sections with their labels. (6) Download button — label, file content (Markdown), file name format. (7) SOTA section — header text, button label, spinner text, dataframe/papers display, missing-papers recommendations section. (8) Chatbot section — header, caption, conversation history display, text input key, submit button key, message role display format. (9) Gauge chart — create_gauge_chart(score) Plotly figure with NeurIPS quality tier thresholds and colors. (10) Custom CSS — all CSS selectors and property values exactly as in CUSTOM_CSS constant.",
+      "sections": [
+        "Page Configuration",
+        "Sidebar Layout",
+        "File Upload Widget",
+        "Audit Results Page Layout",
+        "Compliance Table (columns, risk annotations)",
+        "Download Report Button",
+        "SOTA Analysis Section",
+        "Chatbot Interface",
+        "Gauge Chart (quality tiers and colors)",
+        "Custom CSS (all selectors and property values)"
+      ],
+      "source_categories": ["lookfeel_ui"],
+      "consumes_extractions": [
+        "extracted_frontend_01.md",
+        "extracted_root_tests_scratch_01.md"
+      ],
+      "consumes_cross_refs": [
+        "cross_ref_resolution_cross_ref_root_to_frontend.md"
+      ],
+      "writer_guidance": [
+        "SKIP ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG sections.",
+        "Preserve [GAP: ...] markers verbatim.",
+        "For every Streamlit widget: document the widget type, label text, key (if named), accepted values, and any dynamic visibility conditions.",
+        "For the compliance table: document every column header and the exact HTML structure produced by _build_table_html.",
+        "For the gauge chart: document every NeurIPS quality tier threshold (score ranges), color, and label exactly as extracted.",
+        "For the CSS: reproduce every selector and its property block exactly as in CUSTOM_CSS (already fully extracted in extracted_frontend_01.md § 6).",
+        "For the chatbot: document the message role display format ({role}: {content}) and the exact widget keys ('chat_input', 'send_button').",
+        "Cross-reference g_026 (apply_custom_styles) and g_027 (initialize_session_state) resolutions from cross_ref_root_to_frontend.md."
+      ]
+    },
+    {
+      "id": "test_writer",
+      "type": "test_scenarios",
+      "output_file": "05_test_scenarios.md",
+      "engine": "cli",
+      "skills": ["re-generic"],
+      "scope": "Test scenario specification derived from extraction data. For every business rule documented in the audit pipeline: at least one positive and one negative test scenario with exact input values and expected output. Organized by: (1) Unit tests for LLMClient retry logic (test_llm_retry.py scenarios: mock-based, 6-attempt exhaustion, success-on-Nth-attempt). (2) Integration tests for InformationExtractionSkill section-fragmenting (test_section_splitter.py). (3) Integration tests for RAG logical block splitting (test_rag_logical_splitter.py). (4) Unit tests for AuditState, ExtractedInfo, ChecklistItem models (test_audit_state.py). (5) Integration smoke tests for auditor refactoring (test_auditor_refactor.py: _preprocess_paper returns dict [MARKED AS GAP — method absent in current source]). (6) Import smoke tests (test_imports.py: all frontend modules importable). (7) Skills integration tests (test_skills_integration.py: skills architecture, service initialization). (8) get_checklist_health scenarios (test_checklist_health.py): all 16 items with 'Yes'/'No'/'N/A' answers, pending_justification and missing_evidence edge cases. (9) Scratch scripts as exploratory test cases (test_rag_split.py naive chunks, test_embed.py API response structure).",
+      "sections": [
+        "LLM Client Retry Logic Tests",
+        "Information Extraction Skill Tests (section fragmenting, MAP/REDUCE)",
+        "RAG Logical Block Splitting Tests",
+        "Audit Data Model Tests (AuditState, ExtractedInfo, ChecklistItem)",
+        "Audit Pipeline Integration Tests",
+        "Import Smoke Tests",
+        "Skills Architecture Integration Tests",
+        "Checklist Health Scoring Tests (get_checklist_health)",
+        "Scratch / Exploratory Test Cases"
+      ],
+      "source_categories": ["test_scenarios"],
+      "consumes_extractions": [
+        "extracted_root_tests_scratch_01.md",
+        "extracted_backend_core_01.md",
+        "extracted_backend_skills_01.md",
+        "extracted_frontend_01.md"
+      ],
+      "consumes_cross_refs": [
+        "cross_ref_resolution_cross_ref_root_to_backend.md",
+        "cross_ref_resolution_cross_ref_root_to_frontend.md"
+      ],
+      "writer_guidance": [
+        "SKIP ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG sections.",
+        "CRITICAL FIDELITY RULE: Do NOT invent field names, response schemas, example values, or expected outputs not documented in the extraction. Use [GAP: response schema not extracted — cannot define test assertions] when output structure is undocumented.",
+        "Preserve [GAP: ...] markers verbatim (e.g. _preprocess_paper test scenario: the method is absent from current source — mark expected output as [GAP: method removed in refactoring]).",
+        "For each test file: document the test class/function names, mock setup, assertion conditions, and the business rule being validated.",
+        "For patch_skills.py (g_021): document the precondition (three class markers must exist in regex_detection_skills.py in exact order) as a deployment constraint, not a test scenario.",
+        "For repro_hyperparams.py (g_022): document the file dependency (paper_cientifico_3_CON_ERRORES.md in CWD) as a test precondition."
+      ]
+    },
+    {
+      "id": "glossary_writer",
+      "type": "glossary",
+      "output_file": "06_glossary.md",
+      "engine": "cli",
+      "skills": ["re-generic"],
+      "scope": "Domain glossary: (1) Domain Concepts — NeurIPS 2026 reproducibility checklist (all 16 items with labels and definitions), paper_type valid/invalid classification, red_flags dict, audit pipeline phases (FASE 1/1.5/2/2.5/3/4) with domain meaning, MAP/REDUCE extraction strategy, hybrid hyperparameter extraction, RAG (Retrieval-Augmented Generation) as used here. (2) Status Enums — checklist answer values ('Yes'/'No'/'N/A'/'' with meaning and scoring impact), health status ('valid'/'risk'), paper_type enum ('INVALID - Not ML/AI' + valid paper types). (3) Role Constants — not applicable (no user roles in this application). (4) Cross-Domain Equivalences — 'resultado' (audit result dict, also called 'evaluation' in skill context), 'extracted_info' vs 'informacion_extraida' (same object, different keys in different contexts), 'puntuacion' vs 'score' (gauge input vs internal), 'md_text' (session state key) vs 'paper_text' (skill context key). (5) All named constants with provenance: CHECKLIST_KEYS (16 values), CHECKLIST_LABELS, model name constants (6 values + 2 aliases), temperature constants (3 values), API endpoint strings, SEMANTIC_SCHOLAR_* constants.",
+      "sections": [
+        "Domain Concepts",
+        "NeurIPS 2026 Checklist Items (all 16 with definitions)",
+        "Status Enums",
+        "Named Constants Glossary",
+        "Cross-Domain Equivalences"
+      ],
+      "source_categories": ["glossary_candidates"],
+      "consumes_extractions": [
+        "extracted_backend_core_01.md",
+        "extracted_backend_skills_01.md",
+        "extracted_frontend_01.md",
+        "extracted_root_tests_scratch_01.md"
+      ],
+      "consumes_cross_refs": [
+        "cross_ref_resolution_cross_ref_root_to_backend.md",
+        "cross_ref_resolution_cross_ref_root_to_frontend.md"
+      ],
+      "writer_guidance": [
+        "SKIP ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG sections.",
+        "Every entry MUST cite the extraction file and section where it originates.",
+        "For CHECKLIST_KEYS: reproduce all 16 keys in order with their CHECKLIST_LABELS display strings.",
+        "For model name constants: document all 6 distinct constants plus the 2 alias assignments (MODEL_NAME, RAG_MODEL_NAME).",
+        "For cross-domain equivalences: document cases where the same data object is referred to by different names in different modules (frontend session_state vs backend skill context).",
+        "Do NOT invent definitions. If a term appears but its meaning is not documented in the extraction, use [GAP: definition not found in source]."
+      ]
+    },
+    {
+      "id": "module_index_writer",
+      "type": "module_index",
+      "output_file": "07_module_index.md",
+      "engine": "cli",
+      "skills": ["re-generic"],
+      "scope": "Hierarchical module catalog. Four top-level modules: (1) backend_core (backend/common/, backend/services/) — 12 files; source cluster cluster_backend_core_01. Services: PaperAuditor (6-phase orchestrator), PaperChatbot/Chatbot alias, SotaAnalyzer, convert_pdf_to_markdown. Common: LLMClient, all prompt template functions, config constants, get_logger. (2) backend_skills (backend/skills/) — 7 files; source cluster cluster_backend_skills_01. Exported skills (15): BaseSkill, CompositeSkill, InformationExtractionSkill, ReproducibilityEvaluationSkill, MetricsCalculationSkill, MetadataAggregationSkill, ConversationalResponseSkill, ContextValidationSkill, ThematicCoverageSkill, QueryGenerationSkill, SemanticScholarSearchSkill, CoverageGapAnalysisSkill, CrossValidationSkill, LimitationsQualityDetectionSkill, SoftwareVersionDetectionSkill, HardwareDetailDetectionSkill. Non-exported skills (HybridHyperparameterExtractionSkill, ChecklistVerificationSkill, 9 regex detection skills). (3) frontend (frontend/) — 14 files; source cluster cluster_frontend_01. Components: audit_results.py, chatbot.py, file_uploader.py, gauge_chart.py, sota_section.py. Utils: scoring.py, session_state.py. Styles: custom_css.py. Config: config.py. Entry: app.py. (4) root (top-level scripts, tests/, scratch/) — 21 files; source cluster cluster_root_tests_scratch_01. Test files: test_auditor_refactor.py, test_imports.py, test_skills_integration.py (tests/), plus scratch/* and backend/scratch/*. Utility scripts: create_test_pdf.py, list_models.py, md_to_pdf.py, pdf_to_md.py, app.py (legacy entry point).",
+      "sections": [
+        "Module Inventory Overview",
+        "backend_core Module",
+        "backend_skills Module",
+        "frontend Module",
+        "root Module (scripts, tests, scratch)"
+      ],
+      "source_categories": ["functional", "data_model", "lookfeel_ui"],
+      "consumes_extractions": [
+        "extracted_backend_core_01.md",
+        "extracted_backend_skills_01.md",
+        "extracted_frontend_01.md",
+        "extracted_root_tests_scratch_01.md"
+      ],
+      "consumes_cross_refs": [
+        "cross_ref_resolution_cross_ref_root_to_backend.md",
+        "cross_ref_resolution_cross_ref_root_to_frontend.md"
+      ],
+      "writer_guidance": [
+        "SKIP ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG sections.",
+        "COMPLETENESS REQUIREMENT: Every screen/UI component listed in 04_look_and_feel.md must appear in the frontend module's components section (cross-validate: audit_results.py, chatbot.py, file_uploader.py, gauge_chart.py, sota_section.py, custom_css.py — all must be listed).",
+        "For each file: one-line purpose description + source extraction file reference.",
+        "For backend_skills: clearly distinguish exported (15 symbols in __init__.py) from non-exported skills (ChecklistVerificationSkill, HybridHyperparameterExtractionSkill, 9 regex detection skills).",
+        "For root module: distinguish test files (tests/), scratch exploration scripts (scratch/, backend/scratch/), and production utility scripts (create_test_pdf.py, md_to_pdf.py, pdf_to_md.py).",
+        "External dependencies: list per module — backend_core depends on google-generativeai, docling, python-dotenv, pydantic; frontend depends on streamlit; root/tests depend on unittest.mock.",
+        "Cross-module dependencies: frontend → backend_core (via session_state.auditor, .chatbot, .sota_analyzer); backend_skills → backend_core (via LLMClient and prompts imports)."
+      ]
+    },
+    {
+      "id": "dependency_graph_writer",
+      "type": "dependency_graph",
+      "output_file": "08_dependency_graph.md",
+      "additional_outputs": ["08_dependency_graph.json"],
+      "engine": "cli",
+      "skills": ["re-generic"],
+      "scope": "Build a comprehensive node-edge dependency graph of all spec components across all four modules. Nodes: all services (PaperAuditor, PaperChatbot, SotaAnalyzer, convert_pdf_to_markdown, LLMClient), all skill classes (15 exported + ChecklistVerificationSkill + HybridHyperparameterExtractionSkill + all 9 regex detection skills), all frontend components (audit_results, chatbot, file_uploader, gauge_chart, sota_section, custom_css, scoring, session_state, app), all data model types (AuditState, ExtractedInfo, ChecklistItem — [GAP] if unresolved), all config/constant namespaces (config.py constants, prompts.py functions), external system nodes (Google Gemini API, Semantic Scholar API, Docling, Streamlit, st.session_state). Edges: import/calls/reads/writes/instantiates relationships with exact method names and data keys. Detect cycles (especially the session_state → auditor → session_state write cycle in file_uploader). Classify cross-module edges by severity (CRITICAL/HIGH/MEDIUM/LOW).",
+      "sections": [
+        "Graph Statistics",
+        "Module: backend_core",
+        "Module: backend_skills",
+        "Module: frontend",
+        "Module: root",
+        "Cross-Module Edges",
+        "Detected Cycles",
+        "External System Nodes"
+      ],
+      "source_categories": ["functional", "technical", "data_model"],
+      "consumes_extractions": [
+        "extracted_backend_core_01.md",
+        "extracted_backend_skills_01.md",
+        "extracted_frontend_01.md",
+        "extracted_root_tests_scratch_01.md"
+      ],
+      "consumes_cross_refs": [
+        "cross_ref_resolution_cross_ref_root_to_backend.md",
+        "cross_ref_resolution_cross_ref_root_to_frontend.md"
+      ],
+      "writer_guidance": [
+        "SKIP ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG sections.",
+        "COMPLETENESS REQUIREMENTS (non-negotiable):",
+        "  a) modules array MUST be ['backend_core', 'backend_skills', 'frontend', 'root'] — derived from cluster_id prefixes.",
+        "  b) cross_module_summary MUST count every edge where from-node module != to-node module.",
+        "  c) Every service class (PaperAuditor, PaperChatbot, SotaAnalyzer, LLMClient, convert_pdf_to_markdown) MUST appear as a node of type 'service'.",
+        "  d) Every skill class MUST appear as a node of type 'service' (or 'skill' if type taxonomy expanded).",
+        "  e) Every frontend component MUST appear as a node of type 'screen' (for UI rendering functions) or 'service' (for utility functions).",
+        "  f) Markdown ↔ JSON parity: one #### heading per node in the markdown.",
+        "  g) Node IDs: 'service:PaperAuditor', 'service:LLMClient', 'service:InformationExtractionSkill', 'screen:audit_results', 'external:GoogleGeminiAPI', 'external:SemanticScholarAPI', 'external:Streamlit', 'config:config_py', 'config:prompts_py' — NEVER opaque numeric IDs.",
+        "CRITICAL EDGES to capture: file_uploader→auditor (calls audit()), auditor→InformationExtractionSkill (instantiates/calls), auditor→LLMClient (creates 5 instances), InformationExtractionSkill→GoogleGeminiAPI (via LLMClient.generate), SotaAnalyzer→SemanticScholarAPI (HTTP GET), session_state→auditor (reads), session_state→chatbot (reads), session_state→sota_analyzer (reads), app→file_uploader (calls), app→render_audit_results (calls), app→render_chatbot (calls).",
+        "CYCLE to document: st.session_state write cycle — file_uploader writes session_state.resultado, render_audit_results reads session_state.resultado (data flow cycle, informational only).",
+        "Produce BOTH markdown and JSON from a single scan to ensure consistent node IDs."
+      ]
+    }
+  ],
+  "consolidators": [
+    {
+      "id": "functional_consolidator",
+      "type": "consolidator",
+      "output_file": "02_functional_specs.md",
+      "engine": "cli",
+      "skills": ["re-generic"],
+      "scope": "Merge 02_functional_backend.md and 02_functional_frontend.md into a single coherent functional specification. Add a top-level section map with cross-references between backend phases/skills and the frontend flows that trigger them (e.g. file_uploader → auditor.audit() → render_audit_results). Resolve any duplicate definitions by keeping the more detailed version and citing both sources. Add cross-module interface section documenting how frontend calls backend (session_state.auditor, session_state.chatbot, session_state.sota_analyzer). Preserve all [GAP: ...] markers from both inputs.",
+      "sections": [
+        "Functional Overview and Module Interaction Map",
+        "Backend Functional Spec (from 02_functional_backend.md)",
+        "Frontend Functional Spec (from 02_functional_frontend.md)",
+        "Cross-Module Interface Contracts"
+      ],
+      "source_categories": ["functional"],
+      "consumes_extractions": [
+        "02_functional_backend.md",
+        "02_functional_frontend.md"
+      ],
+      "consumes_cross_refs": []
+    }
+  ]
+}

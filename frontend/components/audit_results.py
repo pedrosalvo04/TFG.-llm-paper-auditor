@@ -2,6 +2,7 @@
 """Componente de resultados de auditoria NeurIPS 2026 - Tabla de Cumplimiento"""
 import streamlit as st
 from frontend.utils.scoring import get_checklist_health
+from frontend.components.gauge_chart import create_gauge_chart
 
 
 def _build_table_html(items):
@@ -94,11 +95,11 @@ def render_audit_results(resultado, uploaded_file):
     health = get_checklist_health(resultado)
     pending = health["pending_count"]
     total = health["total"]
-
+    
     # ── VEREDICTO PRINCIPAL ──────────────────────────────────────────────────
     st.markdown("---")
+    
     st.header("Veredicto del Checklist NeurIPS 2026")
-
     if health["status"] == "valid":
         st.markdown(
             '<div style="background:#064e3b;border-left:6px solid #10b981;padding:16px 20px;border-radius:8px;">'
@@ -132,35 +133,80 @@ def render_audit_results(resultado, uploaded_file):
         tiempo = resultado.get("metricas", {}).get("tiempo_segundos", "N/A")
         st.metric("Tiempo", f"{tiempo}s")
 
-    # ── FICHA TÉCNICA RAG ───────────────────────────────────────────────────
-    rag_data = resultado.get("extracted_hyperparameters_hybrid", {})
-    if rag_data:
-        st.markdown("---")
-        st.subheader("🎯 Ficha Técnica de Entrenamiento (RAG Specialist)")
-        st.caption("Estos datos han sido extraídos mediante un escaneo profundo (RAG) de las secciones técnicas y apéndices.")
+
+    # ── DATOS DEL ANÁLISIS EXHAUSTIVO (DINÁMICO DESDE REDUCE JSON) ───────────
+    st.markdown("---")
+    with st.expander("📊 Datos Extraídos (Análisis Exhaustivo)", expanded=False):
+        st.write("Consulta la base de datos técnica consolidada durante la fase REDUCE.")
         
-        c1, c2, c3, c4 = st.columns(4)
-        with c1:
-            st.markdown("**🚀 Optimizador**")
-            st.code(rag_data.get("optimizer", "N/A"))
-            st.markdown("**📈 Learning Rate**")
-            st.code(rag_data.get("learning_rate", "N/A"))
-        with c2:
-            st.markdown("**📦 Batch Size**")
-            st.code(rag_data.get("batch_size", "N/A"))
-            st.markdown("**🔄 Epochs**")
-            st.code(rag_data.get("epochs", "N/A"))
-        with c3:
-            st.markdown("**🔥 Warmup Steps**")
-            st.code(rag_data.get("warmup_steps", "N/A"))
-            st.markdown("**⚖️ Weight Decay**")
-            st.code(rag_data.get("weight_decay", "N/A"))
-        with c4:
-            st.markdown("**💻 Hardware**")
-            st.info(rag_data.get("hardware", "N/A"))
-            if rag_data.get("random_seed") and rag_data.get("random_seed") != "NOT FOUND":
-                st.markdown("**🌱 Seed**")
-                st.code(rag_data.get("random_seed"))
+        info = resultado.get("informacion_extraida", {})
+        
+        # 1. Metadatos del Paper (Título y Autores si existen)
+        if info.get("paper_title") or info.get("authors"):
+            st.markdown(f"### 📄 {info.get('paper_title', 'Sin título detectado')}")
+            if info.get("authors"):
+                st.caption(f"Autores: {', '.join(info.get('authors')) if isinstance(info.get('authors'), list) else info.get('authors')}")
+            st.markdown("---")
+
+        # 2. Iterar por las "secciones" (claves) del JSON de Reduce
+        # Definimos el orden y los iconos para las secciones principales
+        section_config = {
+            "hyperparameters": {"icon": "⚙️", "label": "Hiperparámetros"},
+            "hardware": {"icon": "💻", "label": "Hardware & Compute"},
+            "architecture": {"icon": "🏗️", "label": "Arquitectura del Modelo"},
+            "data": {"icon": "📂", "label": "Dataset & Datos"},
+            "code": {"icon": "💻", "label": "Código & Repositorio"},
+            "statistics": {"icon": "📊", "label": "Estadística & Rigor"},
+            "baseline_comparison": {"icon": "⚖️", "label": "Comparativa con Baselines"},
+            "theory_and_proofs": {"icon": "📐", "label": "Teoría & Demostraciones"},
+            "software_versions": {"icon": "🛠️", "label": "Software & Versiones"},
+            "limitations_quality": {"icon": "⚠️", "label": "Análisis de Limitaciones"},
+            "problematic_phrases": {"icon": "🚩", "label": "Frases Problemáticas"},
+            "licenses_extraction": {"icon": "📜", "label": "Licencias detectadas"},
+            "broader_impacts_extraction": {"icon": "🌍", "label": "Impacto Social (Broader Impacts)"},
+            "llm_usage_extraction": {"icon": "🤖", "label": "Declaración de uso de LLMs"},
+            "human_subjects_extraction": {"icon": "👥", "label": "Sujetos Humanos & Crowdsourcing"}
+        }
+
+        for key, config in section_config.items():
+            data = info.get(key)
+            if data and data != "NOT FOUND":
+                with st.expander(f"{config['icon']} {config['label']}", expanded=False):
+                    if isinstance(data, dict):
+                        # Formatear como lista clave-valor con estilo mejorado
+                        for k, v in data.items():
+                            if v and v != "NOT FOUND":
+                                label = k.replace('_', ' ').title()
+                                st.markdown(
+                                    f'<div style="margin-bottom:8px;">'
+                                    f'<span style="color:#60a5fa;font-weight:700;font-size:0.9rem;">{label}:</span> '
+                                    f'<span style="color:#e5e7eb;font-size:0.9rem;">{v}</span>'
+                                    f'</div>',
+                                    unsafe_allow_html=True
+                                )
+                    elif isinstance(data, list):
+                        for item in data:
+                            st.markdown(
+                                f'<div style="margin-bottom:6px;color:#e5e7eb;font-size:0.9rem;">• {item}</div>',
+                                unsafe_allow_html=True
+                            )
+                    else:
+                        st.markdown(f'<div style="color:#e5e7eb;font-size:0.9rem;">{data}</div>', unsafe_allow_html=True)
+
+        # 3. Razonamiento y Mapeo de Secciones (Siempre al final)
+        st.markdown("---")
+        col_cot, col_map = st.columns(2)
+        with col_cot:
+            with st.expander("🧠 Razonamiento de Consolidación (CoT)", expanded=False):
+                st.info(info.get("thought_process", "No disponible"))
+        with col_map:
+            with st.expander("📍 Secciones Identificadas", expanded=False):
+                mapping = info.get("context_mapping", [])
+                if mapping:
+                    for section in mapping:
+                        st.markdown(f"✅ `{section}`")
+                else:
+                    st.write("No disponible")
 
     # ── TABLA DE CUMPLIMIENTO ────────────────────────────────────────────────
     st.markdown("---")
@@ -214,32 +260,6 @@ def render_audit_results(resultado, uploaded_file):
             st.caption("Datos finales refinados y validados.")
             st.json(resultado.get("informacion_extraida", {}))
 
-    # ── PIPELINE RAG HÍBRIDO ────────────────────────────────────────────────
-    with st.expander("🔍 Pipeline de Extracción Híbrida (RAG Specialist)"):
-        st.write("Proceso de recuperación semántica y extracción técnica de precisión para hiperparámetros.")
-        
-        c_triage, c_reduce = st.columns(2)
-        with c_triage:
-            st.markdown("### 🛠️ Fase de Triage (MAP)")
-            st.caption("Extracción estructurada de fragmentos recuperados por ChromaDB.")
-            triage_steps = resultado.get("hybrid_triage_fragments", [])
-            if triage_steps:
-                for i, fragment in enumerate(triage_steps):
-                    relevance = fragment.get("_relevance_score", "N/A")
-                    color = "#065f46" if isinstance(relevance, int) and relevance > 70 else "#1e3a5f"
-                    with st.expander(f"📄 Fragmento Técnico {i+1} (Relevancia: {relevance}%)"):
-                        st.markdown(f'<div style="background:{color};padding:2px 10px;border-radius:10px;font-size:0.7rem;display:inline-block;margin-bottom:10px;">Confianza RAG: {relevance}%</div>', unsafe_allow_html=True)
-                        st.markdown("**Texto del Chunk:**")
-                        st.caption(fragment.get("_chunk_text", "Texto no disponible"))
-                        st.markdown("**Datos Extraídos:**")
-                        st.json({k: v for k, v in fragment.items() if not k.startswith('_')})
-            else:
-                st.warning("No hay datos de triage disponibles.")
-                
-        with c_reduce:
-            st.markdown("### 💎 Fase de Consolidación (REDUCE)")
-            st.caption("Fusión de datos técnicos con Gemma 4 31B.")
-            st.json(resultado.get("extracted_hyperparameters_hybrid", {}))
 
     # ── PIPELINE DE EVALUACIÓN ──────────────────────────────────────────────
     with st.expander("🔍 Pipeline de Evaluación (Senior Area Chair + Self-Correction)"):

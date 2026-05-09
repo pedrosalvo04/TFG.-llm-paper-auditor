@@ -103,9 +103,14 @@ class HyperparameterDetectionSkill(BaseSkill):
             r"(\d{2,})\s*(?:samples?|examples?)\s*per\s*(?:batch|GPU)",
         ],
         'epochs': [
-            r"(?:trained?\s+for|over)\s+(\d+)\s*(?:epochs?|steps?|iterations?)",
-            r"(?:epochs?|training[\s_-]steps?)[\s:=]+(\d+)",
-            r"(\d+)\s*(?:epochs?|training\s+steps)",
+            r"(?:trained?\s+for|over)\s+(\d+)\s*(?:epochs?)",
+            r"(?:epochs?)[\s:=]+(\d+)",
+            r"(\d+)\s*(?:epochs?)",
+        ],
+        'training_steps': [
+            r"(?:trained?\s+for|over)\s+([\d,]+)\s*(?:steps?|iterations?)",
+            r"(?:training[\s_-]steps?|iterations?)[\s:=]+([\d,]+)",
+            r"([\d,]+)\s*(?:training\s+steps|iterations?)",
         ],
         'warmup': [
             r"warmup[\s:=]+(\d+)",

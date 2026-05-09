@@ -57,8 +57,8 @@ EXTRACT THE FOLLOWING (respond "NOT FOUND" ONLY after exhaustive search):
 
 1. CODE: repository_url, negative_phrase (quote if code cannot be released), dependencies, instructions (yes/no), release_mention
 2. DATA: dataset_name, access_url, negative_phrase, preprocessing, splits, release_mention
-3. HYPERPARAMETERS: optimizer, learning_rate, batch_size, epochs, training_steps, total_tokens, warmup, weight_decay, betas, epsilon, vague_phrase (quote if uses "standard settings" etc), table_reference
-4. HARDWARE: gpu_cpu (specific model), num_gpus, memory, time, carbon_footprint, energy_consumption, pue, throughput (tokens/sec), latency_metrics
+3. HYPERPARAMETERS: optimizer, learning_rate, batch_size, epochs, training_steps, total_tokens, warmup_steps, weight_decay, betas, epsilon, random_seed, hardware, latency_metrics, vague_phrase (quote if uses "standard settings" etc), table_reference
+4. HARDWARE & COMPUTE: gpu_cpu (specific model), num_gpus, memory, time, carbon_footprint, energy_consumption, pue, throughput (tokens/sec), latency_metrics
 5. STATISTICS: confidence_intervals (yes/no), significance_tests (yes/no), num_runs
 6. ARCHITECTURE: description (layers, dims, heads), weights_available, release_mention
 7. BASELINE COMPARISON: compared_models (list), has_comparative_tables (yes/no), same_metrics (yes/no), results_section
@@ -100,10 +100,13 @@ RETURN JSON:
     "epochs": "value or NOT FOUND",
     "training_steps": "value or NOT FOUND",
     "total_tokens": "value or NOT FOUND",
-    "warmup": "value or NOT FOUND",
+    "warmup_steps": "value or NOT FOUND",
     "weight_decay": "value or NOT FOUND",
     "betas": "values or NOT FOUND",
     "epsilon": "value or NOT FOUND",
+    "random_seed": "value or NOT FOUND",
+    "hardware": "verbatim hardware description or NOT FOUND",
+    "latency_metrics": "verbatim details or NOT FOUND",
     "vague_phrase": "textual quote or NOT FOUND",
     "table_reference": "table number or NOT FOUND"
   }},
@@ -191,7 +194,7 @@ def get_map_extraction_prompt(fragment_text: str) -> str:
     
     REASONING INSTRUCTIONS:
     - Identify specific architectural components (e.g., "Gated Attention", "MoE configuration", "Normalization layers").
-    - Capture ALL hyperparameters even if they seem minor (betas, epsilon, warmup steps, weight decay).
+    - Capture ALL hyperparameters even if they seem minor (betas, epsilon, warmup steps, weight decay, training_steps, iterations).
     - Note specific benchmarks and their corresponding results if present in tables or text.
     - Document your 'thought_process' specifically for this fragment.
     
@@ -205,7 +208,7 @@ def get_map_extraction_prompt(fragment_text: str) -> str:
     - "context_mapping" (list of sections in this fragment)
     - "code"
     - "data"
-    - "hyperparameters" (optimizer, LR, batch size, and technical variants)
+    - "hyperparameters" (optimizer, learning_rate, batch_size, epochs, training_steps, iterations, total_tokens, warmup_steps, weight_decay, betas, epsilon, random_seed, hardware, latency_metrics)
     - "hardware"
     - "statistics"
     - "architecture" (layers, gating, MoE, dims)
@@ -251,7 +254,7 @@ def get_reduce_extraction_prompt(map_results: list) -> str:
     - "context_mapping"
     - "code" (repository_url, release_mention, etc.)
     - "data" (dataset_name, access_url, preprocessing, etc.)
-    - "hyperparameters" (optimizer, learning_rate, batch_size, training_steps, total_tokens, and ALL technical variants)
+    - "hyperparameters" (optimizer, learning_rate, batch_size, epochs, training_steps, iterations, total_tokens, warmup_steps, weight_decay, betas, epsilon, random_seed, hardware, latency_metrics, and ALL technical variants)
     - "hardware" (gpu_cpu, num_gpus, time, energy, latency, throughput, etc.)
     - "statistics" (runs, intervals)
     - "architecture" (detailed description of layers, gating, MoE, etc.)

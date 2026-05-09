@@ -85,20 +85,11 @@ class InformationExtractionSkill(BaseSkill):
                     response = self.llm_client.generate(prompt)
                     raw_text = response.text.strip()
                     
-                    # Extracción balanceada de JSON (evita el error "Extra data")
-                    start_idx = raw_text.find('{')
-                    if start_idx != -1:
-                        stack = 0
-                        for i_char in range(start_idx, len(raw_text)):
-                            if raw_text[i_char] == '{': stack += 1
-                            elif raw_text[i_char] == '}':
-                                stack -= 1
-                                if stack == 0:
-                                    raw_text = raw_text[start_idx:i_char+1]
-                                    break
-                    
-                    fragment_data = json.loads(raw_text)
-                    map_results.append(fragment_data)
+                    try:
+                        fragment_data = self.parse_json_response(raw_text)
+                        map_results.append(fragment_data)
+                    except Exception as e:
+                        self.log_execution(f"⚠️ Error parseando fragmento {i+1}: {str(e)}", level="warning")
                     
                     # Pequeña pausa para no saturar la cuota RPM
                     if i < len(fragments) - 1:
@@ -129,24 +120,11 @@ class InformationExtractionSkill(BaseSkill):
                 )
                 raw_text = response.text.strip()
 
-            # Extracción balanceada de JSON final
-            start_idx = raw_text.find('{')
-            if start_idx != -1:
-                stack = 0
-                for i in range(start_idx, len(raw_text)):
-                    if raw_text[i] == '{': stack += 1
-                    elif raw_text[i] == '}':
-                        stack -= 1
-                        if stack == 0:
-                            raw_text = raw_text[start_idx:i+1]
-                            break
-                
             try:
-                extracted_info = json.loads(raw_text)
-            except json.JSONDecodeError as e:
-                # Intento básico de reparación
-                fixed_text = re.sub(r',\s*([\]}])', r'\1', raw_text)
-                extracted_info = json.loads(fixed_text)
+                extracted_info = self.parse_json_response(raw_text)
+            except Exception as e:
+                self.log_execution(f"❌ Error parseando consolidación final: {str(e)}", level="error")
+                return {'extracted_info': {}, 'extraction_error': f"JSON parse error in REDUCE: {str(e)}"}
             
             # Validar si el paper es ML/AI
             if extracted_info.get('paper_type', '').startswith('INVALID'):
@@ -213,19 +191,11 @@ class ReproducibilityEvaluationSkill(BaseSkill):
             )
             response = self.llm_client.generate(evaluation_prompt)
             raw_text = response.text.strip()
-            if raw_text.startswith("```"):
-                raw_text = re.sub(r'^```(?:json)?\n?|```$', '', raw_text, flags=re.MULTILINE).strip()
-                
             try:
-                evaluation = json.loads(raw_text)
-            except json.JSONDecodeError as e:
-                fixed_text = re.sub(r',\s*([\]}])', r'\1', raw_text)
-                try:
-                    evaluation = json.loads(fixed_text)
-                    self.log_execution("⚠️ JSON de evaluación reparado automáticamente.")
-                except Exception as ex:
-                    self.log_execution(f"❌ Error parseando JSON de evaluación: {str(e)}", level="error")
-                    return {'evaluation': {}, 'evaluation_error': f'JSON parse error: {str(e)}'}
+                evaluation = self.parse_json_response(raw_text)
+            except Exception as e:
+                self.log_execution(f"❌ Error parseando JSON de evaluación: {str(e)}", level="error")
+                return {'evaluation': {}, 'evaluation_error': f'JSON parse error: {str(e)}'}
             
             if isinstance(evaluation, list):
                 evaluation = evaluation[0] if evaluation else {}
@@ -372,10 +342,11 @@ class ChecklistVerificationSkill(BaseSkill):
             try:
                 response = self.llm_client.generate(prompt)
                 raw_text = response.text.strip()
-                if raw_text.startswith("```"):
-                    raw_text = re.sub(r'^```(?:json)?\n?|```$', '', raw_text, flags=re.MULTILINE).strip()
-                
-                verification_result = json.loads(raw_text)
+                try:
+                    verification_result = self.parse_json_response(raw_text)
+                except Exception as e:
+                    self.log_execution(f"⚠️ Error parseando verificación de {item_key}: {str(e)}", level="warning")
+                    continue
                 
                 # Actualizar si hay corrección O si la nueva justificación es más técnica/detallada
                 if verification_result.get('was_corrected', False):

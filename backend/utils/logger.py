@@ -1,6 +1,7 @@
 """Sistema de logging centralizado con soporte de colores"""
 import logging
 import sys
+import io
 
 # Códigos de colores ANSI
 class Colors:
@@ -47,6 +48,14 @@ def get_logger(name):
     logger.propagate = False # Evitar duplicados con el root
     
     if not logger.handlers:
+        import sys
+        # Forzar UTF-8 en Windows para evitar errores con emojis en consola
+        if sys.platform == "win32":
+            try:
+                sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+            except (AttributeError, io.UnsupportedOperation):
+                pass
+                
         handler = logging.StreamHandler(sys.stdout)
         handler.setFormatter(ColoredFormatter())
         logger.addHandler(handler)
