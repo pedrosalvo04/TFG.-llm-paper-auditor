@@ -250,7 +250,7 @@ def get_chatbot_response_prompt(paper_text: str, question: str, history_text: st
 
 def get_thematic_coverage_prompt(paper_text: str) -> str:
     """Prompt para identificar subtemas, áreas técnicas y año del paper."""
-    template = load_prompt("sota", "thematic")
+    template = load_prompt("sota", "1. thematic")
     return render_prompt(template,
         paper_text_start=paper_text[:15000],
         paper_text_end=paper_text[-5000:]
@@ -258,7 +258,7 @@ def get_thematic_coverage_prompt(paper_text: str) -> str:
 
 def get_query_generation_prompt(subtemas_str: str, areas_str: str, paper_text: str) -> str:
     """Prompt para generar queries de búsqueda especializadas."""
-    template = load_prompt("sota", "query_generation")
+    template = load_prompt("sota", "2. query_generation")
     return render_prompt(template,
         subtemas_str=subtemas_str,
         areas_str=areas_str,
@@ -267,7 +267,7 @@ def get_query_generation_prompt(subtemas_str: str, areas_str: str, paper_text: s
 
 def get_coverage_gap_prompt(paper_text: str, subtemas_str: str) -> str:
     """Prompt para analizar gaps de cobertura bibliográfica."""
-    template = load_prompt("sota", "gap_analysis")
+    template = load_prompt("sota", "3. gap_analysis")
     return render_prompt(template,
         subtemas_str=subtemas_str,
         paper_text_start=paper_text[:5000],
@@ -276,7 +276,7 @@ def get_coverage_gap_prompt(paper_text: str, subtemas_str: str) -> str:
 
 def get_cross_validation_prompt(paper_text: str, sota_context: str, subtemas_str: str) -> str:
     """Prompt para validación cruzada y detección de omisiones."""
-    template = load_prompt("sota", "cross_validation")
+    template = load_prompt("sota", "4. cross_validation")
     return render_prompt(template,
         paper_text_start=paper_text[:5000],
         paper_text_refs=paper_text[-15000:],
