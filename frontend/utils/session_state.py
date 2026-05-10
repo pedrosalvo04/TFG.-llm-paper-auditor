@@ -20,3 +20,6 @@ def initialize_session_state():
     
     if "messages" not in st.session_state:
         st.session_state.messages = []
+
+    if "audit_in_progress" not in st.session_state:
+        st.session_state.audit_in_progress = False

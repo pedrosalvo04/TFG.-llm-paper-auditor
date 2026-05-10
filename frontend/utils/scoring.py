@@ -81,15 +81,21 @@ def get_checklist_health(evaluation: dict) -> dict:
         missing_evidence = False
         alert_msg = ""
 
+        # Helper para detectar justificaciones vacías o genéricas (Placeholders)
+        def is_useless(text):
+            if not text: return True
+            t = text.lower().strip().replace(".", "")
+            return t in ["none", "n/a", "unknown", "not found", "-", "no disponible", "no se menciona", "null", "—"]
+
         if "yes" in answer_norm:
             # Yes → necesitamos la sección o evidencia del paper
-            if not evidence and not justification:
+            if is_useless(evidence) and is_useless(justification):
                 missing_evidence = True
                 pending_count += 1
                 alert_msg = "⚠️ Respuesta 'Yes' sin evidencia de sección del paper."
         elif "no" in answer_norm:
-            # No → necesitamos justificación del autor
-            if not is_no_justified or not justification:
+            # No → necesitamos justificación del autor real
+            if not is_no_justified or is_useless(justification):
                 pending_justification = True
                 pending_count += 1
                 alert_msg = "🔴 'No' sin justificación del autor → Riesgo de Desk Reject."
@@ -100,8 +106,8 @@ def get_checklist_health(evaluation: dict) -> dict:
 
         elif "n/a" in answer_norm or answer_norm == "":
             # N/A → aceptable si hay un mínimo de contexto
-            if not justification and not evidence:
-                # N/A sin nada es aceptable solo si el ítem no aplica; no lo marcamos como riesgo
+            if is_useless(justification) and is_useless(evidence):
+                # N/A sin nada es aceptable solo si el ítem no aplica; no lo marcamos como riesgo crítico
                 pass
 
         # Evidencia final a mostrar (priorizar el campo evidence, sino justification)

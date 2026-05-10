@@ -160,7 +160,7 @@ from frontend.components.chatbot import render_chatbot
 col_logo1, col_logo2, col_logo3 = st.columns([2, 1, 2])
 with col_logo2:
     st.markdown('<div class="main-logo">', unsafe_allow_html=True)
-    st.image("C:\\Users\\pedro\\.gemini\\antigravity\\brain\\c69d8679-6953-4d08-beab-6e93a072f601\\ai_paper_auditor_logo_1778356878673.png", use_container_width=True)
+    st.image("C:\\Users\\pedro\\.gemini\\antigravity\\brain\\c69d8679-6953-4d08-beab-6e93a072f601\\ai_paper_auditor_logo_1778356878673.png", width="stretch")
     st.markdown('</div>', unsafe_allow_html=True)
 
 st.title(TITLE)
@@ -190,9 +190,18 @@ if uploaded_file:
         # Botón de inicio de auditoría
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            if st.button("🚀 Iniciar Auditoría", use_container_width=True, key="start_audit_btn", type="primary"):
-                run_audit(md_text, use_rag=use_rag)
+            is_auditing = st.session_state.get('audit_in_progress', False)
+            btn_label = "⏳ Auditando..." if is_auditing else "🚀 Iniciar Auditoría"
+            
+            if st.button(btn_label, width="stretch", key="start_audit_btn", type="primary", disabled=is_auditing):
+                st.session_state.audit_in_progress = True
                 st.rerun()
+        
+        # Ejecución diferida para que el botón se muestre como deshabilitado inmediatamente
+        if st.session_state.get('audit_in_progress'):
+            run_audit(md_text, use_rag=use_rag)
+            st.session_state.audit_in_progress = False
+            st.rerun()
     else:
         # Botón para resetear y volver a auditar si se desea
         if st.button("🔄 Nueva Auditoría / Cambiar Opciones"):

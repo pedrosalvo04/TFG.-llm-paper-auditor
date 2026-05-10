@@ -17,19 +17,25 @@ def _build_table_html(items):
         return '<span style="background:#1e3a5f;color:#93c5fd;padding:4px 14px;border-radius:20px;font-weight:700;font-size:0.82rem;white-space:nowrap;">N/A</span>'
 
     def row_bg(item):
+        a = item["answer"].strip().lower()
+        
         # 1. Rojo: "No" sin justificación (Riesgo Crítico de Desk Reject)
         if item["pending_justification"]:
-            return "#450a0a"
+            return "#450a0a" # Rojo oscuro
             
-        # 2. Ámbar/Naranja: Advertencia (Claim sin evidencia O cualquier ítem con alerta detectada)
-        if item["missing_evidence"] or (item.get("alert_msg") and item["alert_msg"].strip()):
-            return "#452e0a"
+        # 2. Ámbar/Amarillo: "No" justificado O "Yes" sin evidencia O alertas detectadas
+        if ("no" in a) or item["missing_evidence"] or (item.get("alert_msg") and item["alert_msg"].strip()):
+            return "#452e0a" # Ámbar/Naranja (Atención)
             
-        a = item["answer"].strip().lower()
+        # 3. Verde: "Yes" con evidencia (Todo OK)
         if "yes" in a:
-            return "#064e3b" # Verde Esmeralda (Todo OK)
+            return "#064e3b" # Verde Esmeralda
+            
+        # 4. Azul: "N/A"
+        if "n/a" in a:
+            return "#1e3a5f" # Navy Blue
         
-        # Para el resto (No justificado o N/A sin alertas), fondo neutro
+        # Para el resto, fondo neutro
         return "#111827"
 
     rows = ""

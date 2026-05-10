@@ -416,11 +416,15 @@ For every item:
 - "answer" MUST be exactly one of: "Yes", "No", or "N/A".
 - If "Yes" -> "evidence" MUST contain the paper section AND a significant verbatim fragment (e.g. "Section 4.1: 'We use the AdamW optimizer with...'"). 
   - PROVIDE AS MUCH CONTEXT AS POSSIBLE in the evidence.
-- If "No" -> "justification" MUST explain exactly what is missing and why it constitutes a transparency risk (e.g., "The authors mention training on H100s but provide no total training time or energy consumption details, which is required by Item 8.").
+- If "No" -> "justification" MUST explain exactly what is missing and why it constitutes a transparency risk. 
+  - CRITICAL: DO NOT use placeholders like "None", "N/A", or "NOT FOUND". Instead, write a full sentence like: "After an exhaustive search of the main text and appendix, no mention of [item] or its related details was found."
 - If "N/A" -> "justification" MUST explain clearly why the item is not applicable to this specific paper.
-- "is_no_justified" MUST be true only if explicit justification exists or pre-computed signals apply.
+  - Again, DO NOT use placeholders. Explain why it doesn't apply (e.g., "This item is not applicable because the paper is purely theoretical and does not involve any experimental assets or data.").
+- "is_no_justified" MUST be true ONLY if the AUTHOR of the paper explicitly provides a technical or ethical reason for the omission (e.g., "We cannot release the data due to privacy agreements"). 
+  - CRITICAL: If the paper is SILENT about the missing information or providing a link without a license, "is_no_justified" MUST BE FALSE. 
+  - DO NOT set it to true just because you (the auditor) are explaining the finding. It only counts if the justification comes FROM THE PAPER text.
 - BE VERBOSE and TECHNICAL. Do not use generic phrases. Provide specific details found (or not found) in the provided information.
-- LENGTH REQUIREMENT: Every "evidence" and "justification" field should be at least 2-3 sentences long if possible, citing specific data points, section names, and verbatim quotes. Do not truncate information for brevity. We value depth over conciseness here.
+- LENGTH REQUIREMENT: Every "evidence" and "justification" field should be at least 2-3 sentences long, citing specific data points, section names, or explicitly stating the absence of information in specific sections.
 
 =======================================================
 CRITICAL PER-ITEM RULES
@@ -529,14 +533,14 @@ def get_verification_prompt(item_key: str, item_data: dict, paper_context: str) 
     4. For 'Yes' answers: Verify the verbatim quote in 'evidence' actually exists and directly supports the 'Yes' answer.
     5. For Item 7 (Statistics): Beware of tables that show performance results but NO variance (std dev, intervals). A table of results is NOT statistical significance unless it includes error metrics.
     6. Search for explicit section headers like "Data Availability", "Ethical Statement", or "Limitations" that might have been missed.
-    7. If you change the answer, provide a detailed 'justification' explaining exactly why the initial reference was incorrect (e.g., "The cited quote discusses model latency, which is irrelevant to the declaration of LLM usage for writing").
+    7. If you change the answer, provide a detailed 'justification' explaining exactly why the initial reference was incorrect. CRITICAL: DO NOT use placeholders like "None", "N/A", or "NOT FOUND". Always write a full sentence explaining the absence or presence of information (e.g., "The initial evaluation was incorrect because it missed a license mention in the 'Data Availability' section of the Appendix.").
 
     RETURN JSON ONLY:
     {{
       "answer": "Yes/No/N/A",
       "evidence": "Detailed verbatim quote and section",
       "justification": "Technical explanation of why the answer is correct or why it was corrected",
-      "is_no_justified": true/false,
+      "is_no_justified": "true/false (ONLY if the paper text provides an explicit reason for the omission)",
       "was_corrected": true/false
     }}
     """

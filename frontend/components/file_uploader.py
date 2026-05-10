@@ -97,10 +97,10 @@ def run_audit(md_text, use_rag=True):
                     
                     col1, col2 = st.columns(2)
                     with col1:
-                        if st.button("🔄 Reintentar ahora", use_container_width=True):
+                        if st.button("🔄 Reintentar ahora", width="stretch"):
                             st.rerun()
                     with col2:
-                        if st.button("🚫 Cancelar ejecución", use_container_width=True):
+                        if st.button("🚫 Cancelar ejecución", width="stretch"):
                             st.session_state.resultado = {"error": "Ejecución cancelada por el usuario."}
                             st.stop()
                     
