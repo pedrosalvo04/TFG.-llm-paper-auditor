@@ -1,6 +1,7 @@
 """Script de prueba para la integración de skills"""
 import sys
-sys.path.append('.')
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 print("=" * 70)
 print("TEST DE INTEGRACIÓN - ARQUITECTURA BASADA EN SKILLS")
@@ -12,7 +13,7 @@ try:
     from backend.skills import (
         BaseSkill,
         InformationExtractionSkill,
-        ReproducibilityEvaluationSkill,
+        NeurIPSComplianceSkill,
         MetricsCalculationSkill,
         MetadataAggregationSkill,
         ConversationalResponseSkill,
@@ -143,7 +144,7 @@ except Exception as e:
 # Test 10: Verificar logging
 print("\n10. Verificando capacidad de logging...")
 try:
-    from backend.utils.logger import get_logger
+    from backend.common.logger import get_logger
     logger = get_logger("test_skill")
     logger.info("Test de logging")
     print("   [OK] Sistema de logging funcional")

@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 from backend.common.llm_client import LLMClient
-from backend.utils.logger import get_logger
+from backend.common.logger import get_logger
 
 logger = get_logger(__name__)
 

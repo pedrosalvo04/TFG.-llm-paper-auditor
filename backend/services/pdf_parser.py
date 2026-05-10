@@ -1,6 +1,6 @@
 """Servicio de parsing de archivos PDF"""
 from docling.document_converter import DocumentConverter
-from backend.utils.logger import get_logger
+from backend.common.logger import get_logger
 
 logger = get_logger(__name__)
 

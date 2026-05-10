@@ -143,7 +143,7 @@ except Exception as e:
 # Test 10: Verificar logging
 print("\n10. Verificando capacidad de logging...")
 try:
-    from backend.utils.logger import get_logger
+    from backend.common.logger import get_logger
     logger = get_logger("test_skill")
     logger.info("Test de logging")
     print("   [OK] Sistema de logging funcional")

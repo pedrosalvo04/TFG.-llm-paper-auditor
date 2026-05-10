@@ -2,11 +2,10 @@ import streamlit as st
 
 PHASES = [
     {"id": 1, "name": "Extracción", "skill": "InformationExtraction"},
-    {"id": 2, "name": "RAG Híbrido", "skill": "HybridHyperparameter"},
-    {"id": 3, "name": "Evaluación", "skill": "ReproducibilityEvaluation"},
-    {"id": 4, "name": "Verificación", "skill": "ChecklistVerification"},
-    {"id": 5, "name": "Métricas", "skill": "MetricsCalculation"},
-    {"id": 6, "name": "Finalizado", "skill": "MetadataAggregation"}
+    {"id": 2, "name": "Evaluación", "skill": "NeurIPSCompliance"},
+    {"id": 3, "name": "Verificación", "skill": "ChecklistVerification"},
+    {"id": 4, "name": "Métricas", "skill": "MetricsCalculation"},
+    {"id": 5, "name": "Finalizado", "skill": "MetadataAggregation"}
 ]
 
 def get_phase_tracker_html(current_phase_index=0):

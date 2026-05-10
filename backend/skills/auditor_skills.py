@@ -9,7 +9,7 @@ from backend.common.prompt_engine import (
     get_verification_prompt,
     get_map_extraction_prompt,
     get_reduce_extraction_prompt,
-    get_evaluation_signals
+    get_extraction_assistance_helps
 )
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
@@ -159,21 +159,14 @@ class InformationExtractionSkill(BaseSkill):
             return {'extracted_info': {}, 'extraction_error': str(e)}
 
 
-class ReproducibilityEvaluationSkill(BaseSkill):
-    """Skill para evaluar la reproducibilidad del paper usando LLM"""
+class NeurIPSComplianceSkill(BaseSkill):
+    """Skill para evaluar el cumplimiento del checklist NeurIPS 2026 usando LLM"""
     
     def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
         extracted_info = context.get('extracted_info') or {}
         
-        # Asegurar que extracted_info es un diccionario
-        if not isinstance(extracted_info, dict):
-            self.log_execution(f"⚠️ extracted_info no es un diccionario (es {type(extracted_info)}), ignorando.", level="warning")
-            extracted_info = {}
-            
         if not extracted_info:
             return {'evaluation': {}}
-        
-        red_flags = context.get('red_flags', {})
         
         if not self.llm_client:
             self.log_execution("No hay cliente LLM configurado", level="error")
@@ -182,12 +175,11 @@ class ReproducibilityEvaluationSkill(BaseSkill):
         self.log_execution("📊 Evaluando reproducibilidad...")
         
         try:
-            # Calcular señales para el frontend y para el prompt
-            signals = get_evaluation_signals(extracted_info)
+            # Calcular ayudas (helps) para el evaluador basándose en la extracción de la Fase 1
+            helps = get_extraction_assistance_helps(extracted_info)
             
             evaluation_prompt = get_evaluation_prompt(
-                extracted_info, 
-                red_flags
+                extracted_info
             )
             response = self.llm_client.generate(evaluation_prompt)
             raw_text = response.text.strip()
@@ -208,7 +200,7 @@ class ReproducibilityEvaluationSkill(BaseSkill):
             self.log_execution("✅ Evaluación completada")
             return {
                 'evaluation': evaluation,
-                'evaluation_signals': signals # Para visualización en el frontend
+                'evaluation_helps': helps # Para visualización en el frontend
             }
         except Exception as e:
             error_msg = str(e)
@@ -230,22 +222,12 @@ class MetricsCalculationSkill(BaseSkill):
         self.log_execution("Calculando métricas...")
         
         paper_text = context['paper_text']
-        red_flags = context.get('red_flags', {})
-        
-        critical_flags = [
-            k for k, v in red_flags.items() 
-            if v and not k.startswith("tiene_") and not k.startswith("menciona_") 
-            and not k.startswith("_") and not k.startswith("cantidad_")
-            and not k.startswith("puntos_")
-        ]
-        
         metrics = {
             "tiempo_segundos": context.get('execution_time', 0),
-            "caracteres_leidos": len(paper_text),
-            "red_flags_detectadas": len(critical_flags)
+            "caracteres_leidos": len(paper_text)
         }
         
-        self.log_execution(f"✅ Métricas calculadas: {metrics['red_flags_detectadas']} red flags")
+        self.log_execution("✅ Métricas calculadas")
         return {'metrics': metrics}
 
 
@@ -275,12 +257,11 @@ class MetadataAggregationSkill(BaseSkill):
             "irb_approvals": evaluation.get('irb_approvals', {}),
             "declaration_llm_usage": evaluation.get('declaration_llm_usage', {}),
             "informacion_extraida": context.get('extracted_info', {}),
-            "red_flags": context.get('red_flags', {}),
             "metricas": context.get('metrics', {}),
             "general_analysis_map": context.get('general_analysis_map', []),
             "general_analysis_reduce": context.get('general_analysis_reduce', {}),
             "hybrid_triage_fragments": context.get('hybrid_triage_fragments', []),
-            "evaluation_signals": context.get('evaluation_signals', {})
+            "evaluation_helps": context.get('evaluation_helps', {})
         }
         
         self.log_execution("✅ Resultado final construido correctamente")

@@ -1,7 +1,7 @@
 """Cliente LLM compartido para todos los servicios"""
 from google import genai
 from backend.common.config import GOOGLE_API_KEY, MODEL_NAME
-from backend.utils.logger import get_logger
+from backend.common.logger import get_logger
 
 logger = get_logger(__name__)
 

@@ -271,15 +271,15 @@ def render_audit_results(resultado, uploaded_file):
     with st.expander("🔍 Pipeline de Evaluación (Senior Area Chair + Self-Correction)"):
         st.write("Validación final de cumplimiento basada en señales pre-computadas y auditoría de falsos negativos.")
         
-        # 1. Señales Pre-computadas
-        st.markdown("### 🚦 Señales de Juicio (Signals)")
-        signals = resultado.get("evaluation_signals", {})
-        if signals:
-            for key, msg in signals.items():
+        # 1. Ayudas del Extractor (Extraction Helps)
+        st.markdown("### 🚦 Ayudas del Extractor (Extraction Helps)")
+        helps = resultado.get("evaluation_helps", {})
+        if helps:
+            for key, msg in helps.items():
                 st.markdown(f"**Item {key.replace('_', ' ').title()}:**")
                 st.info(msg)
         else:
-            st.warning("No se generaron señales dinámicas para esta evaluación.")
+            st.warning("No se generaron ayudas dinámicas para esta evaluación.")
             
         st.markdown("---")
         

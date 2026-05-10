@@ -1,4 +1,5 @@
 """Script para convertir el paper de prueba a PDF"""
+import os
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
@@ -8,8 +9,9 @@ from reportlab.lib import colors
 def create_test_paper_pdf():
     """Crea un PDF del paper de prueba con errores"""
     
-    # Crear PDF
-    pdf_file = "paper_test_con_errores.pdf"
+    # Crear PDF en la misma carpeta que el script
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    pdf_file = os.path.join(current_dir, "data", "paper_test_con_errores.pdf")
     doc = SimpleDocTemplate(pdf_file, pagesize=letter)
     story = []
     

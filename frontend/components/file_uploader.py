@@ -48,7 +48,7 @@ def extract_text_from_file(uploaded_file):
             
     return st.session_state.get('md_text')
 
-def run_audit(md_text, use_rag=True):
+def run_audit(md_text):
     """Ejecuta el proceso de auditoría sobre el texto proporcionado"""
     if not md_text:
         st.error("⚠️ No hay texto para auditar.")
@@ -76,8 +76,7 @@ def run_audit(md_text, use_rag=True):
         try:
             st.session_state.resultado = st.session_state.auditor.audit(
                 md_text, 
-                status_callback=update_status,
-                use_rag=use_rag
+                status_callback=update_status
             )
             
             # Si hubo un error en la auditoría, verificamos si es por saturación
@@ -112,7 +111,7 @@ def run_audit(md_text, use_rag=True):
                     st.stop()
             
             # Forzar actualización final del tracker
-            tracker_placeholder.markdown(get_phase_tracker_html(7), unsafe_allow_html=True)
+            tracker_placeholder.markdown(get_phase_tracker_html(6), unsafe_allow_html=True)
                 
             status.update(label="✅ Análisis completado", state="complete", expanded=False)
             st.success("✅ Análisis completado")

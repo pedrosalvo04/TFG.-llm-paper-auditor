@@ -10,7 +10,7 @@ from backend.common.config import (
     EMBEDDING_MODEL_NAME,
     VERIFICATION_MODEL_NAME
 )
-from backend.utils.logger import get_logger
+from backend.common.logger import get_logger
 from backend.skills.auditor_skills import (
     InformationExtractionSkill,
     ReproducibilityEvaluationSkill,

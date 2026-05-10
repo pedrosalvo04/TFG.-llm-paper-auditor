@@ -31,8 +31,6 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 SEMANTIC_SCHOLAR_API_KEY = os.getenv("SEMANTIC_SCHOLAR_API_KEY")
 
 # Configuración de modelos
-# Modelo para Embeddings (RAG)
-EMBEDDING_MODEL_NAME = "gemini-embedding-2"
 # Modelo rápido y con razonamiento para Triage y Extracción Masiva (Fase Map)
 MAP_MODEL_NAME = "gemini-3.1-flash-lite-preview"
 # Modelo pesado y analítico para Orquestación y Consolidación (Fase Reduce) - Flash Lite para mayor velocidad
@@ -105,7 +103,6 @@ Name: models/gemini-3.1-flash-live-preview, Display Name: Gemini 3.1 Flash Live 
 """
 # Variables por compatibilidad o uso por defecto si no se especifica
 MODEL_NAME = EXTRACTION_MODEL_NAME
-RAG_MODEL_NAME = MAP_MODEL_NAME
 
 # Temperaturas por servicio
 AUDIT_TEMPERATURE = 0.0

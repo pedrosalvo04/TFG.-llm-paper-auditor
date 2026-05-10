@@ -1,4 +1,7 @@
 """Script para verificar que la refactorización del auditor funciona correctamente"""
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from backend.services.auditor import PaperAuditor
 from backend.common.prompts import get_extraction_prompt, get_evaluation_prompt
 

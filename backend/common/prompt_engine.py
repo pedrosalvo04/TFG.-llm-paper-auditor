@@ -39,138 +39,185 @@ def render_prompt(template: str, **kwargs) -> str:
 # AUDITOR PROMPTS
 # =======================================================
 
-def get_extraction_prompt(paper_text: str, red_flags: dict) -> str:
+def get_extraction_prompt(paper_text: str) -> str:
     """Prompt monolítico (legacy/fallback)."""
     template = load_prompt("auditor", "extraction")
     
-    clean_flags = {k: v for k, v in red_flags.items() if not k.startswith('_')} if red_flags else {}
-    flags_section = ""
-    if clean_flags:
-        flags_section = f"\nRED FLAGS DETECTED BY REGEX PRE-PROCESSING:\n{json.dumps(clean_flags, indent=2)}\n"
-        
     return render_prompt(template,
         snippets_section="", 
-        flags_section=flags_section,
+        flags_section="",
         paper_text=paper_text
     )
 
 def get_map_extraction_prompt(fragment_text: str) -> str:
     """Prompt para la fase MAP del analisis general."""
-    template = load_prompt("auditor", "map_extraction")
+    template = load_prompt("auditor", "1. map_extraction")
     return render_prompt(template, fragment_text=fragment_text)
 
 def get_reduce_extraction_prompt(map_results: list) -> str:
     """Prompt para la fase REDUCE del analisis general."""
-    template = load_prompt("auditor", "reduce_extraction")
+    template = load_prompt("auditor", "2. reduce_extraction")
     return render_prompt(template, map_results=json.dumps(map_results, indent=2))
 
-def get_evaluation_signals(info: dict) -> dict:
+def get_extraction_assistance_helps(info: dict) -> dict:
     """
-    Lógica de señales de cumplimiento para el auditor.
-    Esta función NO es un prompt, sino lógica auxiliar que se queda en Python.
+    Convierte el JSON de extracción de la Fase 1 en pequeñas ayudas (helps)
+    para el evaluador de la Fase 2. No es un prompt final, sino fragmentos inyectables.
     """
-    signals = {}
+    helps = {}
     
     # Aseguramos que info sea un diccionario
     if not isinstance(info, dict):
         info = {}
 
     def safe_get(obj, key, default_val=None):
-        """Helper para obtener valores de forma segura si obj no es un dict."""
         if not isinstance(obj, dict):
             return default_val
         return obj.get(key, default_val)
 
+    def find_urls(obj):
+        urls = []
+        if isinstance(obj, str):
+            import re
+            # Regex robusto que incluye URLs con y sin protocolo (comunes en papers)
+            found = re.findall(r'(?:https?://|www\.)(?:[-\w.]|(?:%[\da-fA-F]{2}))+(?:\S+)?', obj)
+            # Casos especiales de dominios de investigación comunes si no tienen protocolo
+            found.extend(re.findall(r'\b(?:github\.com|huggingface\.co|arxiv\.org|gitlab\.com)/\S+', obj))
+            
+            # Limpiar URLs de caracteres de puntuación final
+            urls.extend([u.rstrip('.,;)]') for u in found])
+        elif isinstance(obj, list):
+            for item in obj:
+                urls.extend(find_urls(item))
+        elif isinstance(obj, dict):
+            for value in obj.values():
+                urls.extend(find_urls(value))
+        return list(set(urls))
+
+    def search_globally(obj, keywords):
+        content = str(obj).lower()
+        return any(k.lower() in content for k in keywords)
+
+    # Búsqueda global de URLs y señales críticas
+    all_urls = find_urls(info)
+    url_str = ", ".join(all_urls) if all_urls else "NOT FOUND"
+    info_str_lower = str(info).lower()
+    
     # 1. REPRODUCIBILIDAD (ITEM 4)
-    code_data = safe_get(info, 'code', {})
-    code_url = safe_get(code_data, 'repository_url', 'NOT FOUND')
+    # Búsqueda global de pesos/checkpoints (no solo en architecture)
+    weights_keywords = ['weights', 'checkpoint', 'huggingface', 'download', 'checkpoints', 'model card', 'available at']
+    weights = 'yes' if search_globally(info, weights_keywords) else 'no'
     
-    arch_data = safe_get(info, 'architecture', {})
-    weights = safe_get(arch_data, 'weights_available', 'no')
-    
-    signals['reproducibility'] = (
-        f"CODE FOUND: {code_url}. WEIGHTS: {weights}. "
+    helps['reproducibility'] = (
+        f"CODE/MODEL URLS: {url_str}. WEIGHTS: {weights}. "
         "NeurIPS Rule: If ANY code/model URL is present, answer 'Yes'. "
         "If NO code/URL is found, answer 'No' and set is_no_justified: false."
     )
     
     # 2. OPEN ACCESS (ITEM 5)
-    data_info = safe_get(info, 'data', {})
-    data_url = safe_get(data_info, 'access_url', 'NOT FOUND')
-    signals['open_access'] = (
-        f"DATA URL: {data_url}. "
+    helps['open_access'] = (
+        f"DATA/RESOURCE URLS: {url_str}. "
         "If ANY public URL (project, demo, HF, github) exists -> 'Yes'. "
         "If only private/proprietary mentioned -> 'No' and set is_no_justified: true ONLY if they explain why."
     )
     
     # 3. ESTADÍSTICA (ITEM 7)
-    stats = safe_get(info, 'statistics', {})
-    ci = safe_get(stats, 'confidence_intervals', 'no')
-    st = safe_get(stats, 'significance_tests', 'no')
-    runs = safe_get(stats, 'num_runs', 'NOT FOUND')
-    signals['statistics'] = (
-        f"CI: {ci}, TESTS: {st}, RUNS: {runs}. "
-        "Rule: If NO intervals/variance/runs found -> answer 'No' and set is_no_justified: false."
+    # Búsqueda más agresiva de símbolos estadísticos
+    ci_keywords = ['confidence interval', '±', 'std dev', 'standard deviation', 'error bars', 'variance', 'uncertainty']
+    st_keywords = ['p-value', 'significant', 't-test', 'wilcoxon', 'statistical significance', 'p <', 'p=']
+    
+    ci = 'yes' if any(x in info_str_lower for x in ci_keywords) else 'no'
+    st = 'yes' if any(x in info_str_lower for x in st_keywords) else 'no'
+    
+    stats_data = safe_get(info, 'statistics', {})
+    runs = safe_get(stats_data, 'num_runs', 'NOT FOUND')
+    
+    hyperparams = safe_get(info, 'hyperparameters', {})
+    is_greedy = search_globally(hyperparams, ['greedy']) or search_globally(info_str_lower, ['deterministic decoding', 'greedy search'])
+    
+    greedy_note = " (DETERMINISTIC: Greedy decoding detected. Results are likely deterministic zero-shot benchmarks.)" if is_greedy else ""
+    
+    helps['statistics'] = (
+        f"CI/Variance: {ci}, Significance Tests: {st}, Runs: {runs}.{greedy_note} "
+        "Rule: If NO intervals/variance/runs found -> answer 'No' and set is_no_justified: false. "
+        "EXCEPTIONAL RULE: For deterministic LLM benchmarks, 'Yes' is acceptable if greedy decoding is used."
     )
     
     # 4. RECURSOS (ITEM 8)
     hw = safe_get(info, 'hardware', {})
-    hw_summary = f"{safe_get(hw, 'gpu_cpu', 'NOT FOUND')} x {safe_get(hw, 'num_gpus', 'NOT FOUND')}"
-    time = safe_get(hw, 'time', 'NOT FOUND')
-    signals['compute_resource'] = (
-        f"DETECTED hardware/cluster: {hw_summary}. "
-        "CRITICAL RULE FOR ITEM 8: "
-        "If ANY hardware, internal cluster (e.g., 'Compute Canada', 'Calcul Québec'), or cloud provider is mentioned -> answer 'Yes' for the resource part. "
-        "If total training time is ALSO mentioned -> 'Yes' with full evidence. "
-        "If ONLY cluster/hardware is mentioned but NOT time -> answer 'No' but set is_no_justified: false, "
-        "and EXPLICITLY MENTION the cluster found in the justification so the user knows it was detected but is insufficient."
+    hw_str = str(hw) if hw else "NOT FOUND"
+    co2_keywords = ['co2', 'carbon', 'emission', 'tco2eq', 'power consumption', 'energy usage', 'watt']
+    co2_found = search_globally(info, co2_keywords)
+    co2_note = " (ENVIRONMENTAL DATA DETECTED: CO2 emissions or carbon footprint mentioned.)" if co2_found else ""
+    
+    efficiency_keywords = ['efficiency', 'latency', 'throughput', 'samples per second', 'ms/token', 'tokens/sec', 'runtime']
+    efficiency_found = search_globally(info, efficiency_keywords)
+    efficiency_note = " (EFFICIENCY METRIC DETECTED: Per-sample runtime or latency found.)" if efficiency_found else ""
+
+    helps['compute_resource'] = (
+        f"DETECTED hardware/cluster: {hw_str}.{co2_note}{efficiency_note} "
+        "CRITICAL RULE FOR ITEM 8: If ANY hardware, cluster, or CO2 emissions are mentioned -> answer 'Yes'. "
+        "If hardware is mentioned but BOTH time and efficiency/CO2 are missing -> 'No'."
     )
     
-    # 5. LICENCIAS (ITEM 12)
-    lic = safe_get(info, 'licenses_extraction', {})
-    lic_found = safe_get(lic, 'licenses_named', [])
-    signals['licenses'] = (
+    # 5. LICENSES (ITEM 12)
+    lic_found = []
+    lic_keywords = {
+        'mit': 'MIT', 'apache': 'Apache', 'creative commons': 'CC', 'cc-by': 'CC', 
+        'openrail': 'OpenRAIL', 'bsd': 'BSD', 'gpl': 'GPL', 'allenai': 'AllenAI License'
+    }
+    
+    for k, v in lic_keywords.items():
+        if k in info_str_lower:
+            lic_found.append(v)
+    lic_found = list(set(lic_found))
+
+    helps['licenses'] = (
         f"LICENSES FOUND: {lic_found}. "
         "Rule: If NO specific license (MIT, Apache, CC) is named -> answer 'No' and set is_no_justified: false."
     )
     
     # 6. CROWDSOURCING (ITEM 14)
+    human_datasets = [
+        'ultrafeedback', 'wildchat', 'preference data', 'rlhf', 'human feedback', 
+        'crowdsourcing', 'mturk', 'prolific', 'annotators', 'human evaluators'
+    ]
+    uses_human_data = search_globally(info, human_datasets)
+    
     crowd = safe_get(info, 'human_subjects_extraction', {})
-    uses_human = safe_get(crowd, 'uses_human_annotation', 'no')
+    # Unificar detección
+    detected_human = (safe_get(crowd, 'uses_human_annotation') == 'yes') or uses_human_data
+    uses_human_flag = 'yes' if detected_human else 'no'
     comp = safe_get(crowd, 'compensation_details', 'NOT FOUND')
-    signals['crowdsourcing'] = (
-        f"USES HUMAN: {uses_human}, COMP: {comp}. "
-        "Rule: If NOT using humans/crowds -> 'N/A'. "
-        "If using humans but NO compensation mentioned -> 'No' and set is_no_justified: false."
+    
+    helps['crowdsourcing'] = (
+        f"USES HUMAN/PREFERENCE DATA: {uses_human_flag}, COMP: {comp}. "
+        "Rule: If human-derived data (RLHF, Ultrafeedback) is used, Items 14/15 MUST be addressed (Yes/No). "
+        "N/A is ONLY for purely algorithmic papers with NO human data interaction."
     )
     
-    return signals
+    return helps
 
-def get_evaluation_prompt(extracted_info: dict, red_flags: dict) -> str:
+def get_evaluation_prompt(extracted_info: dict) -> str:
     """Genera el prompt para evaluacion segun criterios NeurIPS 2026."""
-    template = load_prompt("auditor", "evaluation")
+    template = load_prompt("auditor", "3. evaluation")
     
-    clean_flags = {k: v for k, v in red_flags.items() if not k.startswith('_')} if red_flags else {}
-    flags_section = ""
-    if clean_flags:
-        flags_section = f"\nRED FLAGS (automated regex pre-processing):\n{json.dumps(clean_flags, indent=2)}\n"
-
-    signals = get_evaluation_signals(extracted_info)
+    helps = get_extraction_assistance_helps(extracted_info)
 
     return render_prompt(template,
         extracted_info_json=json.dumps(extracted_info, indent=2, ensure_ascii=False),
-        flags_section=flags_section,
-        reproducibility_signal=signals['reproducibility'],
-        open_access_signal=signals['open_access'],
-        statistics_signal=signals['statistics'],
-        compute_resource_signal=signals['compute_resource'],
-        licenses_signal=signals['licenses'],
-        crowdsourcing_signal=signals['crowdsourcing']
+        flags_section="",
+        reproducibility_help=helps['reproducibility'],
+        open_access_help=helps['open_access'],
+        statistics_help=helps['statistics'],
+        compute_resource_help=helps['compute_resource'],
+        licenses_help=helps['licenses'],
+        crowdsourcing_help=helps['crowdsourcing']
     )
 
 def get_verification_prompt(item_key: str, item_data: dict, paper_context: str) -> str:
     """Prompt para la fase de 'Auditor Estricto' (Self-Correction)."""
-    template = load_prompt("auditor", "verification")
+    template = load_prompt("auditor", "4. verification")
     
     answer = item_data.get('answer', 'N/A')
     justification = item_data.get('justification', '')
@@ -196,20 +243,6 @@ def get_chatbot_response_prompt(paper_text: str, question: str, history_text: st
         history_text=history_text,
         question=question
     )
-
-# =======================================================
-# RAG PROMPTS
-# =======================================================
-
-def get_rag_map_extraction_prompt(chunk: str) -> str:
-    """Prompt para la fase MAP de extracción híbrida RAG."""
-    template = load_prompt("rag", "map_triage")
-    return render_prompt(template, chunk=chunk)
-
-def get_rag_reduce_extraction_prompt(extracted_fragments: list) -> str:
-    """Prompt para la fase REDUCE de extracción híbrida RAG."""
-    template = load_prompt("rag", "reduce_triage")
-    return render_prompt(template, extracted_fragments=json.dumps(extracted_fragments, indent=2))
 
 # =======================================================
 # SOTA PROMPTS

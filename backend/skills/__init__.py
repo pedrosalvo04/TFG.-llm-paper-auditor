@@ -6,17 +6,12 @@ from backend.skills.base_skill import BaseSkill
 # Auditor Skills
 from backend.skills.auditor_skills import (
     InformationExtractionSkill,
-    ReproducibilityEvaluationSkill,
+    NeurIPSComplianceSkill,
     MetricsCalculationSkill,
     MetadataAggregationSkill,
     ChecklistVerificationSkill
 )
 
-# RAG Skills
-from backend.skills.rag_extraction_skill import (
-    HybridHyperparameterExtractionSkill,
-    Hyperparameters
-)
 
 # Chatbot Skills
 from backend.skills.chatbot_skills import (
@@ -33,31 +28,13 @@ from backend.skills.sota_skills import (
     CrossValidationSkill
 )
 
-# Regex Detection Skills
-from backend.skills.regex_detection_skills import (
-    LimitationsQualityDetectionSkill,
-    SoftwareVersionDetectionSkill,
-    HardwareDetailDetectionSkill,
-    HyperparameterDetectionSkill,
-    DataAvailabilityDetectionSkill,
-    CodeAvailabilityDetectionSkill,
-    StatisticsDetectionSkill,
-    EnvironmentalImpactDetectionSkill,
-    ProblematicPhrasesDetectionSkill,
-    LlmUsageDetectionSkill,
-    CrowdsourcingDetectionSkill,
-    LicenseDetectionSkill
-)
-
 __all__ = [
     'BaseSkill',
     'InformationExtractionSkill',
-    'ReproducibilityEvaluationSkill',
+    'NeurIPSComplianceSkill',
     'MetricsCalculationSkill',
     'MetadataAggregationSkill',
     'ChecklistVerificationSkill',
-    'HybridHyperparameterExtractionSkill',
-    'Hyperparameters',
     'ConversationalResponseSkill',
     'ContextValidationSkill',
     'ThematicCoverageSkill',
@@ -65,16 +42,4 @@ __all__ = [
     'SemanticScholarSearchSkill',
     'CoverageGapAnalysisSkill',
     'CrossValidationSkill',
-    'LimitationsQualityDetectionSkill',
-    'SoftwareVersionDetectionSkill',
-    'HardwareDetailDetectionSkill',
-    'HyperparameterDetectionSkill',
-    'DataAvailabilityDetectionSkill',
-    'CodeAvailabilityDetectionSkill',
-    'StatisticsDetectionSkill',
-    'EnvironmentalImpactDetectionSkill',
-    'ProblematicPhrasesDetectionSkill',
-    'LlmUsageDetectionSkill',
-    'CrowdsourcingDetectionSkill',
-    'LicenseDetectionSkill',
 ]
