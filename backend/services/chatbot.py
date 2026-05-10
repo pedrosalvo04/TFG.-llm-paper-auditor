@@ -1,7 +1,7 @@
 """Servicio de chatbot interactivo refactorizado con arquitectura de skills"""
 from backend.common.llm_client import LLMClient
 from backend.common.config import CHAT_CONFIG
-from backend.utils.logger import get_logger
+from backend.common.logger import get_logger
 from backend.skills.chatbot_skills import (
     ConversationalResponseSkill,
     ContextValidationSkill

@@ -1,0 +1,190 @@
+{
+  "validation_strategy": {
+    "rationale": "Nature Auditor Pro is a Python/Streamlit paper-auditing tool (Gemini LLM backend, no SQL database). Specs span 10 deliverables totalling ~544 KB. Sub-writers produced 02_functional_backend.md (88 KB) and 02_functional_frontend.md (60 KB); the expected consolidator 02_functional_specs.md is ABSENT from the output directory — no consolidator_consistency validator is designed (nothing to check against). Sizing follows PER_VALIDATOR_CAPACITY=80 findings: 88 KB functional backend splits into 2 forward-coverage validators; all other files fit in 1 validator each. Depth is validated at three levels: entity fields, business-rule structure, and API/LLM call schemas. Four modules were detected from the extraction plan (backend_core, backend_skills, frontend, root). Total: 16 validators; recommended_max_concurrent=8 (2 batches, ~10-20 min wall-clock).",
+    "deliverables_detected": [
+      "01_data_model.md",
+      "02_functional_backend.md",
+      "02_functional_frontend.md",
+      "03_technical_specs.md",
+      "04_look_and_feel.md",
+      "05_test_scenarios.md",
+      "06_glossary.md",
+      "07_module_index.md",
+      "08_dependency_graph.md",
+      "08_dependency_graph.json"
+    ],
+    "modules_detected": [
+      "backend_core",
+      "backend_skills",
+      "frontend",
+      "root"
+    ],
+    "sizing_analysis": {
+      "note": "1 finding per 1-2 KB spec content; PER_VALIDATOR_CAPACITY=80",
+      "01_data_model.md":        { "size_kb": 48,  "estimated_findings": "40-60",  "validators_needed": 1 },
+      "02_functional_backend.md":{ "size_kb": 88,  "estimated_findings": "80-130", "validators_needed": 2, "split": "pipeline/auditor vs RAG/SOTA/LLM-client" },
+      "02_functional_frontend.md":{ "size_kb": 60, "estimated_findings": "50-80",  "validators_needed": 1 },
+      "03_technical_specs.md":   { "size_kb": 36,  "estimated_findings": "25-45",  "validators_needed": 1 },
+      "04_look_and_feel.md":     { "size_kb": 40,  "estimated_findings": "30-55",  "validators_needed": 1 },
+      "05_test_scenarios.md":    { "size_kb": 56,  "estimated_findings": "40-70",  "validators_needed": 1 },
+      "06_glossary.md":          { "size_kb": 44,  "estimated_findings": "35-60",  "validators_needed": 1 },
+      "07_module_index.md":      { "size_kb": 68,  "estimated_findings": "50-80",  "validators_needed": 1 },
+      "08_dependency_graph.md":  { "size_kb": 60,  "estimated_findings": "N/A (schema check)", "validators_needed": 1, "shared_with": "08_dependency_graph.json" }
+    },
+    "missing_consolidator_note": "02_functional_specs.md was expected (synthesis plan declared a functional consolidator) but is absent from the output directory. The consolidator_consistency validator type is therefore not applicable in this run. Operators should investigate whether the consolidator writer failed during synthesis.",
+    "recommended_max_concurrent": 8,
+    "total_validators": 16
+  },
+  "global_skip_rules": [
+    "(a) When reading extracted_*.md files, SKIP the top-level sections ## FIX LOG, ## PURGE LOG, and ## REFORMAT LOG. These are audit metadata produced by the extraction_fix phase, NOT spec content. Do not derive any findings from them.",
+    "(b) [GAP_ID: hall_*] markers are INTENTIONAL post-purge documented absences. NEVER flag them as a FIDELITY_ISSUE. They are evidence of correct hallucination purging, not bugs.",
+    "(c) [GAP: ...] markers (without the hall_ prefix) are legitimate documented absences from the extraction phase. Do not flag them as issues; they are signals to the operator for downstream resolution."
+  ],
+  "validators": [
+    {
+      "id": "val_forward_data_model",
+      "type": "forward_coverage",
+      "engine": "cli",
+      "scope": "Verify that every entity, field, configuration structure, named constant, session-state key, and LLM response JSON schema declared in 01_data_model.md traces back to a concrete line in the source code (claim → SOURCE: file:line). For each element: open the referenced source file, confirm the declaration exists at or near the stated line, and check that the field name, type annotation, default value, and constraint match what is in the spec. Focus on: Pydantic/dataclass models (Hyperparameters, AuditState, ExtractedInfo, ChecklistItem, BaseSkill, CompositeSkill and all subclasses), configuration dicts (AUDIT_CONFIG, CHAT_CONFIG, SOTA_CONFIG), named constants (API keys, model names, temperature values, Semantic Scholar constants, RAG constants, chunking constants), session-state schema, and all LLM response JSON schemas. Report each mismatch as a FIDELITY_ISSUE with evidence table (claim | source_ref | status). SKIP RULES: (a) In any extracted_*.md file you consult, skip ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG sections — audit metadata only, not spec content. (b) [GAP_ID: hall_*] markers are intentional documented absences — NEVER flag as FIDELITY_ISSUE. (c) [GAP: ...] markers are legitimate documented absences — do not flag.",
+      "target_specs": ["01_data_model.md"],
+      "skills": ["re-generic"]
+    },
+    {
+      "id": "val_forward_backend_pipeline",
+      "type": "forward_coverage",
+      "engine": "cli",
+      "scope": "Verify forward coverage of the auditing pipeline and skill execution domain in 02_functional_backend.md. Focus on: PaperAuditor class (constructor, audit() method, step orchestration, error handling), all concrete skill classes in auditor_skills.py (InformationExtractionSkill, ReproducibilityEvaluationSkill, ChecklistVerificationSkill, ConversationalResponseSkill, ContextValidationSkill, ThematicCoverageSkill, MetricsCalculationSkill, MetadataAggregationSkill), CompositeSkill execution loop, and BaseSkill abstract contract. For each behavioral claim in the spec: open the referenced source file, confirm the code path exists, and verify the described behavior (inputs, outputs, branching, error handling, inter-skill context accumulation). Report each unverifiable claim as FIDELITY_ISSUE with evidence table. SKIP RULES: (a) Skip ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG in any extracted_*.md you consult. (b) [GAP_ID: hall_*] markers are intentional — NEVER flag as FIDELITY_ISSUE. (c) [GAP: ...] markers are legitimate documented absences — do not flag.",
+      "target_specs": ["02_functional_backend.md"],
+      "issue_range_hint": "pipeline/auditor/skills domain — first ~half of 02_functional_backend.md",
+      "skills": ["re-generic"]
+    },
+    {
+      "id": "val_forward_backend_rag_sota",
+      "type": "forward_coverage",
+      "engine": "cli",
+      "scope": "Verify forward coverage of the RAG extraction, SOTA analysis, LLM client, and supporting services domain in 02_functional_backend.md. Focus on: HybridHyperparameterExtractionSkill (MAP/REDUCE phases, ChromaDB operations, embedding batching, relevance scoring formula), SemanticScholarSearchSkill (API calls, dedup, rate-limiting, top-N selection), CrossValidationSkill, QueryGenerationSkill, CoverageGapAnalysisSkill, LLMClient (generate method, retry loop, retryable codes, jitter formula), PDFParser (chunking, convert_pdf_to_markdown), and all regex detection skills (NegationWindow constant). For each behavioral or algorithmic claim: open the source file, confirm the implementation at the stated line, and verify the described behavior. Report unverifiable claims as FIDELITY_ISSUE with evidence table. SKIP RULES: (a) Skip ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG in any extracted_*.md. (b) [GAP_ID: hall_*] — intentional, never flag as FIDELITY_ISSUE. (c) [GAP: ...] — legitimate absences, do not flag.",
+      "target_specs": ["02_functional_backend.md"],
+      "issue_range_hint": "RAG/SOTA/LLM-client/services domain — second ~half of 02_functional_backend.md",
+      "skills": ["re-generic"]
+    },
+    {
+      "id": "val_forward_frontend",
+      "type": "forward_coverage",
+      "engine": "cli",
+      "scope": "Verify forward coverage of all frontend behavioral claims in 02_functional_frontend.md. Focus on: Streamlit app entry point (app.py — layout, tab structure, session-state initialization, Limpiar button, result routing), FileUploader component (file change detection via archivo_actual/file_hash, PDF vs TXT/MD path, audit() call, saturation error classification, progress indicators), AuditResults component (compliance table with row color logic, gauge chart rendering, SOTA section rendering), Chatbot component (message appending, PaperChatbot.preguntar() call, session_state.messages lifecycle), SotaSection component (SotaAnalyzer.analyze_sota() call, results display), GaugeChart (NeurIPS score tier labels and color mapping, threshold line), and SessionState initialization. For each claim: confirm source file + line, behavior, and conditional logic. Report unverifiable claims as FIDELITY_ISSUE. SKIP RULES: (a) Skip ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG in any extracted_*.md. (b) [GAP_ID: hall_*] — intentional, never flag. (c) [GAP: ...] — legitimate absences, do not flag.",
+      "target_specs": ["02_functional_frontend.md"],
+      "skills": ["re-generic"]
+    },
+    {
+      "id": "val_forward_technical",
+      "type": "forward_coverage",
+      "engine": "cli",
+      "scope": "Verify forward coverage of all technical spec claims in 03_technical_specs.md. Focus on: all external API integrations (Google Gemini REST/SDK calls — endpoints, authentication, generation config parameters, JSON-mode setup), Semantic Scholar API integration (endpoint URL, query parameters, timeout, year range), ChromaDB usage (collection creation, batchEmbedContents, query parameters), all configuration constants (model names, temperatures, retry parameters, chunking sizes), environment variable loading (load_dotenv, GOOGLE_API_KEY, SEMANTIC_SCHOLAR_API_KEY), logging setup (ColoredFormatter, log-level color mapping, CleanNetworkLogs filter), and any security or secrets handling described. For each claim: confirm source file + line reference. Report unverifiable claims as FIDELITY_ISSUE. SKIP RULES: (a) Skip ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG in any extracted_*.md. (b) [GAP_ID: hall_*] — intentional, never flag. (c) [GAP: ...] — legitimate absences, do not flag.",
+      "target_specs": ["03_technical_specs.md"],
+      "skills": ["re-generic"]
+    },
+    {
+      "id": "val_backward_coverage",
+      "type": "backward_coverage",
+      "engine": "cli",
+      "scope": "Verify that every source file with LOC > 50 is represented in at least one spec. Enumerate all source files under the input directory (backend/, frontend/, tests/, root .py files). For each file with LOC > 50: search across all target specs for at least one reference to its primary classes, functions, constants, or behaviors. Files with LOC ≤ 50 may be skipped. Report any source file with meaningful content (LOC > 50) that has NO representation in any of the target specs as a COVERAGE_GAP, with the file path and estimated LOC. SKIP RULES: (a) Skip ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG in any extracted_*.md. (b) [GAP_ID: hall_*] — intentional, never flag as FIDELITY_ISSUE. (c) [GAP: ...] — legitimate documented absences; count these as 'partially covered' not 'missing'.",
+      "target_specs": [
+        "01_data_model.md",
+        "02_functional_backend.md",
+        "02_functional_frontend.md",
+        "03_technical_specs.md",
+        "04_look_and_feel.md",
+        "07_module_index.md"
+      ],
+      "skills": ["re-generic"]
+    },
+    {
+      "id": "val_depth_entities",
+      "type": "depth",
+      "engine": "cli",
+      "scope": "Verify structured decomposition depth of every entity in 01_data_model.md. For each Pydantic model, dataclass, or configuration structure: (1) every field must have a declared type annotation (exact Python type, not just 'str'), (2) every field must have a nullability decision (Yes/No), (3) every field must have a default value or explicit 'no default', (4) every field must have a constraint description (e.g. Field(description=...), validator, allowed values), and (5) every field must have a source reference (file:line). Apply the same depth check to: all configuration dicts (every key must have type + value + description + source), all named constants (value + type + usage context + source), and all session-state keys (type + initial value + full lifecycle: set/mutated/cleared at). Report each field missing any of these 5 attributes as a DEPTH_GAP. SKIP RULES: (a) Skip ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG in any extracted_*.md. (b) [GAP_ID: hall_*] — intentional, never flag. (c) [GAP: ...] — legitimate absences; note as existing gap but do not create new DEPTH_GAP entry.",
+      "target_specs": ["01_data_model.md"],
+      "skills": ["re-generic"]
+    },
+    {
+      "id": "val_depth_business_rules",
+      "type": "depth",
+      "engine": "cli",
+      "scope": "Verify structured decomposition of business rules and behavioral flows in 02_functional_backend.md and 02_functional_frontend.md. Every business rule or behavioral specification must have: RULE (what the system does), TRIGGER (what initiates it), CONDITION (guard/branching logic), ACTION (concrete steps taken), and ERROR (exception handling or fallback). Check: PaperAuditor.audit() orchestration steps, all skill execute() methods, LLMClient retry loop logic, saturation error classification in FileUploader, session-state reset on file change, Limpiar button cleanup behavior, checklist answer validation (Yes/No/N/A with evidence/justification fields), score tier computation. Report each behavioral claim lacking any of the 5 structural attributes as a DEPTH_GAP with evidence. SKIP RULES: (a) Skip ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG in any extracted_*.md. (b) [GAP_ID: hall_*] — intentional, never flag. (c) [GAP: ...] — legitimate absences, do not flag.",
+      "target_specs": ["02_functional_backend.md", "02_functional_frontend.md"],
+      "skills": ["re-generic"]
+    },
+    {
+      "id": "val_depth_apis",
+      "type": "depth",
+      "engine": "cli",
+      "scope": "Verify structured decomposition depth of all API and LLM call schemas in 03_technical_specs.md. For every API call (Gemini SDK, Semantic Scholar REST, ChromaDB): (1) endpoint or SDK method must be named, (2) input parameters/request schema must be fully specified (field names, types, values), (3) response schema or return type must be fully specified, (4) error handling must be documented (which codes trigger retry, which abort), (5) authentication mechanism must be documented. For LLM generation configs (AUDIT_CONFIG, CHAT_CONFIG, SOTA_CONFIG): every generation parameter must have type + value. For ChromaDB: collection creation params, embedding method, query params (n_results, distance metric) must be specified. Report missing schema elements as DEPTH_GAP. SKIP RULES: (a) Skip ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG in any extracted_*.md. (b) [GAP_ID: hall_*] — intentional, never flag. (c) [GAP: ...] — legitimate absences, do not flag.",
+      "target_specs": ["03_technical_specs.md"],
+      "skills": ["re-generic"]
+    },
+    {
+      "id": "val_data_model_completeness",
+      "type": "data_model_completeness",
+      "engine": "cli",
+      "scope": "Verify that 01_data_model.md achieves complete entity coverage with zero missing fields. For every entity (Pydantic model, dataclass, or config struct): (1) count of fields in spec must match count of fields in source (open source file and count), (2) no entity may appear with 0 fields unless source confirms it is a marker/mixin class, (3) every field's Python type must match source annotation exactly (e.g. 'Optional[LLMClient]' not just 'object'), (4) every field's default must match source exactly (including 'None', '{}', class_name.__name__), (5) every field's constraint must be derivable from source (Field(...) descriptor, validator, or docstring). Pay special attention to: AuditState and ExtractedInfo (inferred from tests — flag any field where the inference is unverifiable as COVERAGE_GAP not FIDELITY_ISSUE), and ChecklistItem (source file absent — fields should all be [GAP]). Report entities with 0 fields where source has >0 as COVERAGE_GAP. SKIP RULES: (a) Skip ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG in any extracted_*.md. (b) [GAP_ID: hall_*] — intentional, never flag. (c) [GAP: ...] — legitimate; count as documented gap not error.",
+      "target_specs": ["01_data_model.md"],
+      "skills": ["re-generic"]
+    },
+    {
+      "id": "val_laf_completeness",
+      "type": "look_and_feel_completeness",
+      "engine": "cli",
+      "scope": "Verify that every screen, view, panel, or UI component in 04_look_and_feel.md has concrete element-level specification (not just prose). For each screen or component: (1) it must have a concrete identifier (Streamlit widget name, function call, component file reference) not just a label like 'the upload section', (2) every interactive element must have a concrete element ID or Streamlit key (e.g. st.file_uploader('Upload PDF', key='uploader'), st.button('Limpiar'), st.tabs(['Tab1','Tab2'])), (3) visual properties (colors, chart thresholds, tier labels) must be concrete values not descriptions (e.g. '#00aa00' not 'green'), (4) navigation/state transitions must be explicit (which session_state key changes, which component re-renders). Report any screen or element described only in prose without concrete identifiers as a DEPTH_GAP. SKIP RULES: (a) Skip ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG in any extracted_*.md. (b) [GAP_ID: hall_*] — intentional, never flag. (c) [GAP: ...] — legitimate absences, do not flag.",
+      "target_specs": ["04_look_and_feel.md"],
+      "skills": ["re-generic"]
+    },
+    {
+      "id": "val_glossary_completeness",
+      "type": "glossary_completeness",
+      "engine": "cli",
+      "scope": "Verify that every term in 06_glossary.md has: (1) a definition (not just a restatement of the term name), (2) a source reference (file:line or extraction reference), (3) usage context (where in the application this term appears), and (4) for status enums and role constants — all valid values listed with their semantics. Check specifically: CHECKLIST_KEYS enum (all 16 keys with position and NeurIPS item name), checklist answer values (Yes/No/N/A with evidence/justification semantics), NeurIPS score tier labels and numeric boundaries, LLM model name constants (all 8 constants with values), temperature constants, Semantic Scholar API constants, and any domain-specific terms from the paper auditing domain. Report terms missing definition or source reference as COVERAGE_GAP. Report terms with definition but no source as PARTIAL. SKIP RULES: (a) Skip ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG in any extracted_*.md. (b) [GAP_ID: hall_*] — intentional, never flag. (c) [GAP: ...] — legitimate absences, do not flag.",
+      "target_specs": ["06_glossary.md"],
+      "skills": ["re-generic"]
+    },
+    {
+      "id": "val_module_index_completeness",
+      "type": "module_index_completeness",
+      "engine": "cli",
+      "scope": "Verify that 07_module_index.md is complete and consistent with the extraction plan. Four modules were identified: backend_core, backend_skills, frontend, root. For each module: (1) all services/classes in the source cluster must appear in the index (cross-check against extraction_plan.json which maps ext_backend_core_01, ext_backend_skills_01, ext_frontend_01, ext_root_tests_scratch_01 to their files), (2) each module entry must list its DAOs/services/screens/utilities, (3) each entry must have a source file reference, (4) the index must not contain phantom modules not present in source. Specifically verify: backend_core covers PaperAuditor, LLMClient, config.py, prompts.py, auditor_skills.py; backend_skills covers RAG/SOTA/regex skills; frontend covers all Streamlit components under frontend/; root covers tests/ and root-level scripts. Report missing entries as COVERAGE_GAP and phantom entries as FIDELITY_ISSUE. SKIP RULES: (a) Skip ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG in any extracted_*.md. (b) [GAP_ID: hall_*] — intentional, never flag. (c) [GAP: ...] — legitimate absences, do not flag.",
+      "target_specs": ["07_module_index.md"],
+      "skills": ["re-generic"]
+    },
+    {
+      "id": "val_dep_graph_schema",
+      "type": "dependency_graph_schema",
+      "engine": "cli",
+      "scope": "Verify that 08_dependency_graph.json conforms to the expected schema and that its node/edge set matches 08_dependency_graph.md. Schema checks: (1) top-level keys must include 'nodes' (array) and 'edges' (array), (2) each node must have at minimum: 'id' (string), 'label' (string), 'type' (string, e.g. class/service/component/config), (3) each edge must have: 'source' (node id), 'target' (node id), 'relation' (string describing dependency type), (4) all source/target ids in edges must reference existing node ids (no dangling references). Consistency with .md: count nodes in JSON vs node references in markdown — discrepancy >10% is a SCHEMA_ISSUE. Spot-check 10 nodes: confirm each corresponds to an actual source code entity. Report schema violations as SCHEMA_ISSUE and md/json discrepancies as CONSISTENCY_ISSUE. SKIP RULES: (a) Skip ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG in any extracted_*.md. (b) [GAP_ID: hall_*] — intentional, never flag. (c) [GAP: ...] — legitimate absences, do not flag.",
+      "target_specs": ["08_dependency_graph.md", "08_dependency_graph.json"],
+      "skills": ["re-generic"]
+    },
+    {
+      "id": "val_test_scenarios_coverage",
+      "type": "forward_coverage",
+      "engine": "cli",
+      "scope": "Verify that every test scenario in 05_test_scenarios.md traces to an actual business rule or behavior in the functional specs and/or source code. For each test scenario: (1) it must reference a concrete business rule or code path (not a made-up scenario), (2) positive scenarios must describe a valid input condition that leads to a verifiable output, (3) negative scenarios must describe a real error condition handled in source (e.g. LLM 503 retry, invalid PDF, API key missing, INVALID paper_type), (4) no scenario may invent field names or response schemas not present in the data model. If a scenario uses [GAP] to indicate an unresolvable schema, that is acceptable — do not flag [GAP] entries. Report scenarios that fabricate behaviors not traceable to source as FIDELITY_ISSUE. SKIP RULES: (a) Skip ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG in any extracted_*.md. (b) [GAP_ID: hall_*] — intentional, never flag. (c) [GAP: ...] — legitimate, do not flag — mark scenario as PARTIAL_EVIDENCE instead.",
+      "target_specs": ["05_test_scenarios.md"],
+      "skills": ["re-generic"]
+    },
+    {
+      "id": "val_cross_check",
+      "type": "cross_check",
+      "engine": "cli",
+      "scope": "Verify global consistency across all deliverables. Check: (1) Every entity declared in 01_data_model.md must appear as a node in 08_dependency_graph.json (type: class or model); flag missing nodes as CONSISTENCY_ISSUE. (2) Every screen or UI component in 04_look_and_feel.md must appear in 07_module_index.md under the frontend module; flag missing entries as CONSISTENCY_ISSUE. (3) Every service/class listed in 07_module_index.md must appear as a node in 08_dependency_graph.json; flag missing nodes as CONSISTENCY_ISSUE. (4) Every external API integration described in 03_technical_specs.md must appear as an edge or node in 08_dependency_graph.json; flag missing as CONSISTENCY_ISSUE. (5) Every skill class mentioned in 02_functional_backend.md must appear in 07_module_index.md under backend_skills or backend_core. Report all cross-deliverable mismatches as CONSISTENCY_ISSUE with the pair of deliverables involved and the specific element missing. SKIP RULES: (a) Skip ## FIX LOG, ## PURGE LOG, ## REFORMAT LOG in any extracted_*.md. (b) [GAP_ID: hall_*] — intentional, never flag. (c) [GAP: ...] — legitimate absences; if an entity is [GAP] in the data model, do not require it to be in the dependency graph.",
+      "target_specs": [
+        "01_data_model.md",
+        "02_functional_backend.md",
+        "03_technical_specs.md",
+        "04_look_and_feel.md",
+        "07_module_index.md",
+        "08_dependency_graph.md",
+        "08_dependency_graph.json"
+      ],
+      "skills": ["re-generic"]
+    }
+  ]
+}

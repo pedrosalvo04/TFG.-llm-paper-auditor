@@ -1,5 +1,6 @@
-"""Servicio de auditoría de papers refactorizado con arquitectura de skills"""
+import re
 import time
+import copy
 from backend.common.llm_client import LLMClient
 from backend.common.config import (
     AUDIT_CONFIG, 
@@ -7,176 +8,184 @@ from backend.common.config import (
     EVALUATION_MODEL_NAME,
     MAP_MODEL_NAME,
     REDUCE_MODEL_NAME,
-    EMBEDDING_MODEL_NAME,
     VERIFICATION_MODEL_NAME
 )
-from backend.utils.logger import get_logger
-from backend.skills.auditor_skills import (
+from backend.common.logger import get_logger
+from backend.skills import (
     InformationExtractionSkill,
-    ReproducibilityEvaluationSkill,
+    NeurIPSComplianceSkill,
     MetricsCalculationSkill,
     MetadataAggregationSkill,
     ChecklistVerificationSkill
 )
-from backend.skills.rag_extraction_skill import HybridHyperparameterExtractionSkill
 
 logger = get_logger(__name__)
+
 
 class PaperAuditor:
     """Auditor de reproducibilidad en papers científicos usando arquitectura de skills"""
     
     def __init__(self):
         """Inicializa el auditor con configuración determinista y skills especializados"""
-        # Cliente para extracción inicial
+        self._setup_skills()
+        
+        # Definición del pipeline de auditoría para ejecución secuencial
+        self.phases = [
+            {
+                "index": 1,
+                "msg": "🔍 Fase 1: Extracción inicial de información clave...",
+                "skill": self.extraction_skill,
+                "processor": self._process_extraction_result
+            },
+            {
+                "index": 2,
+                "msg": "⚖️ Fase 2: Evaluación de criterios de cumplimiento NeurIPS 2026...",
+                "skill": self.compliance_skill,
+                "processor": self._process_evaluation_result
+            },
+            {
+                "index": 3,
+                "msg": "🛡️ Fase 3: Verificación estricta de cumplimiento (Auditor 2)...",
+                "skill": self.verification_skill,
+                "processor": self._process_default_result
+            },
+            {
+                "index": 4,
+                "msg": "📊 Fase 4: Consolidación de métricas y puntuaciones...",
+                "skill": self.metrics_skill,
+                "processor": self._process_default_result
+            },
+            {
+                "index": 5,
+                "msg": "🏁 Fase 5: Generación de informe final y metadatos...",
+                "skill": self.metadata_skill,
+                "processor": self._process_default_result
+            }
+        ]
+        
+        logger.info(f"✅ Auditor inicializado con pipeline de {len(self.phases)} fases.")
+
+    def _setup_skills(self):
+        """Centraliza la creación de clientes LLM y skills especializados."""
+        # Clientes LLM
         self.extraction_llm = LLMClient(model_name=EXTRACTION_MODEL_NAME, generation_config=AUDIT_CONFIG)
-        
-        # Cliente para evaluación final
         self.evaluation_llm = LLMClient(model_name=EVALUATION_MODEL_NAME, generation_config=AUDIT_CONFIG)
-        
-        # Cliente para RAG/Triage (Fase Map)
-        self.rag_map_llm = LLMClient(model_name=MAP_MODEL_NAME, generation_config=AUDIT_CONFIG)
-        
-        # Cliente para RAG/Reduce (Gemma 4)
-        self.rag_reduce_llm = LLMClient(model_name=REDUCE_MODEL_NAME, generation_config=AUDIT_CONFIG)
-        
-        # Cliente para Verificación Estricta (Auditor 2)
         self.verification_llm = LLMClient(model_name=VERIFICATION_MODEL_NAME, generation_config=AUDIT_CONFIG)
         
-        # Inicializar skills especializados
+        # Skills
         self.extraction_skill = InformationExtractionSkill(llm_client=self.extraction_llm)
-        self.hybrid_hp_skill = HybridHyperparameterExtractionSkill(llm_client=self.rag_map_llm)
-        self.evaluation_skill = ReproducibilityEvaluationSkill(llm_client=self.evaluation_llm)
-        
-        # Para la verificación estricta usamos el cliente específico (Auditor 2)
+        self.compliance_skill = NeurIPSComplianceSkill(llm_client=self.evaluation_llm)
         self.verification_skill = ChecklistVerificationSkill(llm_client=self.verification_llm)
-        
         self.metrics_skill = MetricsCalculationSkill()
         self.metadata_skill = MetadataAggregationSkill()
-        
-        logger.info(f"✅ Motor de Embeddings inicializado: {EMBEDDING_MODEL_NAME}")
-        logger.info(f"✅ Auditor inicializado respetando la configuración técnica.")
     
     
-    def audit(self, paper_text):
-        """
-        Analiza el paper usando arquitectura de skills en 3 fases:
-        Pre-procesamiento, Extracción y Evaluación
+    
+
+    
+    def _process_extraction_result(self, result, context):
+        """Procesa el resultado de la extracción, maneja errores y prepara datos para el frontend."""
+        if 'extraction_error' in result:
+            logger.error(f"❌ Abortando: Error en extracción: {result['extraction_error']}")
+            return {'error': result['extraction_error']}
         
-        Args:
-            paper_text: Texto del paper en formato markdown
+        # Enriquecer contexto para el frontend (Map-Reduce + CoT)
+        if 'map_steps' in result:
+            context['general_analysis_map'] = result['map_steps']
+        if 'reduce_step' in result:
+            context['general_analysis_reduce'] = result['reduce_step']
+        
+        # Guardar copia del original para comparativa en el frontend
+        if 'extracted_info' in result:
+            context['original_extraction_raw'] = copy.deepcopy(result['extracted_info'])
             
-        Returns:
-            Diccionario con resultados de la auditoría
+        # Verificar si el paper es válido (ML/AI)
+        if result.get('invalid_paper', False):
+            logger.warning(f"❌ Paper rechazado: {result.get('invalid_reason')}")
+            return {
+                'error': 'INVALID_PAPER_TYPE',
+                'message': result.get('invalid_reason', 'Este sistema solo evalúa papers de ML/AI'),
+                'paper_type': result.get('extracted_info', {}).get('paper_type', 'Unknown')
+            }
+        return None
+
+    def _process_default_result(self, result, context):
+        """Procesador por defecto para fases sin lógica UI especial."""
+        if result and 'error' in result:
+            logger.error(f"❌ Error en fase: {result['error']}")
+            return {'error': result['error']}
+        return None
+
+
+
+
+    def _process_evaluation_result(self, result, context):
+        """Procesa el resultado de la evaluación y prepara señales para el frontend."""
+        if 'evaluation_error' in result:
+            logger.error(f"❌ Abortando: Error en evaluación: {result['evaluation_error']}")
+            return {'error': result['evaluation_error']}
+            
+        # Guardar ayudas de evaluación para el frontend
+        if 'evaluation_helps' in result:
+            context['evaluation_helps'] = result['evaluation_helps']
+        return None
+
+
+
+
+
+    def _log_status(self, msg, phase_index=None, status_callback=None):
+        """Reporta el progreso tanto al logger como al callback del frontend."""
+        logger.info(msg)
+        if status_callback:
+            try:
+                status_callback(msg, phase_index)
+            except TypeError:
+                status_callback(msg)
+
+    def audit(self, paper_text, status_callback=None):
+        """
+        Analiza el paper usando arquitectura de skills en un pipeline multimodelo.
+        Analiza el paper ejecutando el pipeline de skills definido.
         """
         caracteres = len(paper_text)
-        logger.info(f"🚀 Iniciando auditoría con skills. Tamaño: {caracteres} caracteres")
-        
+        self._log_status(f"🚀 Iniciando auditoría con skills. Tamaño: {caracteres} caracteres.", phase_index=0, status_callback=status_callback)
         start_time = time.time()
         
         try:
-            # Preparar contexto inicial
-            context = {'paper_text': paper_text, 'red_flags': {}} # Mantenemos red_flags vacío por compatibilidad interna momentánea
+            context = {'paper_text': paper_text}
+            final_result = {}
             
-            # FASE 1: Extracción de información (con LLM general)
-            extraction_result = self.extraction_skill.execute(context)
-            if 'extraction_error' in extraction_result:
-                logger.error(f"❌ Abortando: Error en extracción: {extraction_result['extraction_error']}")
-                return {'error': extraction_result['extraction_error']}
-            
-            context.update(extraction_result)
-            
-            # Guardar pasos intermedios para el frontend (Map-Reduce + CoT)
-            if 'map_steps' in extraction_result:
-                context['general_analysis_map'] = extraction_result['map_steps']
-            if 'reduce_step' in extraction_result:
-                context['general_analysis_reduce'] = extraction_result['reduce_step']
-            
-            # Guardar copia del original para comparativa en el frontend
-            if 'extracted_info' in extraction_result:
-                import copy
-                context['original_extraction_raw'] = copy.deepcopy(extraction_result['extracted_info'])
-            
-            # Verificar si el paper es válido (ML/AI)
-            if extraction_result.get('invalid_paper', False):
-                logger.warning(f"❌ Paper rechazado: {extraction_result.get('invalid_reason')}")
-                return {
-                    'error': 'INVALID_PAPER_TYPE',
-                    'message': extraction_result.get('invalid_reason', 'Este sistema solo evalúa papers de ML/AI'),
-                    'paper_type': extraction_result.get('extracted_info', {}).get('paper_type', 'Unknown')
-                }
-            
-            # FASE 1.5: Extracción estructurada híbrida (RAG + Pydantic)
-            hybrid_hp_result = self.hybrid_hp_skill.execute(context)
-            # Si hay error en RAG, loggeamos pero intentamos seguir con la extracción general 
-            # a menos que sea un error crítico que no devuelva nada
-            if 'error' in hybrid_hp_result and not hybrid_hp_result.get('extracted_hyperparameters_hybrid'):
-                logger.warning(f"⚠️ Error en extracción híbrida RAG: {hybrid_hp_result['error']}")
-            
-            context.update(hybrid_hp_result)
-            
-            # Guardar fragmentos de triage para el frontend
-            if 'triage_fragments' in hybrid_hp_result:
-                context['hybrid_triage_fragments'] = hybrid_hp_result['triage_fragments']
-            
-            # Reemplazar hiperparámetros y hardware con los más precisos de la extracción híbrida
-            if 'extracted_hyperparameters_hybrid' in context and 'extracted_info' in context:
-                hybrid_hps = context['extracted_hyperparameters_hybrid']
-                if hybrid_hps:
-                    if 'hyperparameters' not in context['extracted_info']:
-                        context['extracted_info']['hyperparameters'] = {}
-                    # Update standard hyperparameters
-                    for key in ['optimizer', 'learning_rate', 'batch_size', 'epochs', 'warmup', 'weight_decay', 'betas', 'epsilon']:
-                        # Map keys between Pydantic schema and prompts.py schema if necessary
-                        if key == 'warmup': mapped_key = 'warmup_steps'
-                        else: mapped_key = key
-                        if mapped_key in hybrid_hps and str(hybrid_hps[mapped_key]).strip() and hybrid_hps[mapped_key] != 'NOT FOUND':
-                            context['extracted_info']['hyperparameters'][key] = hybrid_hps[mapped_key]
-                    
-                    if 'hardware' in hybrid_hps and str(hybrid_hps['hardware']).strip() and hybrid_hps['hardware'] != 'NOT FOUND':
-                        if 'hardware' not in context['extracted_info']:
-                            context['extracted_info']['hardware'] = {}
-                        context['extracted_info']['hardware']['gpu_cpu'] = hybrid_hps['hardware']
-            
-            # FASE 2: Evaluación de reproducibilidad (con LLM)
-            evaluation_result = self.evaluation_skill.execute(context)
-            if 'evaluation_error' in evaluation_result:
-                logger.error(f"❌ Abortando: Error en evaluación: {evaluation_result['evaluation_error']}")
-                return {'error': evaluation_result['evaluation_error']}
+            for phase in self.phases:
+                # 1. Reportar progreso
+                self._log_status(phase["msg"], phase_index=phase["index"], status_callback=status_callback)
                 
-            context.update(evaluation_result)
+                # 2. Preparar input (Inyectar métricas de tiempo si es la fase de métricas)
+                skill_input = context
+                if phase["skill"] == self.metrics_skill:
+                    execution_time = round(time.time() - start_time, 2)
+                    skill_input = {**context, 'execution_time': execution_time, 'caracteres': caracteres}
+                
+                # 3. Ejecutar Skill
+                result = phase["skill"].execute(skill_input)
+                
+                # 4. Procesar resultado y posibles errores
+                error_response = phase["processor"](result, context)
+                if error_response:
+                    return error_response
+                
+                # 5. Actualizar contexto
+                context.update(result)
+                final_result = result # El último skill suele ser el que genera el informe final
             
-            # Guardar señales de evaluación para el frontend
-            if 'evaluation_signals' in evaluation_result:
-                context['evaluation_signals'] = evaluation_result['evaluation_signals']
-            
-            # FASE 2.5: Verificación Estricta (Auditoría de Falsos Negativos)
-            verification_result = self.verification_skill.execute(context)
-            context.update(verification_result)
-            
-            # FASE 3: Cálculo de métricas
-            end_time = time.time()
-            execution_time = round(end_time - start_time, 2)
-            
-            metrics_context = {
-                **context,
-                'execution_time': execution_time,
-                'caracteres': caracteres
-            }
-            metrics_result = self.metrics_skill.execute(metrics_context)
-            context.update(metrics_result)
-            
-            # FASE 4: Agregación de metadatos
-            final_result = self.metadata_skill.execute(context)
-            
-            # Asegurar que se exponga el resultado híbrido y el original para el frontend
-            if 'extracted_hyperparameters_hybrid' in context:
-                final_result['extracted_hyperparameters_hybrid'] = context['extracted_hyperparameters_hybrid']
+            # Asegurar que se exponga el resultado original para el frontend
             if 'original_extraction_raw' in context:
                 final_result['original_extraction_raw'] = context['original_extraction_raw']
             
-            logger.info(f"✅ Auditoría completada en {execution_time} segundos")
-            
+            execution_time = round(time.time() - start_time, 2)
+            self._log_status(f"✅ Auditoría completada en {execution_time} segundos", phase_index=6, status_callback=status_callback)
             return final_result
+
 
         except Exception as e:
             end_time = time.time()

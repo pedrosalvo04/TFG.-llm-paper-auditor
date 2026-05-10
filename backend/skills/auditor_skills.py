@@ -3,13 +3,13 @@ import re
 from typing import Any, Dict
 from backend.skills.base_skill import BaseSkill
 from backend.common.config import REDUCE_MODEL_NAME
-from backend.common.prompts import (
+from backend.common.prompt_engine import (
     get_extraction_prompt, 
     get_evaluation_prompt,
     get_verification_prompt,
     get_map_extraction_prompt,
     get_reduce_extraction_prompt,
-    get_evaluation_signals
+    get_extraction_assistance_helps
 )
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
@@ -30,15 +30,49 @@ class InformationExtractionSkill(BaseSkill):
         paper_text = context['paper_text']
         
         try:
-            # 1. Fase MAP (Extracción Segmentada)
-            self.log_execution("🧠 [Fase MAP] Segmentando paper en bloques...")
-            # Chunks más manejables para asegurar que el modelo no se pierda y respete el JSON
-            splitter = RecursiveCharacterTextSplitter(chunk_size=20000, chunk_overlap=2000)
-            fragments = splitter.split_text(paper_text)
+            # 1. Fase MAP (Extracción Segmentada por Secciones)
+            self.log_execution("🧠 [Fase MAP] Segmentando paper por secciones lógicas...")
             
-            # Ampliamos a 5 bloques para mayor cobertura (100k caracteres aprox)
-            fragments = fragments[:5]
-            self.log_execution(f"📄 Paper dividido en {len(fragments)} bloques para análisis profundo.")
+            # Identificar secciones (líneas que empiezan con #) generadas por Docling
+            # Usamos una expresión regular que busque el inicio de línea con #
+            import re
+            paper_text_norm = paper_text.replace('\r\n', '\n')
+            sections = re.split(r'\n(?=#+ )', '\n' + paper_text_norm)
+            sections = [s.strip() for s in sections if s.strip()]
+            
+            if len(sections) > 1:
+                total_chars = sum(len(s) for s in sections)
+                target = total_chars / 4
+                fragments = []
+                current_fragment = ""
+                
+                for section in sections:
+                    # Si añadir la siguiente sección supera el objetivo y aún no tenemos 3 fragmentos
+                    if len(current_fragment) + len(section) > target and len(fragments) < 3:
+                        if current_fragment:
+                            fragments.append(current_fragment)
+                            current_fragment = section
+                        else:
+                            # Caso borde: una sola sección es gigante
+                            fragments.append(section)
+                            current_fragment = ""
+                    else:
+                        if current_fragment:
+                            current_fragment += "\n\n" + section
+                        else:
+                            current_fragment = section
+                            
+                if current_fragment:
+                    fragments.append(current_fragment)
+                
+                self.log_execution(f"📄 Paper dividido en {len(fragments)} secciones lógicas (basadas en Docling).")
+            else:
+                # Fallback: Chunks más manejables si no hay estructura de secciones clara
+                self.log_execution("⚠️ No se detectaron secciones claras. Usando fallback de segmentación por caracteres.")
+                splitter = RecursiveCharacterTextSplitter(chunk_size=25000, chunk_overlap=2000)
+                fragments = splitter.split_text(paper_text)
+                fragments = fragments[:4] # Forzar a 4 partes como pide el usuario
+                self.log_execution(f"📄 Paper dividido en {len(fragments)} bloques (fallback).")
             
             map_results = []
             import time
@@ -51,20 +85,11 @@ class InformationExtractionSkill(BaseSkill):
                     response = self.llm_client.generate(prompt)
                     raw_text = response.text.strip()
                     
-                    # Extracción balanceada de JSON (evita el error "Extra data")
-                    start_idx = raw_text.find('{')
-                    if start_idx != -1:
-                        stack = 0
-                        for i_char in range(start_idx, len(raw_text)):
-                            if raw_text[i_char] == '{': stack += 1
-                            elif raw_text[i_char] == '}':
-                                stack -= 1
-                                if stack == 0:
-                                    raw_text = raw_text[start_idx:i_char+1]
-                                    break
-                    
-                    fragment_data = json.loads(raw_text)
-                    map_results.append(fragment_data)
+                    try:
+                        fragment_data = self.parse_json_response(raw_text)
+                        map_results.append(fragment_data)
+                    except Exception as e:
+                        self.log_execution(f"⚠️ Error parseando fragmento {i+1}: {str(e)}", level="warning")
                     
                     # Pequeña pausa para no saturar la cuota RPM
                     if i < len(fragments) - 1:
@@ -95,24 +120,11 @@ class InformationExtractionSkill(BaseSkill):
                 )
                 raw_text = response.text.strip()
 
-            # Extracción balanceada de JSON final
-            start_idx = raw_text.find('{')
-            if start_idx != -1:
-                stack = 0
-                for i in range(start_idx, len(raw_text)):
-                    if raw_text[i] == '{': stack += 1
-                    elif raw_text[i] == '}':
-                        stack -= 1
-                        if stack == 0:
-                            raw_text = raw_text[start_idx:i+1]
-                            break
-                
             try:
-                extracted_info = json.loads(raw_text)
-            except json.JSONDecodeError as e:
-                # Intento básico de reparación
-                fixed_text = re.sub(r',\s*([\]}])', r'\1', raw_text)
-                extracted_info = json.loads(fixed_text)
+                extracted_info = self.parse_json_response(raw_text)
+            except Exception as e:
+                self.log_execution(f"❌ Error parseando consolidación final: {str(e)}", level="error")
+                return {'extracted_info': {}, 'extraction_error': f"JSON parse error in REDUCE: {str(e)}"}
             
             # Validar si el paper es ML/AI
             if extracted_info.get('paper_type', '').startswith('INVALID'):
@@ -147,21 +159,14 @@ class InformationExtractionSkill(BaseSkill):
             return {'extracted_info': {}, 'extraction_error': str(e)}
 
 
-class ReproducibilityEvaluationSkill(BaseSkill):
-    """Skill para evaluar la reproducibilidad del paper usando LLM"""
+class NeurIPSComplianceSkill(BaseSkill):
+    """Skill para evaluar el cumplimiento del checklist NeurIPS 2026 usando LLM"""
     
     def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
         extracted_info = context.get('extracted_info') or {}
         
-        # Asegurar que extracted_info es un diccionario
-        if not isinstance(extracted_info, dict):
-            self.log_execution(f"⚠️ extracted_info no es un diccionario (es {type(extracted_info)}), ignorando.", level="warning")
-            extracted_info = {}
-            
         if not extracted_info:
             return {'evaluation': {}}
-        
-        red_flags = context.get('red_flags', {})
         
         if not self.llm_client:
             self.log_execution("No hay cliente LLM configurado", level="error")
@@ -170,28 +175,19 @@ class ReproducibilityEvaluationSkill(BaseSkill):
         self.log_execution("📊 Evaluando reproducibilidad...")
         
         try:
-            # Calcular señales para el frontend y para el prompt
-            signals = get_evaluation_signals(extracted_info)
+            # Calcular ayudas (helps) para el evaluador basándose en la extracción de la Fase 1
+            helps = get_extraction_assistance_helps(extracted_info)
             
             evaluation_prompt = get_evaluation_prompt(
-                extracted_info, 
-                red_flags
+                extracted_info
             )
             response = self.llm_client.generate(evaluation_prompt)
             raw_text = response.text.strip()
-            if raw_text.startswith("```"):
-                raw_text = re.sub(r'^```(?:json)?\n?|```$', '', raw_text, flags=re.MULTILINE).strip()
-                
             try:
-                evaluation = json.loads(raw_text)
-            except json.JSONDecodeError as e:
-                fixed_text = re.sub(r',\s*([\]}])', r'\1', raw_text)
-                try:
-                    evaluation = json.loads(fixed_text)
-                    self.log_execution("⚠️ JSON de evaluación reparado automáticamente.")
-                except Exception as ex:
-                    self.log_execution(f"❌ Error parseando JSON de evaluación: {str(e)}", level="error")
-                    return {'evaluation': {}, 'evaluation_error': f'JSON parse error: {str(e)}'}
+                evaluation = self.parse_json_response(raw_text)
+            except Exception as e:
+                self.log_execution(f"❌ Error parseando JSON de evaluación: {str(e)}", level="error")
+                return {'evaluation': {}, 'evaluation_error': f'JSON parse error: {str(e)}'}
             
             if isinstance(evaluation, list):
                 evaluation = evaluation[0] if evaluation else {}
@@ -204,7 +200,7 @@ class ReproducibilityEvaluationSkill(BaseSkill):
             self.log_execution("✅ Evaluación completada")
             return {
                 'evaluation': evaluation,
-                'evaluation_signals': signals # Para visualización en el frontend
+                'evaluation_helps': helps # Para visualización en el frontend
             }
         except Exception as e:
             error_msg = str(e)
@@ -226,22 +222,12 @@ class MetricsCalculationSkill(BaseSkill):
         self.log_execution("Calculando métricas...")
         
         paper_text = context['paper_text']
-        red_flags = context.get('red_flags', {})
-        
-        critical_flags = [
-            k for k, v in red_flags.items() 
-            if v and not k.startswith("tiene_") and not k.startswith("menciona_") 
-            and not k.startswith("_") and not k.startswith("cantidad_")
-            and not k.startswith("puntos_")
-        ]
-        
         metrics = {
             "tiempo_segundos": context.get('execution_time', 0),
-            "caracteres_leidos": len(paper_text),
-            "red_flags_detectadas": len(critical_flags)
+            "caracteres_leidos": len(paper_text)
         }
         
-        self.log_execution(f"✅ Métricas calculadas: {metrics['red_flags_detectadas']} red flags")
+        self.log_execution("✅ Métricas calculadas")
         return {'metrics': metrics}
 
 
@@ -271,12 +257,11 @@ class MetadataAggregationSkill(BaseSkill):
             "irb_approvals": evaluation.get('irb_approvals', {}),
             "declaration_llm_usage": evaluation.get('declaration_llm_usage', {}),
             "informacion_extraida": context.get('extracted_info', {}),
-            "red_flags": context.get('red_flags', {}),
             "metricas": context.get('metrics', {}),
             "general_analysis_map": context.get('general_analysis_map', []),
             "general_analysis_reduce": context.get('general_analysis_reduce', {}),
             "hybrid_triage_fragments": context.get('hybrid_triage_fragments', []),
-            "evaluation_signals": context.get('evaluation_signals', {})
+            "evaluation_helps": context.get('evaluation_helps', {})
         }
         
         self.log_execution("✅ Resultado final construido correctamente")
@@ -306,7 +291,8 @@ class ChecklistVerificationSkill(BaseSkill):
         priority_items = [
             'claims', 'experimental_result_reproducibility', 'open_access_data_code', 
             'experimental_setting_details', 'experiments_compute_resource',
-            'experiment_statistical_significance', 'licenses', 'declaration_llm_usage'
+            'experiment_statistical_significance', 'licenses', 'declaration_llm_usage',
+            'code_of_ethics'
         ]
         
         # Filtramos solo los que existen en la evaluación y son diccionarios
@@ -338,10 +324,11 @@ class ChecklistVerificationSkill(BaseSkill):
             try:
                 response = self.llm_client.generate(prompt)
                 raw_text = response.text.strip()
-                if raw_text.startswith("```"):
-                    raw_text = re.sub(r'^```(?:json)?\n?|```$', '', raw_text, flags=re.MULTILINE).strip()
-                
-                verification_result = json.loads(raw_text)
+                try:
+                    verification_result = self.parse_json_response(raw_text)
+                except Exception as e:
+                    self.log_execution(f"⚠️ Error parseando verificación de {item_key}: {str(e)}", level="warning")
+                    continue
                 
                 # Actualizar si hay corrección O si la nueva justificación es más técnica/detallada
                 if verification_result.get('was_corrected', False):

@@ -1,0 +1,332 @@
+{
+  "run_id": "20260508_124848",
+  "timestamp": "2026-05-09T17:24:09.370816+02:00",
+  "total_tokens": 106276269,
+  "total_requests": 1231,
+  "per_phase": {
+    "synthesis_lead": {
+      "tokens": 699140,
+      "requests": 9,
+      "input": 477783,
+      "output": 221357
+    },
+    "technical_writer": {
+      "tokens": 811881,
+      "requests": 9,
+      "input": 460575,
+      "output": 351306
+    },
+    "data_model_writer": {
+      "tokens": 1322485,
+      "requests": 13,
+      "input": 665002,
+      "output": 657483
+    },
+    "functional_writer_frontend": {
+      "tokens": 867305,
+      "requests": 10,
+      "input": 517150,
+      "output": 350155
+    },
+    "functional_writer_backend": {
+      "tokens": 1245692,
+      "requests": 14,
+      "input": 728616,
+      "output": 517076
+    },
+    "look_and_feel_writer": {
+      "tokens": 520413,
+      "requests": 7,
+      "input": 360346,
+      "output": 160067
+    },
+    "glossary_writer": {
+      "tokens": 1788183,
+      "requests": 20,
+      "input": 1027780,
+      "output": 760403
+    },
+    "test_writer": {
+      "tokens": 992471,
+      "requests": 10,
+      "input": 517480,
+      "output": 474991
+    },
+    "module_index_writer": {
+      "tokens": 755585,
+      "requests": 8,
+      "input": 410472,
+      "output": 345113
+    },
+    "dependency_graph_writer": {
+      "tokens": 1181595,
+      "requests": 12,
+      "input": 627492,
+      "output": 554103
+    },
+    "functional_consolidator": {
+      "tokens": 2341255,
+      "requests": 24,
+      "input": 1224960,
+      "output": 1116295
+    },
+    "validation_lead": {
+      "tokens": 536452,
+      "requests": 8,
+      "input": 414432,
+      "output": 122020
+    },
+    "val_depth_entities": {
+      "tokens": 2489139,
+      "requests": 27,
+      "input": 1380105,
+      "output": 1109034
+    },
+    "val_depth_business_rules": {
+      "tokens": 1991904,
+      "requests": 23,
+      "input": 1181004,
+      "output": 810900
+    },
+    "val_forward_data_model": {
+      "tokens": 3132367,
+      "requests": 30,
+      "input": 1531230,
+      "output": 1601137
+    },
+    "val_forward_technical": {
+      "tokens": 1395649,
+      "requests": 19,
+      "input": 967214,
+      "output": 428435
+    },
+    "val_data_model_completeness": {
+      "tokens": 1882344,
+      "requests": 23,
+      "input": 1173851,
+      "output": 708493
+    },
+    "val_forward_backend_rag_sota": {
+      "tokens": 1807471,
+      "requests": 20,
+      "input": 1020380,
+      "output": 787091
+    },
+    "val_laf_completeness": {
+      "tokens": 1134461,
+      "requests": 15,
+      "input": 765240,
+      "output": 369221
+    },
+    "val_glossary_completeness": {
+      "tokens": 1393251,
+      "requests": 18,
+      "input": 910926,
+      "output": 482325
+    },
+    "val_forward_backend_pipeline": {
+      "tokens": 1050761,
+      "requests": 14,
+      "input": 709338,
+      "output": 341423
+    },
+    "val_depth_apis": {
+      "tokens": 1500309,
+      "requests": 17,
+      "input": 880022,
+      "output": 620287
+    },
+    "val_backward_coverage": {
+      "tokens": 878412,
+      "requests": 12,
+      "input": 614280,
+      "output": 264132
+    },
+    "val_forward_frontend": {
+      "tokens": 1383971,
+      "requests": 18,
+      "input": 911376,
+      "output": 472595
+    },
+    "val_module_index_completeness": {
+      "tokens": 1115790,
+      "requests": 14,
+      "input": 713902,
+      "output": 401888
+    },
+    "val_dep_graph_schema": {
+      "tokens": 1329424,
+      "requests": 20,
+      "input": 1015360,
+      "output": 314064
+    },
+    "val_test_scenarios_coverage": {
+      "tokens": 1369675,
+      "requests": 17,
+      "input": 867918,
+      "output": 501757
+    },
+    "val_cross_check": {
+      "tokens": 1179144,
+      "requests": 16,
+      "input": 822672,
+      "output": 356472
+    },
+    "fix_lead": {
+      "tokens": 351667,
+      "requests": 5,
+      "input": 265905,
+      "output": 85762
+    },
+    "fix_depth_entities_2": {
+      "tokens": 1148014,
+      "requests": 18,
+      "input": 904860,
+      "output": 243154
+    },
+    "fix_depth_biz_rules_2": {
+      "tokens": 3525049,
+      "requests": 40,
+      "input": 2020280,
+      "output": 1504769
+    },
+    "fix_backend_pipeline_1": {
+      "tokens": 3222953,
+      "requests": 33,
+      "input": 1652409,
+      "output": 1570544
+    },
+    "fix_backend_pipeline_2": {
+      "tokens": 4335936,
+      "requests": 42,
+      "input": 2107182,
+      "output": 2228754
+    },
+    "fix_forward_data_model_1": {
+      "tokens": 1892784,
+      "requests": 21,
+      "input": 1061130,
+      "output": 831654
+    },
+    "fix_backend_pipeline_3": {
+      "tokens": 3600867,
+      "requests": 39,
+      "input": 1951794,
+      "output": 1649073
+    },
+    "fix_dep_graph_regen": {
+      "tokens": 916728,
+      "requests": 15,
+      "input": 754110,
+      "output": 162618
+    },
+    "fix_backend_pipeline_4": {
+      "tokens": 1450300,
+      "requests": 23,
+      "input": 1148206,
+      "output": 302094
+    },
+    "fix_depth_biz_rules_1": {
+      "tokens": 2926043,
+      "requests": 41,
+      "input": 2051025,
+      "output": 875018
+    },
+    "fix_depth_biz_rules_3": {
+      "tokens": 3468938,
+      "requests": 41,
+      "input": 2051599,
+      "output": 1417339
+    },
+    "fix_data_model_completeness_1": {
+      "tokens": 2661607,
+      "requests": 26,
+      "input": 1311440,
+      "output": 1350167
+    },
+    "fix_depth_entities_1": {
+      "tokens": 3196322,
+      "requests": 39,
+      "input": 1962636,
+      "output": 1233686
+    },
+    "fix_backend_rag_sota_1": {
+      "tokens": 3320796,
+      "requests": 36,
+      "input": 1795428,
+      "output": 1525368
+    },
+    "fix_backend_rag_sota_2": {
+      "tokens": 4228682,
+      "requests": 43,
+      "input": 2177219,
+      "output": 2051463
+    },
+    "fix_backend_rag_sota_3": {
+      "tokens": 3874104,
+      "requests": 39,
+      "input": 1964001,
+      "output": 1910103
+    },
+    "fix_backend_rag_sota_4": {
+      "tokens": 5190108,
+      "requests": 52,
+      "input": 2609984,
+      "output": 2580124
+    },
+    "fix_backend_rag_sota_5": {
+      "tokens": 2062534,
+      "requests": 29,
+      "input": 1446114,
+      "output": 616420
+    },
+    "fix_forward_frontend_1": {
+      "tokens": 3308592,
+      "requests": 33,
+      "input": 1665147,
+      "output": 1643445
+    },
+    "fix_depth_apis_1": {
+      "tokens": 1776614,
+      "requests": 23,
+      "input": 1158602,
+      "output": 618012
+    },
+    "fix_forward_technical_1": {
+      "tokens": 2439351,
+      "requests": 29,
+      "input": 1458758,
+      "output": 980593
+    },
+    "fix_laf_1": {
+      "tokens": 2215354,
+      "requests": 26,
+      "input": 1305122,
+      "output": 910232
+    },
+    "fix_laf_2": {
+      "tokens": 929032,
+      "requests": 14,
+      "input": 704256,
+      "output": 224776
+    },
+    "fix_glossary_1": {
+      "tokens": 1507356,
+      "requests": 21,
+      "input": 1054053,
+      "output": 453303
+    },
+    "fix_module_index_1": {
+      "tokens": 1154363,
+      "requests": 16,
+      "input": 806944,
+      "output": 347419
+    },
+    "fix_cross_check_1": {
+      "tokens": 3475646,
+      "requests": 40,
+      "input": 2026200,
+      "output": 1449446
+    }
+  }
+}
