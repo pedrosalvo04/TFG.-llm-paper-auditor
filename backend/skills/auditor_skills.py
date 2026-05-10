@@ -3,7 +3,7 @@ import re
 from typing import Any, Dict
 from backend.skills.base_skill import BaseSkill
 from backend.common.config import REDUCE_MODEL_NAME
-from backend.common.prompts import (
+from backend.common.prompt_engine import (
     get_extraction_prompt, 
     get_evaluation_prompt,
     get_verification_prompt,
@@ -310,7 +310,8 @@ class ChecklistVerificationSkill(BaseSkill):
         priority_items = [
             'claims', 'experimental_result_reproducibility', 'open_access_data_code', 
             'experimental_setting_details', 'experiments_compute_resource',
-            'experiment_statistical_significance', 'licenses', 'declaration_llm_usage'
+            'experiment_statistical_significance', 'licenses', 'declaration_llm_usage',
+            'code_of_ethics'
         ]
         
         # Filtramos solo los que existen en la evaluación y son diccionarios

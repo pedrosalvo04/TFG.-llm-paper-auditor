@@ -66,10 +66,10 @@ def get_checklist_health(evaluation: dict) -> dict:
 
     for key in CHECKLIST_KEYS:
         val = evaluation.get(key, {})
-        answer_raw = val.get("answer", "").strip()
+        answer_raw = (val.get("answer") or "").strip()
         answer_norm = answer_raw.lower()
-        justification = val.get("justification", "").strip()
-        evidence = val.get("evidence", "").strip()
+        justification = (val.get("justification") or "").strip()
+        evidence = (val.get("evidence") or "").strip()
         is_no_justified_raw = val.get("is_no_justified", False)
         if isinstance(is_no_justified_raw, str):
             is_no_justified = is_no_justified_raw.lower() == "true"

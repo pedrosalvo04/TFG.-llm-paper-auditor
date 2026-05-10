@@ -7,6 +7,10 @@ from backend.skills.base_skill import BaseSkill
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 import chromadb
 from backend.common.config import MAP_MODEL_NAME, REDUCE_MODEL_NAME, EMBEDDING_MODEL_NAME
+from backend.common.prompt_engine import (
+    get_rag_map_extraction_prompt, 
+    get_rag_reduce_extraction_prompt
+)
 
 class Hyperparameters(BaseModel):
     thought_process: str = Field(description="Internal reasoning about the technical details found in this fragment, specifically comparing reported values like compute hours vs efficiency claims.")
@@ -156,23 +160,7 @@ class HybridHyperparameterExtractionSkill(BaseSkill):
                 else:
                     relevance_score = max(5, int(31 - ((distance - 0.7) * 50))) # >0.7 -> degradación lenta
                 
-                prompt = f"""
-                You are a rigorous NeurIPS reviewer performing technical triage on a paper fragment.
-                Extract all hyperparameters, scale metrics, and performance data found in this text.
-                
-                FIELDS TO EXTRACT:
-                - learning_rate, batch_size, epochs, training_steps, total_tokens, optimizer, warmup_steps, weight_decay, hardware, latency_metrics.
-                
-                REASONING INSTRUCTIONS:
-                - If the fragment contains optimization steps (e.g. "100k steps") or total tokens (e.g. "2 trillion tokens"), extract them as training_steps and total_tokens.
-                - Capture any performance data like "latency was less than 2%" or "throughput of 500 tokens/s" under latency_metrics.
-                - Be smart about noisy table text (e.g., if columns are misaligned, try to reconstruct the key-value pair logically).
-                
-                TEXT FRAGMENT:
-                {chunk}
-                
-                RETURN ONLY A VALID JSON OBJECT WITH THE FIELDS ABOVE. Use "NOT FOUND" if missing.
-                """
+                prompt = get_rag_map_extraction_prompt(chunk)
                 try:
                     # Usar el método generate con reintentos para evitar 503
                     response = self.llm_client.generate(prompt)
@@ -194,22 +182,7 @@ class HybridHyperparameterExtractionSkill(BaseSkill):
             # 4. REDUCE Phase: Consolidate with Gemma 4
             self.log_execution("🧠 [Fase REDUCE] Consolidando datos extraídos con Gemma 4...")
             
-            reduce_prompt = f"""
-            You are a senior AI researcher reviewing a paper's hyperparameter extraction.
-            Below is a list of independent extractions from various parts of the paper (e.g., Pre-training, SFT, RLHF).
-            Your job is to consolidate them into a single definitive set of hyperparameters.
-            
-            RULES:
-            - If there are conflicts (e.g. SFT batch size is 256, Pre-training is 1280), prefer the final fine-tuning/SFT parameters if obvious, or pick the most representative one.
-            - If an extraction says 'NOT FOUND', ignore it if another extraction found a valid value.
-            - If no valid value is found across all fragments for a field, output 'NOT FOUND'.
-            - Use the 'thought_process' from each fragment to build a final synthesis.
-            - TABLE VALIDATION: If multiple fragments cite different tables for the same value, verify which table title and headers match the target hyperparameter (e.g., differentiate between a 'Model Architecture' table and a 'Training Hyperparameters' table).
-            - DO NOT guess or hallucinate.
-            
-            EXTRACTIONS:
-            {json.dumps(extracted_fragments, indent=2)}
-            """
+            reduce_prompt = get_rag_reduce_extraction_prompt(extracted_fragments)
             
             self.log_execution("🚀 [REDUCE] Consolidando datos con Gemma 4 (TPM Ilimitado)...")
             
