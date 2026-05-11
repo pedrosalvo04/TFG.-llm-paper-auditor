@@ -4,13 +4,14 @@ from backend.common.logger import get_logger
 
 logger = get_logger(__name__)
 
-def convert_pdf_to_markdown(pdf_path):
+def convert_pdf_to_markdown(pdf_path, use_gpu=False):
     """
     Convierte un PDF a formato Markdown optimizado para LLMs usando Docling,
     preservando tablas y listas.
     
     Args:
         pdf_path: Ruta al archivo PDF
+        use_gpu: Si se debe intentar usar aceleración por GPU (CUDA)
         
     Returns:
         Texto en formato Markdown
@@ -29,12 +30,22 @@ def convert_pdf_to_markdown(pdf_path):
         pipeline_options.do_ocr = False
         pipeline_options.do_table_structure = True
         
-        # Intentar usar GPU (CUDA) si está disponible (Docling lo detectará automáticamente vía torch)
+        # Configurar dispositivo (CPU o GPU)
         import torch
-        if torch.cuda.is_available():
-            logger.info("🚀 GPU detectada. Docling usará aceleración CUDA automáticamente.")
+        cuda_available = torch.cuda.is_available()
+        
+        if use_gpu:
+            if cuda_available:
+                device = "cuda"
+                logger.info("🚀 GPU detectada y solicitada. Usando CUDA para Docling.")
+            else:
+                device = "cpu"
+                logger.warning("⚠️ GPU solicitada pero CUDA no está disponible en este sistema. Usando CPU.")
         else:
-            logger.info("ℹ️ No se detectó GPU compatible. Usando CPU para Docling.")
+            device = "cpu"
+            logger.info("ℹ️ Usando dispositivo CPU para Docling (GPU no solicitada).")
+            
+        pipeline_options.accelerator_options.device = device
         
         converter = DocumentConverter(
             format_options={

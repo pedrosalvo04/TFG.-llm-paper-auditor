@@ -29,9 +29,9 @@ Este documento describe la refactorización del sistema de auditoría de papers 
 BaseSkill (Clase Abstracta)
     │
     ├── Auditor Skills
-    │   ├── RedFlagDetectionSkill
     │   ├── InformationExtractionSkill
-    │   ├── ReproducibilityEvaluationSkill
+    │   ├── SectionMappingSkill
+    │   ├── NeurIPSComplianceSkill
     │   ├── MetricsCalculationSkill
     │   └── MetadataAggregationSkill
     │
@@ -88,34 +88,34 @@ class BaseSkill:
 
 **Ubicación**: `backend/skills/auditor_skills.py`
 
-#### RedFlagDetectionSkill
-- **Entrada**: `paper_text`
-- **Salida**: `red_flags` (dict con patrones detectados)
-- **Función**: Detecta patrones problemáticos usando regex
-- **LLM**: ❌ No requiere
-
 #### InformationExtractionSkill
-- **Entrada**: `paper_text`, `red_flags`
-- **Salida**: `extracted_info` (información estructurada)
-- **Función**: Extrae datos, código, hiperparámetros, etc.
-- **LLM**: ✅ Sí (Gemini)
+- **Entrada**: `paper_text`
+- **Salida**: `extracted_info`, `paper_sections`
+- **Función**: Map-Reduce para extraer datos técnicos e indexar el paper por secciones.
+- **LLM**: ✅ Sí (Gemini 3.1 Flash Lite)
 
-#### ReproducibilityEvaluationSkill
-- **Entrada**: `extracted_info`, `red_flags`
-- **Salida**: `evaluation` (evaluación completa)
-- **Función**: Evalúa reproducibilidad en 7 categorías
-- **LLM**: ✅ Sí (Gemini)
+#### SectionMappingSkill [NUEVO]
+- **Entrada**: `paper_sections`, `criterios_neurips`
+- **Salida**: `section_mapping`
+- **Función**: Mapea ítems de alto contexto a secciones específicas del paper.
+- **LLM**: ✅ Sí (Gemini 3.1 Flash Lite)
+
+#### NeurIPSComplianceSkill
+- **Entrada**: `extracted_info`, `section_mapping`, `paper_sections`
+- **Salida**: `evaluation`
+- **Función**: Evaluación por lotes (Batch) y contextual con inyección de texto crudo.
+- **LLM**: ✅ Sí (Gemini 3.1 Flash Lite)
 
 #### MetricsCalculationSkill
-- **Entrada**: `execution_time`, `caracteres`, `red_flags`
-- **Salida**: `metricas` (métricas de ejecución)
-- **Función**: Calcula estadísticas de auditoría
+- **Entrada**: `execution_time`, `caracteres`
+- **Salida**: `metricas`
+- **Función**: Calcula estadísticas de rendimiento.
 - **LLM**: ❌ No requiere
 
 #### MetadataAggregationSkill
 - **Entrada**: Todos los resultados anteriores
 - **Salida**: Resultado final agregado
-- **Función**: Combina todos los resultados
+- **Función**: Construye el objeto JSON maestro para el frontend.
 - **LLM**: ❌ No requiere
 
 ### 3. Chatbot Skills
@@ -176,20 +176,20 @@ class BaseSkill:
 1. Preparar contexto inicial
    └── context = {'paper_text': texto}
 
-2. RedFlagDetectionSkill.execute(context)
-   └── Detecta patrones problemáticos
-   └── Actualiza context con 'red_flags'
+2. InformationExtractionSkill.execute(context)
+   └── Extrae info y construye mapa de secciones
+   └── Actualiza context con 'extracted_info' y 'paper_sections'
 
-3. InformationExtractionSkill.execute(context)
-   └── Extrae información estructurada
-   └── Actualiza context con 'extracted_info'
+3. SectionMappingSkill.execute(context)
+   └── Mapea ítems a secciones físicas
+   └── Actualiza context con 'section_mapping'
 
-4. ReproducibilityEvaluationSkill.execute(context)
-   └── Evalúa reproducibilidad
+4. NeurIPSComplianceSkill.execute(context)
+   └── Evaluación Batch + High Context (Inyectada)
    └── Actualiza context con 'evaluation'
 
 5. MetricsCalculationSkill.execute(context)
-   └── Calcula métricas
+   └── Calcula métricas de rendimiento
    └── Actualiza context con 'metricas'
 
 6. MetadataAggregationSkill.execute(context)

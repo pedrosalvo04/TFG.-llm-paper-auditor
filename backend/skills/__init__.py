@@ -6,10 +6,10 @@ from backend.skills.base_skill import BaseSkill
 # Auditor Skills
 from backend.skills.auditor_skills import (
     InformationExtractionSkill,
+    SectionMappingSkill,
     NeurIPSComplianceSkill,
     MetricsCalculationSkill,
-    MetadataAggregationSkill,
-    ChecklistVerificationSkill
+    MetadataAggregationSkill
 )
 
 
@@ -31,10 +31,10 @@ from backend.skills.sota_skills import (
 __all__ = [
     'BaseSkill',
     'InformationExtractionSkill',
+    'SectionMappingSkill',
     'NeurIPSComplianceSkill',
     'MetricsCalculationSkill',
     'MetadataAggregationSkill',
-    'ChecklistVerificationSkill',
     'ConversationalResponseSkill',
     'ContextValidationSkill',
     'ThematicCoverageSkill',

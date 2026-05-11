@@ -3,15 +3,16 @@ import streamlit as st
 import os
 from backend.services.pdf_parser import convert_pdf_to_markdown
 
-def extract_text_from_file(uploaded_file):
+def extract_text_from_file(uploaded_file, use_gpu=False):
     """Extrae el texto del archivo subido (PDF, TXT, MD) y lo guarda en session_state"""
     import hashlib
     
-    # Calcular hash del contenido para detectar cambios
+    # Calcular hash del contenido + opciones para detectar cambios
     file_content = uploaded_file.getvalue()
-    file_hash = hashlib.md5(file_content).hexdigest()
+    options_str = f"gpu:{use_gpu}"
+    file_hash = hashlib.md5(file_content + options_str.encode()).hexdigest()
     
-    # Verificar si es un archivo nuevo o diferente
+    # Verificar si es un archivo nuevo o diferente (o si cambiaron las opciones)
     if ("archivo_actual" not in st.session_state or 
         st.session_state.archivo_actual != uploaded_file.name or
         st.session_state.get('file_hash') != file_hash):
@@ -35,7 +36,7 @@ def extract_text_from_file(uploaded_file):
         # Procesar según el tipo de archivo
         with st.spinner("📂 Extrayendo texto..."):
             if file_extension == 'pdf':
-                st.session_state.md_text = convert_pdf_to_markdown(temp_path)
+                st.session_state.md_text = convert_pdf_to_markdown(temp_path, use_gpu=use_gpu)
             elif file_extension in ['txt', 'md']:
                 with open(temp_path, 'r', encoding='utf-8') as f:
                     st.session_state.md_text = f.read()
@@ -111,7 +112,7 @@ def run_audit(md_text):
                     st.stop()
             
             # Forzar actualización final del tracker
-            tracker_placeholder.markdown(get_phase_tracker_html(6), unsafe_allow_html=True)
+            tracker_placeholder.markdown(get_phase_tracker_html(5), unsafe_allow_html=True)
                 
             status.update(label="✅ Análisis completado", state="complete", expanded=False)
             st.success("✅ Análisis completado")

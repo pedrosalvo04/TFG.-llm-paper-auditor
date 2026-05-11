@@ -1,9 +1,9 @@
 # 🤖 NeurIPS 2026 Paper Auditor: Arquitectura y Flujo de Trabajo
 
-Este documento describe detalladamente el funcionamiento interno del auditor de artículos científicos, desde la ingesta del documento hasta la generación del informe de cumplimiento final. El sistema utiliza una arquitectura de **Skills** (habilidades) coordinadas en un pipeline secuencial de 5 fases.
+Este documento describe detalladamente el funcionamiento interno del auditor de artículos científicos, desde la ingesta del documento hasta la generación del informe de cumplimiento final. El sistema utiliza una arquitectura de **Skills** (habilidades) coordinadas en un pipeline secuencial de **6 fases** (recientemente optimizado para evaluación contextual).
 
 ## 🌟 Descripción General
-El **NeurIPS 2026 Paper Auditor** evalúa la transparencia y reproducibilidad de papers de IA/ML siguiendo los criterios oficiales de **NeurIPS 2026**. Su motor combina razonamiento Chain-of-Thought (CoT), arquitectura Map-Reduce para documentos extensos y un sistema de verificación cruzada ("Auditor 2") para minimizar falsos positivos.
+El **NeurIPS 2026 Paper Auditor** evalúa la transparencia y reproducibilidad de papers de IA/ML siguiendo los criterios oficiales de **NeurIPS 2026**. Su motor combina razonamiento Chain-of-Thought (CoT), arquitectura Map-Reduce para documentos extensos y una evaluación exhaustiva mediante mapeo inteligente de secciones.
 
 ## 🏗️ Arquitectura del Sistema
 El sistema se basa en una arquitectura modular de servicios y habilidades:
@@ -41,28 +41,27 @@ graph TD
         I --> J{"¿Es ML/AI?"}
         J -- "No" --> K["🛑 Abortar: INVALID_PAPER"]
         J -- "Sí" --> L["📋 Información Extraída Master"]
+        D -- "Indexación" --> LS["🗂️ Diccionario de Secciones (Título/Texto)"]
+    end
+
+    subgraph "2.5. Mapeo Inteligente (SectionMappingSkill)"
+        LS --> M1["🗺️ Router: Mapeo Items <-> Secciones"]
+        PE -. "section_mapping.md" .-> M1
+        M1 --> M2["📍 Mapa de Contexto (JSON)"]
     end
 
     subgraph "3. Fase de Evaluación (NeurIPSComplianceSkill)"
-        PY -. "get_extraction_assistance_helps" .-> M
-        L --> M["📡 Cálculo de Ayudas/Helps (Python)"]
-        PE -. "evaluation.md" .-> N
-        L --> N["🤖 Evaluación Checklist (CoT)"]
-        M & N --> O["📄 Evaluación Preliminar"]
+        PY -. "get_extraction_assistance_helps" .-> N1
+        L --> N1["📡 Cálculo de Ayudas/Helps (Python)"]
+        
+        M2 & LS --> N3["📊 8 Pares High Context (Inyección de Texto Crudo)"]
+        PE -. "evaluation_high_context.md" .-> N3
+        
+        N1 & N3 --> O["📄 Evaluación Consolidada Final"]
     end
 
-    subgraph "4. Fase de Verificación (ChecklistVerificationSkill)"
-        O --> P["🔍 Triage: Selección de 8 Items Críticos"]
-        PE -. "verification.md" .-> Q
-        P --> Q["🛡️ Auditor 2 (Re-evaluación con Paper Íntegro)"]
-        Q --> R{"¿Corrección?"}
-        R -- "Sí" --> S["✨ Actualizar JSON (was_corrected)"]
-        R -- "No" --> T["✅ Confirmar Evaluación"]
-        S & T --> U["⚖️ Evaluación Verificada Final"]
-    end
-
-    subgraph "5. Consolidación y Veredicto"
-        U --> V["📊 Cálculo de Métricas"]
+    subgraph "4. Consolidación y Veredicto"
+        O --> V["📊 Cálculo de Métricas"]
         V --> W["🧠 Lógica de Salud (Health Scoring)"]
         W --> X{"¿No's Justificados?"}
         X -- "Sí" --> Y["🟢 Veredicto: Válido"]
@@ -79,8 +78,8 @@ graph TD
 Para entender el flujo temporal del agente:
 1.  **`map_extraction.md`** (Múltiple): Una vez por cada sección del paper.
 2.  **`reduce_extraction.md`** (1 vez): Para consolidar los hechos.
-3.  **`evaluation.md`** (1 vez): El juicio inicial de los 16 ítems.
-4.  **`verification.md`** (Hasta 8 veces): El "Auditor 2" revisando puntos críticos.
+3.  **`section_mapping.md`** (1 vez): Fase 1.5 para enrutar contexto a los 16 ítems.
+4.  **`evaluation_high_context.md`** (8 veces): Evaluación profunda de los ítems agrupados en pares.
 
 ---
 
@@ -91,45 +90,35 @@ Es la base del análisis. Utiliza un enfoque de **Map-Reduce** para procesar pap
 
 - **Inputs**: 
     - `paper_text` (Texto completo extraído por Docling).
-    - `map_extraction.md` (Template para análisis de fragmentos).
-    - `reduce_extraction.md` (Template para consolidación global).
 - **Proceso**:
-    - **Fase MAP (Extracción Segmentada)**: El paper se divide en secciones lógicas (usando encabezados `#` de Docling). Cada segmento se envía a un LLM para extraer entidades, metodología, hardware y contexto técnico.
-    - **Fase REDUCE (Consolidación)**: Un segundo paso de síntesis unifica las extracciones, resuelve contradicciones y genera un objeto maestro.
-    - **Validación de Dominio**: Si el modelo detecta que el paper no es de ML/AI, aborta la ejecución con un error `INVALID_PAPER_TYPE`.
-- **Outputs**: `extracted_info` (JSON global), `map_steps` (detalles por bloque), `invalid_paper` (boolean).
-- **Modelos**: `Gemini 3.1 Flash Lite`.
+    - **Fase MAP (Extracción Segmentada)**: El paper se divide en secciones lógicas. Cada segmento se envía a un LLM para extraer entidades y contexto técnico.
+    - **Indexación de Secciones**: Además de la extracción, esta fase ahora construye un **Diccionario de Secciones** (`paper_sections`) que vincula cada título (`# Heading`) con su texto crudo íntegro.
+    - **Fase REDUCE (Consolidación)**: Unifica las extracciones y genera el objeto maestro `extracted_info`.
+- **Outputs**: `extracted_info` (JSON global), `paper_sections` (Diccionario de texto crudo).
 
-### 2. Evaluación NeurIPS (`NeurIPSComplianceSkill`)
-Transforma la información técnica extraída en juicios de cumplimiento normativo.
+### 1.5. Mapeo de Contexto (`SectionMappingSkill`) [NUEVA FASE]
+Actúa como un **Enrutador Inteligente** para dirigir el contexto adecuado a cada ítem del checklist.
 
 - **Inputs**: 
-    - `extracted_info` (JSON maestro de la Fase 1).
-    - `evaluation_helps` (Pistas técnicas generadas por Python).
-    - `evaluation.md` (Template con los criterios oficiales NeurIPS 2026).
+    - Lista de títulos de secciones extraídos.
+    - Criterios literales de NeurIPS 2026 para los 8 ítems de alto contexto.
 - **Proceso**:
-    - **Ayudas del Extractor (Helps)**: Antes de la evaluación profunda, un puente de Python genera ayudas de ayuda (`evaluation_helps`) que mapean hechos técnicos a reglas de NeurIPS para pre-calentar al evaluador.
-    - **Evaluación Normativa**: Aplica los criterios de NeurIPS 2026 sobre la información consolidada para generar respuestas preliminares (`Yes`, `No`, `N/A`) con su respectiva evidencia y justificación.
-- **Outputs**: `evaluation` (Checklist preliminar), `evaluation_helps`.
-- **Modelo**: `Gemini 3.1 Flash Lite`.
+    - El LLM analiza los títulos y los mapea a los ítems (ej: asociar "4.1 Data Collection" al ítem de "Crowdsourcing").
+    - **Regla de Granularidad**: El sistema prioriza automáticamente subsecciones específicas (4.1) sobre títulos genéricos (4) para evitar ruido.
+- **Outputs**: `section_mapping` (JSON con el mapeo ítem -> [títulos]).
 
-### 3. Auditoría Estricta / Auditor 2 (`ChecklistVerificationSkill`)
-Un sistema de **Self-Correction** que actúa como un segundo revisor senior para garantizar la máxima fidelidad y cazar alucinaciones.
+### 2. Evaluación NeurIPS Contextual (`NeurIPSComplianceSkill`)
+Refactorizada para realizar un análisis profundo mediante inyección dinámica de fragmentos para TODOS los ítems.
 
 - **Inputs**: 
-    - `evaluation` (Borrador de la Fase 2).
-    - `paper_text` (Texto original para búsqueda de evidencias).
-    - `verification.md` (Instrucciones de auditoría y detección de alucinaciones).
+    - `extracted_info` (JSON maestro y ayudas pre-calculadas).
+    - `section_mapping` y `paper_sections`.
 - **Proceso**:
-    - **Lógica de Triage**: No verifica los 16 ítems para optimizar tiempo/coste. Selecciona un máximo de **8 ítems** prioritarios:
-        1.  **Ítems Críticos**: Siempre revisa reproducibilidad, código, datos, hardware, estadística, ética y uso de LLMs.
-        2.  **Banderas Rojas**: Prioriza cualquier ítem marcado como "No" o "N/A" para verificar que no sea un falso negativo.
-    - **Verificación contra Fuente**: El "Auditor 2" consulta directamente el texto original del paper (ventana de 60k tokens: 30k iniciales + 30k finales) para validar si el primer auditor omitió algo.
-    - **Refinamiento Técnico**: Actualiza respuestas y añade el flag `was_corrected: true` si hay cambios.
-- **Outputs**: `evaluation` (Checklist verificado y corregido).
-- **Modelo**: `Gemini 3.1 Flash Lite` (con configuración determinista).
+    - **Pares High Context**: Los 16 ítems se agrupan en llamadas de 2 en 2. Para cada par, se busca el texto crudo en `paper_sections` según el mapeo y **se inyecta directamente en el prompt**.
+    - **Análisis de Evidencia**: El evaluador lee el texto crudo del paper y las ayudas computadas para emitir su juicio "Yes/No".
+- **Outputs**: `evaluation` (Checklist consolidado), `evaluation_helps`.
 
-### 4. Consolidación de Métricas (`MetricsCalculationSkill`)
+### 3. Consolidación de Métricas (`MetricsCalculationSkill`)
 Fase de cálculo determinista para medir la eficiencia del proceso.
 
 - **Inputs**: `paper_text`, `execution_time`.
@@ -137,7 +126,7 @@ Fase de cálculo determinista para medir la eficiencia del proceso.
     - Calcula estadísticas de rendimiento: tiempo total, velocidad de procesamiento (tokens/segundo) y volumen de datos analizados.
 - **Outputs**: `metrics` (Metadatos de rendimiento).
 
-### 5. Generación de Informe Final (`MetadataAggregationSkill`)
+### 4. Generación de Informe Final (`MetadataAggregationSkill`)
 Fase de cierre que consolida el conocimiento para el dashboard.
 
 - **Inputs**: Todo el contexto acumulado de las fases 1-4.
@@ -189,8 +178,7 @@ Actúa como un filtro de calidad crítico.
 
 ## 📊 Ciclo de Vida del Contexto
 1. **Raw Text**: 100% del documento (Docling).
-2. **Context Mapping**: Identificación de anclas (Fase 1).
-3. **Structured Context**: Extracción consolidada (Fase 1-2).
-4. **Verified Evidence**: Citas textuales validadas (Fase 3).
-5. **Insights**: Dashboard visual final (Fase 5).
+2. **Context Mapping**: Identificación de anclas (Fase 1.5).
+3. **Structured Context**: Extracción consolidada (Fase 2).
+4. **Insights**: Dashboard visual final (Fase 4).
 

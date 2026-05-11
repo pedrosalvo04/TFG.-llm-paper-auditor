@@ -38,9 +38,16 @@ from frontend.components.audit_results import render_audit_results, generate_rep
 from frontend.components.sota_section import render_sota_analysis
 from frontend.components.chatbot import render_chatbot
 
-# 4. Renderizado de la App
 render_sidebar()
 render_header()
+
+# 5. Carga de Documento y Configuración
+st.markdown("### 🛠️ Configuración de Procesamiento")
+col_gpu, col_info = st.columns([1, 2])
+with col_gpu:
+    use_gpu = st.checkbox("🚀 Usar GPU (Aceleración)", value=False, help="Activa esto si tienes una GPU NVIDIA configurada.")
+with col_info:
+    st.caption("ℹ️ La aceleración por GPU reduce el tiempo de extracción de texto en PDFs largos.")
 
 uploaded_file = st.file_uploader(
     "Sube el artículo científico (PDF, TXT o Markdown)", 
@@ -48,7 +55,7 @@ uploaded_file = st.file_uploader(
 )
 
 if uploaded_file:
-    md_text = extract_text_from_file(uploaded_file)
+    md_text = extract_text_from_file(uploaded_file, use_gpu=use_gpu)
     
     if not st.session_state.get('resultado'):
         st.info("📄 Archivo cargado correctamente. Pulsa 'Iniciar Auditoría' para comenzar el análisis.")
@@ -79,7 +86,7 @@ if uploaded_file:
         if "error" in resultado or "evaluation_error" in resultado:
             error_msg = resultado.get("error") or resultado.get("evaluation_error")
             st.error(f"❌ Error: {error_msg}")
-        elif resultado.get("claims"):
+        elif resultado.get("claims") or resultado.get("limitations") or len(resultado) > 5:
             puntuacion = render_audit_results(resultado, uploaded_file)
             render_sota_analysis(md_text)
             render_chatbot(md_text)

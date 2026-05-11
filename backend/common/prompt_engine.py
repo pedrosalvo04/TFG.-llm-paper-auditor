@@ -198,38 +198,32 @@ def get_extraction_assistance_helps(info: dict) -> dict:
     
     return helps
 
-def get_evaluation_prompt(extracted_info: dict) -> str:
-    """Genera el prompt para evaluacion segun criterios NeurIPS 2026."""
-    template = load_prompt("auditor", "3. evaluation")
+def get_section_mapping_prompt(section_titles: list) -> str:
+    """Genera el prompt para mapear títulos de secciones a items de alto contexto."""
+    template = load_prompt("auditor", "3a. section_mapping")
+    return render_prompt(template, section_titles="\n".join(f"- {title}" for title in section_titles))
+
+
+def get_evaluation_high_context_prompt(extracted_info: dict, items_to_evaluate: list, mapped_sections_text: str, criteria_literal_text: str = "") -> str:
+    """Genera el prompt individual o agrupado para items de alto contexto."""
+    template = load_prompt("auditor", "3c. evaluation_high_context")
     
     helps = get_extraction_assistance_helps(extracted_info)
-
+    
     return render_prompt(template,
+        items_to_evaluate=json.dumps(items_to_evaluate, indent=2),
         extracted_info_json=json.dumps(extracted_info, indent=2, ensure_ascii=False),
-        flags_section="",
-        reproducibility_help=helps['reproducibility'],
-        open_access_help=helps['open_access'],
-        statistics_help=helps['statistics'],
-        compute_resource_help=helps['compute_resource'],
-        licenses_help=helps['licenses'],
-        crowdsourcing_help=helps['crowdsourcing']
+        mapped_sections_text=mapped_sections_text,
+        criteria_literal_text=criteria_literal_text,
+        reproducibility_help=helps.get('reproducibility', ''),
+        open_access_help=helps.get('open_access', ''),
+        statistics_help=helps.get('statistics', ''),
+        compute_resource_help=helps.get('compute_resource', ''),
+        licenses_help=helps.get('licenses', ''),
+        crowdsourcing_help=helps.get('crowdsourcing', '')
     )
 
-def get_verification_prompt(item_key: str, item_data: dict, paper_context: str) -> str:
-    """Prompt para la fase de 'Auditor Estricto' (Self-Correction)."""
-    template = load_prompt("auditor", "4. verification")
-    
-    answer = item_data.get('answer', 'N/A')
-    justification = item_data.get('justification', '')
-    evidence = item_data.get('evidence', '')
-    
-    return render_prompt(template,
-        item_key=item_key,
-        answer=answer,
-        justification=justification,
-        evidence=evidence,
-        paper_context=paper_context
-    )
+
 
 # =======================================================
 # CHATBOT PROMPTS

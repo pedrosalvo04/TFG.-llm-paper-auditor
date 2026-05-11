@@ -109,12 +109,21 @@ AUDIT_TEMPERATURE = 0.0
 CHAT_TEMPERATURE = 0.2
 SOTA_TEMPERATURE = 0.3
 
-# Configuración de auditoría
+# Configuración de auditoría (Extracción)
 AUDIT_CONFIG = {
     "response_mime_type": "application/json",
     "temperature": AUDIT_TEMPERATURE,
     "top_k": 1,
     "top_p": 0.1,
+    "max_output_tokens": 16384
+}
+
+# Configuración de evaluación (Senior Area Chair) - Más creativa para mejores justificaciones
+EVALUATION_CONFIG = {
+    "response_mime_type": "application/json",
+    "temperature": 0.3,
+    "top_k": 40,
+    "top_p": 0.95,
     "max_output_tokens": 16384
 }
 

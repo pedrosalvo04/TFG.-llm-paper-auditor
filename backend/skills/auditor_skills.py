@@ -5,12 +5,13 @@ from backend.skills.base_skill import BaseSkill
 from backend.common.config import REDUCE_MODEL_NAME
 from backend.common.prompt_engine import (
     get_extraction_prompt, 
-    get_evaluation_prompt,
-    get_verification_prompt,
+    get_section_mapping_prompt,
+    get_evaluation_high_context_prompt,
     get_map_extraction_prompt,
     get_reduce_extraction_prompt,
     get_extraction_assistance_helps
 )
+from backend.common.neurips_criteria import NEURIPS_CRITERIA_LITERAL
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
@@ -39,6 +40,29 @@ class InformationExtractionSkill(BaseSkill):
             paper_text_norm = paper_text.replace('\r\n', '\n')
             sections = re.split(r'\n(?=#+ )', '\n' + paper_text_norm)
             sections = [s.strip() for s in sections if s.strip()]
+            
+            # NUEVO: Guardar las secciones como diccionario para la Fase 1.5
+            paper_sections_dict = {}
+            for s in sections:
+                lines = s.split('\n')
+                if lines:
+                    title = lines[0].strip()
+                    # El contenido es todo lo que hay DESPUÉS de la primera línea (el título)
+                    content = '\n'.join(lines[1:]).strip()
+                    
+                    if not title.startswith('#'):
+                        # Si no hay un encabezado claro (ej. primer fragmento sin #), le asignamos uno por defecto
+                        # y el contenido es el bloque entero
+                        title = "General Context / Abstract"
+                        content = s.strip()
+                    
+                    # Manejar posibles títulos duplicados (ej. varios "Conclusion" en distintas partes)
+                    if title in paper_sections_dict:
+                        paper_sections_dict[title] += "\n\n" + content
+                    else:
+                        paper_sections_dict[title] = content
+            context['paper_sections'] = paper_sections_dict
+
             
             if len(sections) > 1:
                 total_chars = sum(len(s) for s in sections)
@@ -159,11 +183,47 @@ class InformationExtractionSkill(BaseSkill):
             return {'extracted_info': {}, 'extraction_error': str(e)}
 
 
+class SectionMappingSkill(BaseSkill):
+    """Skill para mapear los títulos de docling a los items de alto contexto."""
+    
+    def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        paper_sections_dict = context.get('paper_sections', {})
+        if not paper_sections_dict:
+            self.log_execution("No hay secciones detectadas para mapear.", level="warning")
+            return {'section_mapping': {}}
+            
+        if not self.llm_client:
+            self.log_execution("No hay cliente LLM configurado para SectionMappingSkill", level="error")
+            return {'section_mapping': {}}
+            
+        self.log_execution("🗺️ [Fase 1.5] Mapeando títulos de Docling con items de alto contexto...")
+        
+        section_titles = list(paper_sections_dict.keys())
+        prompt = get_section_mapping_prompt(section_titles)
+        
+        try:
+            response = self.llm_client.generate(prompt)
+            raw_text = response.text.strip()
+            
+            try:
+                mapping = self.parse_json_response(raw_text)
+                self.log_execution("✅ Mapeo de secciones completado")
+                return {'section_mapping': mapping}
+            except Exception as e:
+                self.log_execution(f"❌ Error parseando JSON de mapeo: {str(e)}", level="error")
+                return {'section_mapping': {}}
+                
+        except Exception as e:
+            self.log_execution(f"❌ Error general en mapeo: {str(e)}", level="error")
+            return {'section_mapping': {}}
+
 class NeurIPSComplianceSkill(BaseSkill):
     """Skill para evaluar el cumplimiento del checklist NeurIPS 2026 usando LLM"""
     
     def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
         extracted_info = context.get('extracted_info') or {}
+        section_mapping = context.get('section_mapping') or {}
+        paper_sections = context.get('paper_sections') or {}
         
         if not extracted_info:
             return {'evaluation': {}}
@@ -171,46 +231,107 @@ class NeurIPSComplianceSkill(BaseSkill):
         if not self.llm_client:
             self.log_execution("No hay cliente LLM configurado", level="error")
             return {'evaluation': {}}
-        
-        self.log_execution("📊 Evaluando reproducibilidad...")
-        
-        try:
-            # Calcular ayudas (helps) para el evaluador basándose en la extracción de la Fase 1
-            helps = get_extraction_assistance_helps(extracted_info)
             
-            evaluation_prompt = get_evaluation_prompt(
-                extracted_info
-            )
-            response = self.llm_client.generate(evaluation_prompt)
-            raw_text = response.text.strip()
+        final_evaluation = {}
+        helps = get_extraction_assistance_helps(extracted_info)
+        
+        # EVALUACIÓN HIGH CONTEXT EN PAREJAS (16 Items)
+        all_items = [
+            'claims', 'limitations', 
+            'theory_assumptions_proofs', 'experimental_result_reproducibility',
+            'open_access_data_code', 'experimental_setting_details',
+            'experiment_statistical_significance', 'experiments_compute_resource',
+            'code_of_ethics', 'broader_impacts',
+            'safeguards', 'licenses',
+            'assets', 'crowdsourcing_human_subjects',
+            'irb_approvals', 'declaration_llm_usage'
+        ]
+        
+        groups = [all_items[i:i + 2] for i in range(0, len(all_items), 2)]
+        
+        for i, group in enumerate(groups):
+            self.log_execution(f"📊 Evaluando grupo {i+1}/{len(groups)} de items en alto contexto...")
+            
+            # Recopilar secciones relevantes sin duplicados
+            relevant_titles = set()
+            for item in group:
+                titles = section_mapping.get(item, [])
+                if isinstance(titles, list):
+                    relevant_titles.update(titles)
+            
+            # Construir texto inyectado
+            injected_text = ""
+            for title in relevant_titles:
+                if title in paper_sections:
+                    injected_text += f"\n\n=== {title} ===\n{paper_sections[title]}"
+            
+            if not injected_text.strip():
+                injected_text = "No se encontraron secciones específicas mapeadas para estos items. Revisa el resumen general."
+                
+            # Extraer textos literales de NeurIPS para los items a evaluar
+            criteria_literal_list = []
+            for item in group:
+                if item in NEURIPS_CRITERIA_LITERAL:
+                    criteria_literal_list.append(NEURIPS_CRITERIA_LITERAL[item])
+                
+                # Inyectar el texto completo del Código de Ética si corresponde
+                if item == "code_of_ethics":
+                    import os
+                    ethics_path = os.path.join(os.path.dirname(__file__), '..', '..', 'code of ethics.md')
+                    try:
+                        with open(ethics_path, 'r', encoding='utf-8') as f:
+                            ethics_text = f.read()
+                            criteria_literal_list.append("--- NEURIPS FULL CODE OF ETHICS ---\n" + ethics_text)
+                            self.log_execution("📜 Código de Ética completo inyectado en el prompt.")
+                    except Exception as e:
+                        self.log_execution(f"⚠️ No se pudo leer 'code of ethics.md': {e}", level="warning")
+            
+            criteria_literal_text = "\n\n".join(criteria_literal_list)
+            
+            self.log_execution(f"🔍 Items {group}: Inyectando {len(criteria_literal_list)} descripciones literales de NeurIPS.")
+                
+            prompt = get_evaluation_high_context_prompt(extracted_info, group, injected_text, criteria_literal_text)
             try:
-                evaluation = self.parse_json_response(raw_text)
+                response = self.llm_client.generate(prompt)
+                raw_text = response.text.strip()
+                group_eval = self.parse_json_response(raw_text)
+                
+                # Normalización robusta para grupos
+                normalized = {}
+                if isinstance(group_eval, dict):
+                    # Verificar si las claves del grupo están en el primer nivel
+                    if any(k in group_eval for k in group):
+                        normalized = group_eval
+                    else:
+                        # Buscar en niveles anidados
+                        for val in group_eval.values():
+                            if isinstance(val, dict) and any(k in val for k in group):
+                                normalized = val
+                                break
+                elif isinstance(group_eval, list):
+                    for item in group_eval:
+                        if isinstance(item, dict):
+                            # Si es un dict con claves de items
+                            if any(k in item for k in group):
+                                normalized.update(item)
+                            # Si es un dict tipo {"item": "claims", "answer": "Yes"}
+                            elif "item" in item and item["item"] in group:
+                                normalized[item["item"]] = item
+                
+                if normalized:
+                    final_evaluation.update(normalized)
+                    self.log_execution(f"✅ Grupo {i+1} completado: {len(normalized)} ítems recuperados.")
+                else:
+                    self.log_execution(f"⚠️ Grupo {i+1} no devolvió ítems válidos en el formato esperado.", level="warning")
+                    self.log_execution(f"🔍 Raw LLM Output (Grupo {i+1}): {raw_text[:500]}...", level="warning")
             except Exception as e:
-                self.log_execution(f"❌ Error parseando JSON de evaluación: {str(e)}", level="error")
-                return {'evaluation': {}, 'evaluation_error': f'JSON parse error: {str(e)}'}
-            
-            if isinstance(evaluation, list):
-                evaluation = evaluation[0] if evaluation else {}
-            
-            # Asegurar que evaluation es un diccionario (por si acaso el LLM devolvió algo raro)
-            if not isinstance(evaluation, dict):
-                self.log_execution(f"⚠️ La evaluación no es un diccionario ({type(evaluation)}), reseteando.", level="warning")
-                evaluation = {}
+                self.log_execution(f"❌ Error en evaluación grupo {i+1}: {str(e)}", level="error")
 
-            self.log_execution("✅ Evaluación completada")
-            return {
-                'evaluation': evaluation,
-                'evaluation_helps': helps # Para visualización en el frontend
-            }
-        except Exception as e:
-            error_msg = str(e)
-            self.log_execution(f"❌ Error general en evaluación: {error_msg}", level="error")
-            
-            if '503' in error_msg or 'UNAVAILABLE' in error_msg:
-                return {'evaluation': {}, 'evaluation_error': 'El modelo LLM está experimentando alta demanda. Intenta nuevamente en unos momentos.'}
-            
-            return {'evaluation': {}, 'evaluation_error': error_msg}
-
+        self.log_execution("✅ Evaluación completada")
+        return {
+            'evaluation': final_evaluation,
+            'evaluation_helps': helps # Para visualización en el frontend
+        }
 
 class MetricsCalculationSkill(BaseSkill):
     """Skill para calcular métricas de la auditoría"""
@@ -267,86 +388,4 @@ class MetadataAggregationSkill(BaseSkill):
         self.log_execution("✅ Resultado final construido correctamente")
         return result
 
-class ChecklistVerificationSkill(BaseSkill):
-    """
-    Skill de Auditoría Estricta (Self-Correction).
-    Revisa los ítems críticos (Yes/No/N/A) para detectar falsos positivos y falsos negativos.
-    """
-    
-    def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        evaluation = context.get('evaluation') or {}
-        paper_text = context.get('paper_text') or ''
-        
-        # Asegurar que evaluation es un diccionario
-        if not isinstance(evaluation, dict):
-            self.log_execution(f"⚠️ evaluation no es un diccionario (es {type(evaluation)}), ignorando.", level="warning")
-            evaluation = {}
-            
-        if not evaluation:
-            self.log_execution("⚠️ No hay datos de evaluación para verificar.", level="warning")
-            return {'evaluation': {}}
-        
-        # Seleccionar ítems para verificación
-        # Damos prioridad a los ítems técnicos críticos independientemente de su respuesta inicial
-        priority_items = [
-            'claims', 'experimental_result_reproducibility', 'open_access_data_code', 
-            'experimental_setting_details', 'experiments_compute_resource',
-            'experiment_statistical_significance', 'licenses', 'declaration_llm_usage',
-            'code_of_ethics'
-        ]
-        
-        # Filtramos solo los que existen en la evaluación y son diccionarios
-        to_check = [item for item in priority_items if item in evaluation and isinstance(evaluation[item], dict)]
 
-        
-        # Si sobran huecos, añadimos los que tengan respuestas negativas que no estén en la lista de prioridad
-        if len(to_check) < 8:
-            other_negatives = [
-                k for k, v in evaluation.items() 
-                if k not in to_check and isinstance(v, dict) and v.get('answer') in ['No', 'N/A']
-            ]
-            to_check.extend(other_negatives[:(8 - len(to_check))])
-            
-        self.log_execution(f"🔍 Iniciando Auditoría Estricta Universal sobre {len(to_check)} ítems clave...")
-        
-        corrections_made = 0
-        
-        for item_key in to_check:
-            item_data = evaluation[item_key]
-            status_type = "Verificación de cumplimiento" if item_data.get('answer') == 'Yes' else "Búsqueda de omisión"
-            self.log_execution(f"🛡️ {status_type}: {item_key} (Inicial: {item_data.get('answer')})")
-            
-            # Contexto amplio (60k chars totales)
-            context_snippet = paper_text[:30000] + "\n[...]\n" + paper_text[-30000:]
-            
-            prompt = get_verification_prompt(item_key, item_data, context_snippet)
-            
-            try:
-                response = self.llm_client.generate(prompt)
-                raw_text = response.text.strip()
-                try:
-                    verification_result = self.parse_json_response(raw_text)
-                except Exception as e:
-                    self.log_execution(f"⚠️ Error parseando verificación de {item_key}: {str(e)}", level="warning")
-                    continue
-                
-                # Actualizar si hay corrección O si la nueva justificación es más técnica/detallada
-                if verification_result.get('was_corrected', False):
-                    self.log_execution(f"✨ ¡CAMBIO DETECTADO! {item_key}: {item_data.get('answer')} -> {verification_result.get('answer')}")
-                    corrections_made += 1
-                
-                # Siempre actualizamos para beneficiarnos del refinamiento de la justificación y evidencia
-                evaluation[item_key] = {
-                    "answer": verification_result.get('answer'),
-                    "evidence": verification_result.get('evidence'),
-                    "justification": verification_result.get('justification'),
-                    "is_no_justified": verification_result.get('is_no_justified', False),
-                    "verified": True,
-                    "was_refined": not verification_result.get('was_corrected', False)
-                }
-                    
-            except Exception as e:
-                self.log_execution(f"⚠️ Error verificando {item_key}: {str(e)}", level="warning")
-                
-        self.log_execution(f"✅ Auditoría Estricta finalizada. Cambios de estado: {corrections_made}")
-        return {'evaluation': evaluation}
