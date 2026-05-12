@@ -296,11 +296,16 @@ def generate_report(resultado, uploaded_file, health=None):
     status_label = "Checklist Valido" if health["status"] == "valid" else "Requiere Atencion (Faltan justificaciones)"
     pending = health["pending_count"]
     total = health["total"]
+    metricas = resultado.get("metricas", {})
+    tiempo = metricas.get("tiempo_segundos", "N/A")
+    caracteres = metricas.get("caracteres_leidos", "N/A")
 
     reporte = f"# NeurIPS 2026 Checklist Audit Report\n\n"
     reporte += f"**Paper:** {uploaded_file.name}\n\n"
     reporte += f"**Veredicto:** {status_label}\n"
-    reporte += f"**Items con problemas:** {pending} de {total}\n\n"
+    reporte += f"**Items con problemas:** {pending} de {total}\n"
+    reporte += f"**Tiempo de ejecución:** {tiempo}s\n"
+    reporte += f"**Caracteres analizados:** {caracteres}\n\n"
     reporte += "---\n\n## Tabla de Cumplimiento\n\n"
     reporte += "| # | Item | Respuesta | Evidencia / Justificacion |\n"
     reporte += "|---|------|-----------|---------------------------|\n"
@@ -309,12 +314,7 @@ def generate_report(resultado, uploaded_file, health=None):
         label = item["label"]
         answer = item["answer"]
         evidence = item["evidence"] if item["evidence"] and item["evidence"] != "-" else "-"
-        note = ""
-        if item["pending_justification"]:
-            note = " [ATENCIÓN: sin justificacion clara]"
-        elif item["missing_evidence"]:
-            note = " [ATENCIÓN: sin evidencia]"
-        reporte += f"| {idx} | {label} | {answer} | {evidence}{note} |\n"
+        reporte += f"| {idx} | {label} | {answer} | {evidence} |\n"
 
     reporte += "\n---\n_Generado por Auditor NeurIPS 2026._\n"
     return reporte

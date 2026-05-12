@@ -41,38 +41,21 @@ from frontend.components.chatbot import render_chatbot
 render_sidebar()
 render_header()
 
-# 5. Carga de Documento y Configuración
-st.markdown("### 🛠️ Configuración de Procesamiento")
-col_gpu, col_info = st.columns([1, 2])
-with col_gpu:
-    use_gpu = st.checkbox("🚀 Usar GPU (Aceleración)", value=False, help="Activa esto si tienes una GPU NVIDIA configurada.")
-with col_info:
-    st.caption("ℹ️ La aceleración por GPU reduce el tiempo de extracción de texto en PDFs largos.")
-
+# 5. Carga de Documento
 uploaded_file = st.file_uploader(
     "Sube el artículo científico (PDF, TXT o Markdown)", 
     type=["pdf", "txt", "md"]
 )
 
 if uploaded_file:
-    md_text = extract_text_from_file(uploaded_file, use_gpu=use_gpu)
+    md_text = extract_text_from_file(uploaded_file)
     
-    if not st.session_state.get('resultado'):
-        st.info("📄 Archivo cargado correctamente. Pulsa 'Iniciar Auditoría' para comenzar el análisis.")
-        
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            is_auditing = st.session_state.get('audit_in_progress', False)
-            btn_label = "⏳ Auditando..." if is_auditing else "🚀 Iniciar Auditoría"
-            
-            if st.button(btn_label, width="stretch", key="start_audit_btn", type="primary", disabled=is_auditing):
-                st.session_state.audit_in_progress = True
-                st.rerun()
-        
-        if st.session_state.get('audit_in_progress'):
-            run_audit(md_text)
-            st.session_state.audit_in_progress = False
-            st.rerun()
+    # Iniciar auditoría automáticamente si no hay resultados y no está en progreso
+    if md_text and not st.session_state.get('resultado') and not st.session_state.get('audit_in_progress'):
+        st.session_state.audit_in_progress = True
+        run_audit(md_text)
+        st.session_state.audit_in_progress = False
+        st.rerun()
     else:
         if st.button("🔄 Nueva Auditoría / Cambiar Opciones"):
             st.session_state.resultado = None

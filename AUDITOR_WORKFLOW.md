@@ -1,9 +1,15 @@
 # 🤖 NeurIPS 2026 Paper Auditor: Arquitectura y Flujo de Trabajo
 
-Este documento describe detalladamente el funcionamiento interno del auditor de artículos científicos, desde la ingesta del documento hasta la generación del informe de cumplimiento final. El sistema utiliza una arquitectura de **Skills** (habilidades) coordinadas en un pipeline secuencial de **6 fases** (recientemente optimizado para evaluación contextual).
+Este documento describe detalladamente el funcionamiento interno del auditor de artículos científicos, desde la ingesta del documento hasta la generación del informe de cumplimiento final. El sistema utiliza una arquitectura de **Skills** (habilidades) coordinadas en un pipeline secuencial de **5 fases**.
 
 ## 🌟 Descripción General
 El **NeurIPS 2026 Paper Auditor** evalúa la transparencia y reproducibilidad de papers de IA/ML siguiendo los criterios oficiales de **NeurIPS 2026**. Su motor combina razonamiento Chain-of-Thought (CoT), arquitectura Map-Reduce para documentos extensos y una evaluación exhaustiva mediante mapeo inteligente de secciones.
+
+### ⚡ Flujo Automatizado (sin intervención del usuario)
+1. El usuario **sube el archivo** (PDF, TXT o MD).
+2. **Docling** parsea el PDF automáticamente, usando **GPU (CUDA) si está disponible** o CPU en caso contrario.
+3. La **auditoría comienza de inmediato** sin necesidad de pulsar ningún botón.
+4. Los resultados se muestran en el dashboard. El informe descargable incluye **tiempo de ejecución** y **número de caracteres analizados**.
 
 ## 🏗️ Arquitectura del Sistema
 El sistema se basa en una arquitectura modular de servicios y habilidades:
@@ -55,7 +61,7 @@ graph TD
         L --> N1["📡 Cálculo de Ayudas/Helps (Python)"]
         
         M2 & LS --> N3["📊 8 Pares High Context (Inyección de Texto Crudo)"]
-        PE -. "evaluation_high_context.md" .-> N3
+        PE -. "evaluation_high_context.md + item_rules/<item>.md" .-> N3
         
         N1 & N3 --> O["📄 Evaluación Consolidada Final"]
     end
@@ -79,7 +85,7 @@ Para entender el flujo temporal del agente:
 1.  **`map_extraction.md`** (Múltiple): Una vez por cada sección del paper.
 2.  **`reduce_extraction.md`** (1 vez): Para consolidar los hechos.
 3.  **`section_mapping.md`** (1 vez): Fase 1.5 para enrutar contexto a los 16 ítems.
-4.  **`evaluation_high_context.md`** (8 veces): Evaluación profunda de los ítems agrupados en pares.
+4.  **`evaluation_high_context.md` + `item_rules/<item>.md`** (8 veces): Evaluación profunda de los ítems agrupados en pares. En cada llamada, solo se inyectan las **2 reglas específicas** del par evaluado, cargadas dinámicamente desde `backend/prompts/auditor/item_rules/`.
 
 ---
 
@@ -108,13 +114,14 @@ Actúa como un **Enrutador Inteligente** para dirigir el contexto adecuado a cad
 - **Outputs**: `section_mapping` (JSON con el mapeo ítem -> [títulos]).
 
 ### 2. Evaluación NeurIPS Contextual (`NeurIPSComplianceSkill`)
-Refactorizada para realizar un análisis profundo mediante inyección dinámica de fragmentos para TODOS los ítems.
+Realiza un análisis profundo mediante inyección dinámica de contexto y reglas por par de ítems.
 
 - **Inputs**: 
     - `extracted_info` (JSON maestro y ayudas pre-calculadas).
     - `section_mapping` y `paper_sections`.
 - **Proceso**:
     - **Pares High Context**: Los 16 ítems se agrupan en llamadas de 2 en 2. Para cada par, se busca el texto crudo en `paper_sections` según el mapeo y **se inyecta directamente en el prompt**.
+    - **Reglas Dinámicas por Ítem**: En cada llamada se inyectan **únicamente las 2 reglas del par evaluado**, cargadas desde archivos `.md` individuales en `backend/prompts/auditor/item_rules/`. Esto evita ruido de instrucciones irrelevantes.
     - **Análisis de Evidencia**: El evaluador lee el texto crudo del paper y las ayudas computadas para emitir su juicio "Yes/No".
 - **Outputs**: `evaluation` (Checklist consolidado), `evaluation_helps`.
 
@@ -133,9 +140,16 @@ Fase de cierre que consolida el conocimiento para el dashboard.
 - **Proceso**:
     - **Lógica de Veredicto (Health Score)**:
         - **🟢 Checklist Válido**: Si todos los "No" tienen una justificación válida extraída del paper (`is_no_justified: true`).
-        - **🔴 Riesgo de Desk Reject**: Si hay ítems en "No" sin justificación del autor.
+        - **🔴 Atención Requerida**: Si hay ítems en "No" sin justificación del autor.
     - **Empaquetado**: Agrega metadatos finales y estructura el JSON final.
 - **Outputs**: Objeto JSON final con veredicto, métricas, helps y checklist verificado.
+
+### 📄 Informe Descargable (`.md`)
+El usuario puede descargar el informe de auditoría en formato Markdown. Incluye:
+- **Veredicto** y conteo de ítems problemáticos.
+- **Tiempo de ejecución total** (segundos).
+- **Número de caracteres analizados** del paper.
+- **Tabla de cumplimiento** con respuesta y evidencia por ítem.
 
 ---
 
@@ -170,11 +184,11 @@ Actúa como un filtro de calidad crítico.
 
 ## 🛠️ Tecnologías y Stack Técnico
 
-- **LLM Core**: Familia **Gemini 3.1 Flash Lite** (optimizado para latencia y razonamiento técnico en JSON).
-- **Context Handling**: Ventanas de hasta 1M tokens con técnicas de Map-Reduce y Ventanas Deslizantes.
-- **PDF Intelligence**: **Docling (IBM)** para preservación de semántica y estructura Markdown.
-- **Prompting**: Arquitectura **Markdown-to-JSON** con validación estricta de esquemas.
-- **Frontend**: Streamlit 2026 con componentes personalizados en HTML/CSS para visualización de "signals".
+- **LLM Core**: Familia **Gemini** (configurable por fase: extracción, evaluación, verificación).
+- **Context Handling**: Ventanas de hasta 1M tokens con técnicas de Map-Reduce.
+- **PDF Intelligence**: **Docling (IBM)** con **detección automática de GPU (CUDA)**. Usa GPU si está disponible, CPU en caso contrario.
+- **Prompting**: Arquitectura **Markdown-to-JSON** con reglas por ítem en archivos `.md` individuales (`item_rules/`).
+- **Frontend**: Streamlit con pipeline completamente automático (sin botones de inicio manual).
 
 ## 📊 Ciclo de Vida del Contexto
 1. **Raw Text**: 100% del documento (Docling).

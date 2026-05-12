@@ -6,6 +6,7 @@ __pycache__/
 .Python
 
 *.txt
+!requirements.txt
 
 # Virtual environments
 venv/

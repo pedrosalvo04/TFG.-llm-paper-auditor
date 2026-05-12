@@ -204,17 +204,40 @@ def get_section_mapping_prompt(section_titles: list) -> str:
     return render_prompt(template, section_titles="\n".join(f"- {title}" for title in section_titles))
 
 
+def load_item_rule(item_key: str) -> str:
+    """
+    Carga la regla de un item desde su archivo .md individual en item_rules/.
+    Devuelve string vacío si el archivo no existe (item sin regla específica).
+    """
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    rule_path = os.path.join(base_dir, "prompts", "auditor", "item_rules", f"{item_key}.md")
+    try:
+        with open(rule_path, "r", encoding="utf-8") as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        return ""
+
+
 def get_evaluation_high_context_prompt(extracted_info: dict, items_to_evaluate: list, mapped_sections_text: str, criteria_literal_text: str = "") -> str:
-    """Genera el prompt individual o agrupado para items de alto contexto."""
+    """Genera el prompt para items de alto contexto.
+    Inyecta dinámicamente SOLO las reglas de los items del batch actual,
+    cargadas desde backend/prompts/auditor/item_rules/<item>.md."""
     template = load_prompt("auditor", "3c. evaluation_high_context")
-    
+
     helps = get_extraction_assistance_helps(extracted_info)
-    
+
+    # Cargar y concatenar SOLO las reglas de los 2 items de este batch
+    per_item_rules = "\n\n".join(
+        rule for item in items_to_evaluate
+        if (rule := load_item_rule(item))
+    )
+
     return render_prompt(template,
         items_to_evaluate=json.dumps(items_to_evaluate, indent=2),
         extracted_info_json=json.dumps(extracted_info, indent=2, ensure_ascii=False),
         mapped_sections_text=mapped_sections_text,
         criteria_literal_text=criteria_literal_text,
+        per_item_rules=per_item_rules,
         reproducibility_help=helps.get('reproducibility', ''),
         open_access_help=helps.get('open_access', ''),
         statistics_help=helps.get('statistics', ''),

@@ -255,18 +255,48 @@ backend/
 │   └── sota_skills.py           # 5 skills de SOTA
 │
 ├── services/
-│   ├── auditor.py               # PaperAuditor (refactorizado)
-│   ├── chatbot.py               # PaperChatbot (refactorizado)
-│   ├── sota_analyzer.py         # SotaAnalyzer (refactorizado)
-│   └── pdf_parser.py            # Sin cambios
+│   ├── auditor.py               # PaperAuditor (pipeline de 5 fases)
+│   ├── chatbot.py               # PaperChatbot
+│   ├── sota_analyzer.py         # SotaAnalyzer
+│   └── pdf_parser.py            # Docling con detección automática de GPU
 │
 ├── common/
-│   ├── config.py                # Configuraciones
-│   ├── llm_client.py            # Cliente LLM
-│   └── prompts.py               # Prompts del sistema
+│   ├── config.py                # Configuraciones y modelos LLM
+│   ├── llm_client.py            # Cliente LLM (Gemini)
+│   ├── logger.py                # Sistema de logging
+│   ├── neurips_criteria.py      # Criterios literales de NeurIPS 2026
+│   └── prompt_engine.py         # Motor de prompts: carga .md + inyección dinámica
 │
-└── utils/
-    └── logger.py                # Sistema de logging
+└── prompts/
+    ├── auditor/
+    │   ├── 1. map_extraction.md
+    │   ├── 2. reduce_extraction.md
+    │   ├── 3a. section_mapping.md
+    │   ├── 3c. evaluation_high_context.md  # Plantilla base de evaluación
+    │   └── item_rules/              # Reglas específicas por ítem (1 .md por ítem)
+    │       ├── claims.md
+    │       ├── limitations.md
+    │       ├── theory_assumptions_proofs.md
+    │       ├── experimental_result_reproducibility.md
+    │       ├── open_access_data_code.md
+    │       ├── experimental_setting_details.md
+    │       ├── experiment_statistical_significance.md
+    │       ├── experiments_compute_resource.md
+    │       ├── code_of_ethics.md
+    │       ├── broader_impacts.md
+    │       ├── safeguards.md
+    │       ├── licenses.md
+    │       ├── assets.md
+    │       ├── crowdsourcing_human_subjects.md
+    │       ├── irb_approvals.md
+    │       └── declaration_llm_usage.md
+    ├── chatbot/
+    │   └── conversational.md
+    └── sota/
+        ├── 1. thematic.md
+        ├── 2. query_generation.md
+        ├── 3. gap_analysis.md
+        └── 4. cross_validation.md
 
 tests/
 ├── test_skills_integration.py   # Test de integración
