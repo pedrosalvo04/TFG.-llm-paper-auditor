@@ -32,13 +32,13 @@ SEMANTIC_SCHOLAR_API_KEY = os.getenv("SEMANTIC_SCHOLAR_API_KEY")
 
 # Configuración de modelos
 # Modelo rápido y con razonamiento para Triage y Extracción Masiva (Fase Map)
-MAP_MODEL_NAME = "gemini-3.1-flash-lite-preview"
+MAP_MODEL_NAME = "gemini-3.1-flash-lite"
 # Modelo pesado y analítico para Orquestación y Consolidación (Fase Reduce) - Flash Lite para mayor velocidad
-REDUCE_MODEL_NAME = "gemini-3.1-flash-lite-preview"
+REDUCE_MODEL_NAME = "gemini-3.1-flash-lite"
 # Modelo para Extracción Inicial (General Analysis) - Flash Live
-EXTRACTION_MODEL_NAME = "gemini-3.1-flash-lite-preview"
+EXTRACTION_MODEL_NAME = "gemini-3.1-flash-lite"
 # Modelo para Evaluación Final (Senior Area Chair) - Flash Lite para mayor cuota
-EVALUATION_MODEL_NAME = "gemini-3.1-flash-lite-preview"
+EVALUATION_MODEL_NAME = "gemini-3.1-flash-lite"
 # Modelo para Verificación Estricta (Auditor 2) - Pro para máxima precisión
 VERIFICATION_MODEL_NAME = "gemini-3.1-flash-lite-preview"
 
