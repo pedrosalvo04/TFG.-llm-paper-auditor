@@ -98,7 +98,7 @@ def get_checklist_health(evaluation: dict) -> dict:
             if not is_no_justified or is_useless(justification):
                 pending_justification = True
                 pending_count += 1
-                alert_msg = "🔴 'No' sin justificación del autor → Riesgo de Desk Reject."
+                alert_msg = "🔴 'No' sin justificación clara (Se recomienda añadir justificación para los revisores)."
 
             # Regla especial ítem 14: alerta de Código de Ética NeurIPS
             if key == "crowdsourcing_human_subjects" and not is_no_justified:

@@ -4,6 +4,7 @@ import copy
 from backend.common.llm_client import LLMClient
 from backend.common.config import (
     AUDIT_CONFIG, 
+    EVALUATION_CONFIG,
     EXTRACTION_MODEL_NAME, 
     EVALUATION_MODEL_NAME,
     MAP_MODEL_NAME,
@@ -13,10 +14,10 @@ from backend.common.config import (
 from backend.common.logger import get_logger
 from backend.skills import (
     InformationExtractionSkill,
+    SectionMappingSkill,
     NeurIPSComplianceSkill,
     MetricsCalculationSkill,
-    MetadataAggregationSkill,
-    ChecklistVerificationSkill
+    MetadataAggregationSkill
 )
 
 logger = get_logger(__name__)
@@ -39,25 +40,25 @@ class PaperAuditor:
             },
             {
                 "index": 2,
+                "msg": "🗺️ Fase 1.5: Mapeo inteligente de secciones...",
+                "skill": self.section_mapping_skill,
+                "processor": self._process_default_result
+            },
+            {
+                "index": 3,
                 "msg": "⚖️ Fase 2: Evaluación de criterios de cumplimiento NeurIPS 2026...",
                 "skill": self.compliance_skill,
                 "processor": self._process_evaluation_result
             },
             {
-                "index": 3,
-                "msg": "🛡️ Fase 3: Verificación estricta de cumplimiento (Auditor 2)...",
-                "skill": self.verification_skill,
-                "processor": self._process_default_result
-            },
-            {
                 "index": 4,
-                "msg": "📊 Fase 4: Consolidación de métricas y puntuaciones...",
+                "msg": "📊 Fase 3: Consolidación de métricas y puntuaciones...",
                 "skill": self.metrics_skill,
                 "processor": self._process_default_result
             },
             {
                 "index": 5,
-                "msg": "🏁 Fase 5: Generación de informe final y metadatos...",
+                "msg": "🏁 Fase 4: Generación de informe final y metadatos...",
                 "skill": self.metadata_skill,
                 "processor": self._process_default_result
             }
@@ -69,13 +70,14 @@ class PaperAuditor:
         """Centraliza la creación de clientes LLM y skills especializados."""
         # Clientes LLM
         self.extraction_llm = LLMClient(model_name=EXTRACTION_MODEL_NAME, generation_config=AUDIT_CONFIG)
-        self.evaluation_llm = LLMClient(model_name=EVALUATION_MODEL_NAME, generation_config=AUDIT_CONFIG)
+        self.section_mapping_llm = LLMClient(model_name=EXTRACTION_MODEL_NAME, generation_config=AUDIT_CONFIG)
+        self.evaluation_llm = LLMClient(model_name=EVALUATION_MODEL_NAME, generation_config=EVALUATION_CONFIG)
         self.verification_llm = LLMClient(model_name=VERIFICATION_MODEL_NAME, generation_config=AUDIT_CONFIG)
         
         # Skills
         self.extraction_skill = InformationExtractionSkill(llm_client=self.extraction_llm)
+        self.section_mapping_skill = SectionMappingSkill(llm_client=self.section_mapping_llm)
         self.compliance_skill = NeurIPSComplianceSkill(llm_client=self.evaluation_llm)
-        self.verification_skill = ChecklistVerificationSkill(llm_client=self.verification_llm)
         self.metrics_skill = MetricsCalculationSkill()
         self.metadata_skill = MetadataAggregationSkill()
     
@@ -183,7 +185,7 @@ class PaperAuditor:
                 final_result['original_extraction_raw'] = context['original_extraction_raw']
             
             execution_time = round(time.time() - start_time, 2)
-            self._log_status(f"✅ Auditoría completada en {execution_time} segundos", phase_index=6, status_callback=status_callback)
+            self._log_status(f"✅ Auditoría completada en {execution_time} segundos", phase_index=5, status_callback=status_callback)
             return final_result
 
 

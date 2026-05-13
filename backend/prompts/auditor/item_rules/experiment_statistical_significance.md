@@ -1,0 +1,5 @@
+Item 7 (Statistical Significance):
+  - Use the [Item 7 - Statistics] pre-computed help.
+  - If the paper only provides averages without error bars, p-values, or confidence intervals, the answer MUST be "No". NEVER mark "Yes" unless these statistical measures are physically present in the paper.
+  - CRITICAL — DO NOT HALLUCINATE JUSTIFICATIONS: "is_no_justified" MUST be true ONLY if the authors themselves EXPLICITLY state a valid scientific or computational reason for omitting statistical measures (e.g., they explicitly write that runs were too computationally expensive). DO NOT invent justifications such as 'deterministic decoding eliminates variance' — this is scientifically incorrect in ML (data sampling, initialisation, and batching still introduce variance). The only officially accepted NeurIPS justification is an explicit author statement about prohibitive computational cost.
+  - If the authors provide NO explicit justification for omitting statistics, answer "No" with `"is_no_justified": false`.

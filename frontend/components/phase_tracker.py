@@ -2,8 +2,8 @@ import streamlit as st
 
 PHASES = [
     {"id": 1, "name": "Extracción", "skill": "InformationExtraction"},
-    {"id": 2, "name": "Evaluación", "skill": "NeurIPSCompliance"},
-    {"id": 3, "name": "Verificación", "skill": "ChecklistVerification"},
+    {"id": 2, "name": "Mapeo", "skill": "SectionMapping"},
+    {"id": 3, "name": "Evaluación", "skill": "NeurIPSCompliance"},
     {"id": 4, "name": "Métricas", "skill": "MetricsCalculation"},
     {"id": 5, "name": "Finalizado", "skill": "MetadataAggregation"}
 ]

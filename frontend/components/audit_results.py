@@ -19,7 +19,7 @@ def _build_table_html(items):
     def row_bg(item):
         a = item["answer"].strip().lower()
         
-        # 1. Rojo: "No" sin justificación (Riesgo Crítico de Desk Reject)
+        # 1. Rojo: "No" sin justificación
         if item["pending_justification"]:
             return "#450a0a" # Rojo oscuro
             
@@ -57,7 +57,7 @@ def _build_table_html(items):
         # Alert line
         alert_html = ""
         if item["pending_justification"]:
-            alert_html = '<div style="color:#fca5a5;font-size:0.78rem;margin-top:5px;font-style:italic;">&#9888; Sin justificacion del autor &mdash; Riesgo de Desk Reject</div>'
+            alert_html = '<div style="color:#fca5a5;font-size:0.78rem;margin-top:5px;font-style:italic;">&#9888; Falta justificación explícita del autor</div>'
         elif item["missing_evidence"]:
             alert_html = '<div style="color:#fde68a;font-size:0.78rem;margin-top:5px;font-style:italic;">&#9888; Respuesta Yes sin evidencia de seccion del paper</div>'
 
@@ -116,9 +116,9 @@ def render_audit_results(resultado, uploaded_file):
         )
     else:
         st.markdown(
-            f'<div style="background:#7f1d1d;border-left:6px solid #ef4444;padding:16px 20px;border-radius:8px;">'
-            f'<strong style="font-size:1.15rem;color:#fca5a5;">&#x1F534; Riesgo de Desk Reject</strong>'
-            f'<p style="color:#fecaca;margin:6px 0 0 0;"><strong>{pending} de {total}</strong> item(s) requieren accion del autor antes del envio.</p>'
+            f'<div style="background:#452e0a;border-left:6px solid #fbbf24;padding:16px 20px;border-radius:8px;">'
+            f'<strong style="font-size:1.15rem;color:#fde68a;">&#x1F7E0; Atención Requerida</strong>'
+            f'<p style="color:#fef3c7;margin:6px 0 0 0;"><strong>{pending} de {total}</strong> item(s) requieren atención o justificación adicional antes del envío.</p>'
             f'</div>',
             unsafe_allow_html=True,
         )
@@ -219,8 +219,8 @@ def render_audit_results(resultado, uploaded_file):
     st.header("Tabla de Cumplimiento NeurIPS 2026")
     st.caption(
         "🟢 Fila verde: Cumplimiento verificado | "
-        "🟠 Fila naranja: Claim sin evidencia (verificar) | "
-        "🔴 Fila roja: Omisión sin justificar (riesgo de Desk Reject)"
+        "🟠 Fila naranja: 'No' justificado o falta evidencia | "
+        "🔴 Fila roja: 'No' sin justificar"
     )
 
     table_html = _build_table_html(health["items"])
@@ -268,8 +268,8 @@ def render_audit_results(resultado, uploaded_file):
 
 
     # ── PIPELINE DE EVALUACIÓN ──────────────────────────────────────────────
-    with st.expander("🔍 Pipeline de Evaluación (Senior Area Chair + Self-Correction)"):
-        st.write("Validación final de cumplimiento basada en señales pre-computadas y auditoría de falsos negativos.")
+    with st.expander("🔍 Pipeline de Evaluación (Senior Area Chair)"):
+        st.write("Validación final de cumplimiento basada en señales pre-computadas e inyección de contexto profundo.")
         
         # 1. Ayudas del Extractor (Extraction Helps)
         st.markdown("### 🚦 Ayudas del Extractor (Extraction Helps)")
@@ -283,29 +283,7 @@ def render_audit_results(resultado, uploaded_file):
             
         st.markdown("---")
         
-        # 2. Detalles de Verificación (Self-Correction / Auditor 2)
-        st.markdown("### 🛡️ Auditoría de Falsos Negativos (Self-Correction - Auditor 2)")
-        st.caption("Re-evaluación crítica de ítems realizada por Gemini 3.1 Pro para detectar omisiones o errores de interpretación.")
-        
-        # Filtrar ítems que fueron verificados
-        verification_details = {k: v for k, v in resultado.items() if isinstance(v, dict) and v.get('verified')}
-        if not verification_details:
-             # Si no están directos, buscarlos dentro de las secciones
-             for k, v in resultado.items():
-                 if isinstance(v, dict) and v.get('answer'):
-                     if v.get('verified'):
-                         verification_details[k] = v
-                         
-        if verification_details:
-            for item, data in verification_details.items():
-                status = "✨ Corregido" if data.get('was_corrected') else "✅ Confirmado"
-                with st.expander(f"{status}: {item}"):
-                    st.write(f"**Respuesta:** {data.get('answer')}")
-                    st.write(f"**Justificación Técnica:** {data.get('justification')}")
-                    st.markdown("**Evidencia Verificada:**")
-                    st.code(data.get('evidence'))
-        else:
-            st.warning("La fase de verificación no reportó cambios o no está disponible.")
+
 
     return health
 
@@ -315,14 +293,19 @@ def generate_report(resultado, uploaded_file, health=None):
     if health is None:
         health = get_checklist_health(resultado)
 
-    status_label = "Checklist Valido" if health["status"] == "valid" else "Riesgo de Desk Reject"
+    status_label = "Checklist Valido" if health["status"] == "valid" else "Requiere Atencion (Faltan justificaciones)"
     pending = health["pending_count"]
     total = health["total"]
+    metricas = resultado.get("metricas", {})
+    tiempo = metricas.get("tiempo_segundos", "N/A")
+    caracteres = metricas.get("caracteres_leidos", "N/A")
 
     reporte = f"# NeurIPS 2026 Checklist Audit Report\n\n"
     reporte += f"**Paper:** {uploaded_file.name}\n\n"
     reporte += f"**Veredicto:** {status_label}\n"
-    reporte += f"**Items con problemas:** {pending} de {total}\n\n"
+    reporte += f"**Items con problemas:** {pending} de {total}\n"
+    reporte += f"**Tiempo de ejecución:** {tiempo}s\n"
+    reporte += f"**Caracteres analizados:** {caracteres}\n\n"
     reporte += "---\n\n## Tabla de Cumplimiento\n\n"
     reporte += "| # | Item | Respuesta | Evidencia / Justificacion |\n"
     reporte += "|---|------|-----------|---------------------------|\n"
@@ -331,12 +314,7 @@ def generate_report(resultado, uploaded_file, health=None):
         label = item["label"]
         answer = item["answer"]
         evidence = item["evidence"] if item["evidence"] and item["evidence"] != "-" else "-"
-        note = ""
-        if item["pending_justification"]:
-            note = " [RIESGO: sin justificacion]"
-        elif item["missing_evidence"]:
-            note = " [RIESGO: sin evidencia]"
-        reporte += f"| {idx} | {label} | {answer} | {evidence}{note} |\n"
+        reporte += f"| {idx} | {label} | {answer} | {evidence} |\n"
 
     reporte += "\n---\n_Generado por Auditor NeurIPS 2026._\n"
     return reporte

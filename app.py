@@ -38,10 +38,10 @@ from frontend.components.audit_results import render_audit_results, generate_rep
 from frontend.components.sota_section import render_sota_analysis
 from frontend.components.chatbot import render_chatbot
 
-# 4. Renderizado de la App
 render_sidebar()
 render_header()
 
+# 5. Carga de Documento
 uploaded_file = st.file_uploader(
     "Sube el artículo científico (PDF, TXT o Markdown)", 
     type=["pdf", "txt", "md"]
@@ -50,22 +50,12 @@ uploaded_file = st.file_uploader(
 if uploaded_file:
     md_text = extract_text_from_file(uploaded_file)
     
-    if not st.session_state.get('resultado'):
-        st.info("📄 Archivo cargado correctamente. Pulsa 'Iniciar Auditoría' para comenzar el análisis.")
-        
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            is_auditing = st.session_state.get('audit_in_progress', False)
-            btn_label = "⏳ Auditando..." if is_auditing else "🚀 Iniciar Auditoría"
-            
-            if st.button(btn_label, width="stretch", key="start_audit_btn", type="primary", disabled=is_auditing):
-                st.session_state.audit_in_progress = True
-                st.rerun()
-        
-        if st.session_state.get('audit_in_progress'):
-            run_audit(md_text)
-            st.session_state.audit_in_progress = False
-            st.rerun()
+    # Iniciar auditoría automáticamente si no hay resultados y no está en progreso
+    if md_text and not st.session_state.get('resultado') and not st.session_state.get('audit_in_progress'):
+        st.session_state.audit_in_progress = True
+        run_audit(md_text)
+        st.session_state.audit_in_progress = False
+        st.rerun()
     else:
         if st.button("🔄 Nueva Auditoría / Cambiar Opciones"):
             st.session_state.resultado = None
@@ -79,7 +69,7 @@ if uploaded_file:
         if "error" in resultado or "evaluation_error" in resultado:
             error_msg = resultado.get("error") or resultado.get("evaluation_error")
             st.error(f"❌ Error: {error_msg}")
-        elif resultado.get("claims"):
+        elif resultado.get("claims") or resultado.get("limitations") or len(resultado) > 5:
             puntuacion = render_audit_results(resultado, uploaded_file)
             render_sota_analysis(md_text)
             render_chatbot(md_text)

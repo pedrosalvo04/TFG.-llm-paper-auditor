@@ -198,38 +198,55 @@ def get_extraction_assistance_helps(info: dict) -> dict:
     
     return helps
 
-def get_evaluation_prompt(extracted_info: dict) -> str:
-    """Genera el prompt para evaluacion segun criterios NeurIPS 2026."""
-    template = load_prompt("auditor", "3. evaluation")
-    
+def get_section_mapping_prompt(section_titles: list) -> str:
+    """Genera el prompt para mapear títulos de secciones a items de alto contexto."""
+    template = load_prompt("auditor", "3a. section_mapping")
+    return render_prompt(template, section_titles="\n".join(f"- {title}" for title in section_titles))
+
+
+def load_item_rule(item_key: str) -> str:
+    """
+    Carga la regla de un item desde su archivo .md individual en item_rules/.
+    Devuelve string vacío si el archivo no existe (item sin regla específica).
+    """
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    rule_path = os.path.join(base_dir, "prompts", "auditor", "item_rules", f"{item_key}.md")
+    try:
+        with open(rule_path, "r", encoding="utf-8") as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        return ""
+
+
+def get_evaluation_high_context_prompt(extracted_info: dict, items_to_evaluate: list, mapped_sections_text: str, criteria_literal_text: str = "") -> str:
+    """Genera el prompt para items de alto contexto.
+    Inyecta dinámicamente SOLO las reglas de los items del batch actual,
+    cargadas desde backend/prompts/auditor/item_rules/<item>.md."""
+    template = load_prompt("auditor", "3c. evaluation_high_context")
+
     helps = get_extraction_assistance_helps(extracted_info)
 
-    return render_prompt(template,
-        extracted_info_json=json.dumps(extracted_info, indent=2, ensure_ascii=False),
-        flags_section="",
-        reproducibility_help=helps['reproducibility'],
-        open_access_help=helps['open_access'],
-        statistics_help=helps['statistics'],
-        compute_resource_help=helps['compute_resource'],
-        licenses_help=helps['licenses'],
-        crowdsourcing_help=helps['crowdsourcing']
+    # Cargar y concatenar SOLO las reglas de los 2 items de este batch
+    per_item_rules = "\n\n".join(
+        rule for item in items_to_evaluate
+        if (rule := load_item_rule(item))
     )
 
-def get_verification_prompt(item_key: str, item_data: dict, paper_context: str) -> str:
-    """Prompt para la fase de 'Auditor Estricto' (Self-Correction)."""
-    template = load_prompt("auditor", "4. verification")
-    
-    answer = item_data.get('answer', 'N/A')
-    justification = item_data.get('justification', '')
-    evidence = item_data.get('evidence', '')
-    
     return render_prompt(template,
-        item_key=item_key,
-        answer=answer,
-        justification=justification,
-        evidence=evidence,
-        paper_context=paper_context
+        items_to_evaluate=json.dumps(items_to_evaluate, indent=2),
+        extracted_info_json=json.dumps(extracted_info, indent=2, ensure_ascii=False),
+        mapped_sections_text=mapped_sections_text,
+        criteria_literal_text=criteria_literal_text,
+        per_item_rules=per_item_rules,
+        reproducibility_help=helps.get('reproducibility', ''),
+        open_access_help=helps.get('open_access', ''),
+        statistics_help=helps.get('statistics', ''),
+        compute_resource_help=helps.get('compute_resource', ''),
+        licenses_help=helps.get('licenses', ''),
+        crowdsourcing_help=helps.get('crowdsourcing', '')
     )
+
+
 
 # =======================================================
 # CHATBOT PROMPTS

@@ -11,7 +11,7 @@ def extract_text_from_file(uploaded_file):
     file_content = uploaded_file.getvalue()
     file_hash = hashlib.md5(file_content).hexdigest()
     
-    # Verificar si es un archivo nuevo o diferente
+    # Verificar si es un archivo nuevo o diferente (o si cambiaron las opciones)
     if ("archivo_actual" not in st.session_state or 
         st.session_state.archivo_actual != uploaded_file.name or
         st.session_state.get('file_hash') != file_hash):
@@ -21,6 +21,7 @@ def extract_text_from_file(uploaded_file):
         st.session_state.messages = []
         st.session_state.resultado = None # Resetear resultado al subir nuevo archivo
         st.session_state.md_text = None
+        st.session_state.uploaded_file_obj = uploaded_file # Guardar referencia para reportes
         
         if not os.path.exists("temp"):
             os.makedirs("temp")
@@ -111,10 +112,35 @@ def run_audit(md_text):
                     st.stop()
             
             # Forzar actualización final del tracker
-            tracker_placeholder.markdown(get_phase_tracker_html(6), unsafe_allow_html=True)
+            tracker_placeholder.markdown(get_phase_tracker_html(5), unsafe_allow_html=True)
                 
             status.update(label="✅ Análisis completado", state="complete", expanded=False)
             st.success("✅ Análisis completado")
+
+            # --- NUEVO: Guardar automáticamente en el escritorio ---
+            try:
+                from frontend.components.audit_results import generate_report
+                from frontend.utils.scoring import get_checklist_health
+                
+                health = get_checklist_health(st.session_state.resultado)
+                reporte_contenido = generate_report(st.session_state.resultado, st.session_state.uploaded_file_obj, health)
+                
+                # Ruta solicitada por el usuario
+                save_dir = r"C:\Users\pedro\Desktop\papers IA resultado"
+                if not os.path.exists(save_dir):
+                    os.makedirs(save_dir)
+                
+                filename = f"auditoria_{st.session_state.archivo_actual.replace('.pdf', '')}.md"
+                save_path = os.path.join(save_dir, filename)
+                
+                with open(save_path, "w", encoding="utf-8") as f:
+                    f.write(reporte_contenido)
+                
+                st.info(f"💾 Informe guardado en: {save_path}")
+            except Exception as save_error:
+                st.warning(f"⚠️ No se pudo guardar el informe automáticamente: {str(save_error)}")
+            # -------------------------------------------------------
+
             return st.session_state.resultado
 
         except Exception as e:
