@@ -2,6 +2,7 @@
 """Componente de resultados de auditoria NeurIPS 2026 - Tabla de Cumplimiento"""
 import streamlit as st
 from frontend.utils.scoring import get_checklist_health
+from frontend.components.gauge_chart import create_gauge_chart
 
 
 def _build_table_html(items):
@@ -16,19 +17,25 @@ def _build_table_html(items):
         return '<span style="background:#1e3a5f;color:#93c5fd;padding:4px 14px;border-radius:20px;font-weight:700;font-size:0.82rem;white-space:nowrap;">N/A</span>'
 
     def row_bg(item):
-        # 1. Rojo: "No" sin justificación (Riesgo Crítico de Desk Reject)
-        if item["pending_justification"]:
-            return "#450a0a"
-            
-        # 2. Ámbar/Naranja: Advertencia (Claim sin evidencia O cualquier ítem con alerta detectada)
-        if item["missing_evidence"] or (item.get("alert_msg") and item["alert_msg"].strip()):
-            return "#452e0a"
-            
         a = item["answer"].strip().lower()
-        if "yes" in a:
-            return "#064e3b" # Verde Esmeralda (Todo OK)
         
-        # Para el resto (No justificado o N/A sin alertas), fondo neutro
+        # 1. Rojo: "No" sin justificación
+        if item["pending_justification"]:
+            return "#450a0a" # Rojo oscuro
+            
+        # 2. Ámbar/Amarillo: "No" justificado O "Yes" sin evidencia O alertas detectadas
+        if ("no" in a) or item["missing_evidence"] or (item.get("alert_msg") and item["alert_msg"].strip()):
+            return "#452e0a" # Ámbar/Naranja (Atención)
+            
+        # 3. Verde: "Yes" con evidencia (Todo OK)
+        if "yes" in a:
+            return "#064e3b" # Verde Esmeralda
+            
+        # 4. Azul: "N/A"
+        if "n/a" in a:
+            return "#1e3a5f" # Navy Blue
+        
+        # Para el resto, fondo neutro
         return "#111827"
 
     rows = ""
@@ -50,7 +57,7 @@ def _build_table_html(items):
         # Alert line
         alert_html = ""
         if item["pending_justification"]:
-            alert_html = '<div style="color:#fca5a5;font-size:0.78rem;margin-top:5px;font-style:italic;">&#9888; Sin justificacion del autor &mdash; Riesgo de Desk Reject</div>'
+            alert_html = '<div style="color:#fca5a5;font-size:0.78rem;margin-top:5px;font-style:italic;">&#9888; Falta justificación explícita del autor</div>'
         elif item["missing_evidence"]:
             alert_html = '<div style="color:#fde68a;font-size:0.78rem;margin-top:5px;font-style:italic;">&#9888; Respuesta Yes sin evidencia de seccion del paper</div>'
 
@@ -94,11 +101,11 @@ def render_audit_results(resultado, uploaded_file):
     health = get_checklist_health(resultado)
     pending = health["pending_count"]
     total = health["total"]
-
+    
     # ── VEREDICTO PRINCIPAL ──────────────────────────────────────────────────
     st.markdown("---")
+    
     st.header("Veredicto del Checklist NeurIPS 2026")
-
     if health["status"] == "valid":
         st.markdown(
             '<div style="background:#064e3b;border-left:6px solid #10b981;padding:16px 20px;border-radius:8px;">'
@@ -109,9 +116,9 @@ def render_audit_results(resultado, uploaded_file):
         )
     else:
         st.markdown(
-            f'<div style="background:#7f1d1d;border-left:6px solid #ef4444;padding:16px 20px;border-radius:8px;">'
-            f'<strong style="font-size:1.15rem;color:#fca5a5;">&#x1F534; Riesgo de Desk Reject</strong>'
-            f'<p style="color:#fecaca;margin:6px 0 0 0;"><strong>{pending} de {total}</strong> item(s) requieren accion del autor antes del envio.</p>'
+            f'<div style="background:#452e0a;border-left:6px solid #fbbf24;padding:16px 20px;border-radius:8px;">'
+            f'<strong style="font-size:1.15rem;color:#fde68a;">&#x1F7E0; Atención Requerida</strong>'
+            f'<p style="color:#fef3c7;margin:6px 0 0 0;"><strong>{pending} de {total}</strong> item(s) requieren atención o justificación adicional antes del envío.</p>'
             f'</div>',
             unsafe_allow_html=True,
         )
@@ -132,43 +139,88 @@ def render_audit_results(resultado, uploaded_file):
         tiempo = resultado.get("metricas", {}).get("tiempo_segundos", "N/A")
         st.metric("Tiempo", f"{tiempo}s")
 
-    # ── FICHA TÉCNICA RAG ───────────────────────────────────────────────────
-    rag_data = resultado.get("extracted_hyperparameters_hybrid", {})
-    if rag_data:
-        st.markdown("---")
-        st.subheader("🎯 Ficha Técnica de Entrenamiento (RAG Specialist)")
-        st.caption("Estos datos han sido extraídos mediante un escaneo profundo (RAG) de las secciones técnicas y apéndices.")
+
+    # ── DATOS DEL ANÁLISIS EXHAUSTIVO (DINÁMICO DESDE REDUCE JSON) ───────────
+    st.markdown("---")
+    with st.expander("📊 Datos Extraídos (Análisis Exhaustivo)", expanded=False):
+        st.write("Consulta la base de datos técnica consolidada durante la fase REDUCE.")
         
-        c1, c2, c3, c4 = st.columns(4)
-        with c1:
-            st.markdown("**🚀 Optimizador**")
-            st.code(rag_data.get("optimizer", "N/A"))
-            st.markdown("**📈 Learning Rate**")
-            st.code(rag_data.get("learning_rate", "N/A"))
-        with c2:
-            st.markdown("**📦 Batch Size**")
-            st.code(rag_data.get("batch_size", "N/A"))
-            st.markdown("**🔄 Epochs**")
-            st.code(rag_data.get("epochs", "N/A"))
-        with c3:
-            st.markdown("**🔥 Warmup Steps**")
-            st.code(rag_data.get("warmup_steps", "N/A"))
-            st.markdown("**⚖️ Weight Decay**")
-            st.code(rag_data.get("weight_decay", "N/A"))
-        with c4:
-            st.markdown("**💻 Hardware**")
-            st.info(rag_data.get("hardware", "N/A"))
-            if rag_data.get("random_seed") and rag_data.get("random_seed") != "NOT FOUND":
-                st.markdown("**🌱 Seed**")
-                st.code(rag_data.get("random_seed"))
+        info = resultado.get("informacion_extraida", {})
+        
+        # 1. Metadatos del Paper (Título y Autores si existen)
+        if info.get("paper_title") or info.get("authors"):
+            st.markdown(f"### 📄 {info.get('paper_title', 'Sin título detectado')}")
+            if info.get("authors"):
+                st.caption(f"Autores: {', '.join(info.get('authors')) if isinstance(info.get('authors'), list) else info.get('authors')}")
+            st.markdown("---")
+
+        # 2. Iterar por las "secciones" (claves) del JSON de Reduce
+        # Definimos el orden y los iconos para las secciones principales
+        section_config = {
+            "hyperparameters": {"icon": "⚙️", "label": "Hiperparámetros"},
+            "hardware": {"icon": "💻", "label": "Hardware & Compute"},
+            "architecture": {"icon": "🏗️", "label": "Arquitectura del Modelo"},
+            "data": {"icon": "📂", "label": "Dataset & Datos"},
+            "code": {"icon": "💻", "label": "Código & Repositorio"},
+            "statistics": {"icon": "📊", "label": "Estadística & Rigor"},
+            "baseline_comparison": {"icon": "⚖️", "label": "Comparativa con Baselines"},
+            "theory_and_proofs": {"icon": "📐", "label": "Teoría & Demostraciones"},
+            "software_versions": {"icon": "🛠️", "label": "Software & Versiones"},
+            "limitations_quality": {"icon": "⚠️", "label": "Análisis de Limitaciones"},
+            "problematic_phrases": {"icon": "🚩", "label": "Frases Problemáticas"},
+            "licenses_extraction": {"icon": "📜", "label": "Licencias detectadas"},
+            "broader_impacts_extraction": {"icon": "🌍", "label": "Impacto Social (Broader Impacts)"},
+            "llm_usage_extraction": {"icon": "🤖", "label": "Declaración de uso de LLMs"},
+            "human_subjects_extraction": {"icon": "👥", "label": "Sujetos Humanos & Crowdsourcing"}
+        }
+
+        for key, config in section_config.items():
+            data = info.get(key)
+            if data and data != "NOT FOUND":
+                with st.expander(f"{config['icon']} {config['label']}", expanded=False):
+                    if isinstance(data, dict):
+                        # Formatear como lista clave-valor con estilo mejorado
+                        for k, v in data.items():
+                            if v and v != "NOT FOUND":
+                                label = k.replace('_', ' ').title()
+                                st.markdown(
+                                    f'<div style="margin-bottom:8px;">'
+                                    f'<span style="color:#60a5fa;font-weight:700;font-size:0.9rem;">{label}:</span> '
+                                    f'<span style="color:#e5e7eb;font-size:0.9rem;">{v}</span>'
+                                    f'</div>',
+                                    unsafe_allow_html=True
+                                )
+                    elif isinstance(data, list):
+                        for item in data:
+                            st.markdown(
+                                f'<div style="margin-bottom:6px;color:#e5e7eb;font-size:0.9rem;">• {item}</div>',
+                                unsafe_allow_html=True
+                            )
+                    else:
+                        st.markdown(f'<div style="color:#e5e7eb;font-size:0.9rem;">{data}</div>', unsafe_allow_html=True)
+
+        # 3. Razonamiento y Mapeo de Secciones (Siempre al final)
+        st.markdown("---")
+        col_cot, col_map = st.columns(2)
+        with col_cot:
+            with st.expander("🧠 Razonamiento de Consolidación (CoT)", expanded=False):
+                st.info(info.get("thought_process", "No disponible"))
+        with col_map:
+            with st.expander("📍 Secciones Identificadas", expanded=False):
+                mapping = info.get("context_mapping", [])
+                if mapping:
+                    for section in mapping:
+                        st.markdown(f"✅ `{section}`")
+                else:
+                    st.write("No disponible")
 
     # ── TABLA DE CUMPLIMIENTO ────────────────────────────────────────────────
     st.markdown("---")
     st.header("Tabla de Cumplimiento NeurIPS 2026")
     st.caption(
         "🟢 Fila verde: Cumplimiento verificado | "
-        "🟠 Fila naranja: Claim sin evidencia (verificar) | "
-        "🔴 Fila roja: Omisión sin justificar (riesgo de Desk Reject)"
+        "🟠 Fila naranja: 'No' justificado o falta evidencia | "
+        "🔴 Fila roja: 'No' sin justificar"
     )
 
     table_html = _build_table_html(health["items"])
@@ -214,72 +266,24 @@ def render_audit_results(resultado, uploaded_file):
             st.caption("Datos finales refinados y validados.")
             st.json(resultado.get("informacion_extraida", {}))
 
-    # ── PIPELINE RAG HÍBRIDO ────────────────────────────────────────────────
-    with st.expander("🔍 Pipeline de Extracción Híbrida (RAG Specialist)"):
-        st.write("Proceso de recuperación semántica y extracción técnica de precisión para hiperparámetros.")
-        
-        c_triage, c_reduce = st.columns(2)
-        with c_triage:
-            st.markdown("### 🛠️ Fase de Triage (MAP)")
-            st.caption("Extracción estructurada de fragmentos recuperados por ChromaDB.")
-            triage_steps = resultado.get("hybrid_triage_fragments", [])
-            if triage_steps:
-                for i, fragment in enumerate(triage_steps):
-                    relevance = fragment.get("_relevance_score", "N/A")
-                    color = "#065f46" if isinstance(relevance, int) and relevance > 70 else "#1e3a5f"
-                    with st.expander(f"📄 Fragmento Técnico {i+1} (Relevancia: {relevance}%)"):
-                        st.markdown(f'<div style="background:{color};padding:2px 10px;border-radius:10px;font-size:0.7rem;display:inline-block;margin-bottom:10px;">Confianza RAG: {relevance}%</div>', unsafe_allow_html=True)
-                        st.markdown("**Texto del Chunk:**")
-                        st.caption(fragment.get("_chunk_text", "Texto no disponible"))
-                        st.markdown("**Datos Extraídos:**")
-                        st.json({k: v for k, v in fragment.items() if not k.startswith('_')})
-            else:
-                st.warning("No hay datos de triage disponibles.")
-                
-        with c_reduce:
-            st.markdown("### 💎 Fase de Consolidación (REDUCE)")
-            st.caption("Fusión de datos técnicos con Gemma 4 31B.")
-            st.json(resultado.get("extracted_hyperparameters_hybrid", {}))
 
     # ── PIPELINE DE EVALUACIÓN ──────────────────────────────────────────────
-    with st.expander("🔍 Pipeline de Evaluación (Senior Area Chair + Self-Correction)"):
-        st.write("Validación final de cumplimiento basada en señales pre-computadas y auditoría de falsos negativos.")
+    with st.expander("🔍 Pipeline de Evaluación (Senior Area Chair)"):
+        st.write("Validación final de cumplimiento basada en señales pre-computadas e inyección de contexto profundo.")
         
-        # 1. Señales Pre-computadas
-        st.markdown("### 🚦 Señales de Juicio (Signals)")
-        signals = resultado.get("evaluation_signals", {})
-        if signals:
-            for key, msg in signals.items():
+        # 1. Ayudas del Extractor (Extraction Helps)
+        st.markdown("### 🚦 Ayudas del Extractor (Extraction Helps)")
+        helps = resultado.get("evaluation_helps", {})
+        if helps:
+            for key, msg in helps.items():
                 st.markdown(f"**Item {key.replace('_', ' ').title()}:**")
                 st.info(msg)
         else:
-            st.warning("No se generaron señales dinámicas para esta evaluación.")
+            st.warning("No se generaron ayudas dinámicas para esta evaluación.")
             
         st.markdown("---")
         
-        # 2. Detalles de Verificación (Self-Correction / Auditor 2)
-        st.markdown("### 🛡️ Auditoría de Falsos Negativos (Self-Correction - Auditor 2)")
-        st.caption("Re-evaluación crítica de ítems realizada por Gemini 3.1 Pro para detectar omisiones o errores de interpretación.")
-        
-        # Filtrar ítems que fueron verificados
-        verification_details = {k: v for k, v in resultado.items() if isinstance(v, dict) and v.get('verified')}
-        if not verification_details:
-             # Si no están directos, buscarlos dentro de las secciones
-             for k, v in resultado.items():
-                 if isinstance(v, dict) and v.get('answer'):
-                     if v.get('verified'):
-                         verification_details[k] = v
-                         
-        if verification_details:
-            for item, data in verification_details.items():
-                status = "✨ Corregido" if data.get('was_corrected') else "✅ Confirmado"
-                with st.expander(f"{status}: {item}"):
-                    st.write(f"**Respuesta:** {data.get('answer')}")
-                    st.write(f"**Justificación Técnica:** {data.get('justification')}")
-                    st.markdown("**Evidencia Verificada:**")
-                    st.code(data.get('evidence'))
-        else:
-            st.warning("La fase de verificación no reportó cambios o no está disponible.")
+
 
     return health
 
@@ -289,14 +293,19 @@ def generate_report(resultado, uploaded_file, health=None):
     if health is None:
         health = get_checklist_health(resultado)
 
-    status_label = "Checklist Valido" if health["status"] == "valid" else "Riesgo de Desk Reject"
+    status_label = "Checklist Valido" if health["status"] == "valid" else "Requiere Atencion (Faltan justificaciones)"
     pending = health["pending_count"]
     total = health["total"]
+    metricas = resultado.get("metricas", {})
+    tiempo = metricas.get("tiempo_segundos", "N/A")
+    caracteres = metricas.get("caracteres_leidos", "N/A")
 
     reporte = f"# NeurIPS 2026 Checklist Audit Report\n\n"
     reporte += f"**Paper:** {uploaded_file.name}\n\n"
     reporte += f"**Veredicto:** {status_label}\n"
-    reporte += f"**Items con problemas:** {pending} de {total}\n\n"
+    reporte += f"**Items con problemas:** {pending} de {total}\n"
+    reporte += f"**Tiempo de ejecución:** {tiempo}s\n"
+    reporte += f"**Caracteres analizados:** {caracteres}\n\n"
     reporte += "---\n\n## Tabla de Cumplimiento\n\n"
     reporte += "| # | Item | Respuesta | Evidencia / Justificacion |\n"
     reporte += "|---|------|-----------|---------------------------|\n"
@@ -305,12 +314,7 @@ def generate_report(resultado, uploaded_file, health=None):
         label = item["label"]
         answer = item["answer"]
         evidence = item["evidence"] if item["evidence"] and item["evidence"] != "-" else "-"
-        note = ""
-        if item["pending_justification"]:
-            note = " [RIESGO: sin justificacion]"
-        elif item["missing_evidence"]:
-            note = " [RIESGO: sin evidencia]"
-        reporte += f"| {idx} | {label} | {answer} | {evidence}{note} |\n"
+        reporte += f"| {idx} | {label} | {answer} | {evidence} |\n"
 
     reporte += "\n---\n_Generado por Auditor NeurIPS 2026._\n"
     return reporte

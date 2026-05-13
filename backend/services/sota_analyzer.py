@@ -2,7 +2,7 @@
 from typing import Dict, Any
 from backend.common.llm_client import LLMClient
 from backend.common.config import SOTA_CONFIG
-from backend.utils.logger import get_logger
+from backend.common.logger import get_logger
 from backend.skills.sota_skills import (
     ThematicCoverageSkill,
     QueryGenerationSkill,

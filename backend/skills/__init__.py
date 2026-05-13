@@ -6,10 +6,12 @@ from backend.skills.base_skill import BaseSkill
 # Auditor Skills
 from backend.skills.auditor_skills import (
     InformationExtractionSkill,
-    ReproducibilityEvaluationSkill,
+    SectionMappingSkill,
+    NeurIPSComplianceSkill,
     MetricsCalculationSkill,
     MetadataAggregationSkill
 )
+
 
 # Chatbot Skills
 from backend.skills.chatbot_skills import (
@@ -26,17 +28,11 @@ from backend.skills.sota_skills import (
     CrossValidationSkill
 )
 
-# Regex Detection Skills (new)
-from backend.skills.regex_detection_skills import (
-    LimitationsQualityDetectionSkill,
-    SoftwareVersionDetectionSkill,
-    HardwareDetailDetectionSkill,
-)
-
 __all__ = [
     'BaseSkill',
     'InformationExtractionSkill',
-    'ReproducibilityEvaluationSkill',
+    'SectionMappingSkill',
+    'NeurIPSComplianceSkill',
     'MetricsCalculationSkill',
     'MetadataAggregationSkill',
     'ConversationalResponseSkill',
@@ -46,7 +42,4 @@ __all__ = [
     'SemanticScholarSearchSkill',
     'CoverageGapAnalysisSkill',
     'CrossValidationSkill',
-    'LimitationsQualityDetectionSkill',
-    'SoftwareVersionDetectionSkill',
-    'HardwareDetailDetectionSkill',
 ]

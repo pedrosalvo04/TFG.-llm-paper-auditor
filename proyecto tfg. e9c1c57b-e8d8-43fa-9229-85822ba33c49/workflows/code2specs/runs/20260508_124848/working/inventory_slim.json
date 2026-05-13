@@ -1,0 +1,421 @@
+{
+  "summary": {
+    "total_files": 54,
+    "total_loc": 4927,
+    "total_size_bytes": 256409,
+    "project_types": [],
+    "tech_distribution": {
+      "unknown": 54
+    },
+    "group_distribution": {
+      "other": 54
+    },
+    "directory_count": 13
+  },
+  "directories": [
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels",
+      "file_count": 10,
+      "loc": 947,
+      "technologies": []
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend",
+      "file_count": 1,
+      "loc": 1,
+      "technologies": []
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/common",
+      "file_count": 4,
+      "loc": 659,
+      "technologies": []
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/scratch",
+      "file_count": 2,
+      "loc": 41,
+      "technologies": []
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/services",
+      "file_count": 5,
+      "loc": 361,
+      "technologies": []
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/skills",
+      "file_count": 7,
+      "loc": 1704,
+      "technologies": []
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/utils",
+      "file_count": 2,
+      "loc": 49,
+      "technologies": []
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/frontend",
+      "file_count": 3,
+      "loc": 71,
+      "technologies": []
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/frontend/components",
+      "file_count": 6,
+      "loc": 529,
+      "technologies": []
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/frontend/styles",
+      "file_count": 2,
+      "loc": 79,
+      "technologies": []
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/frontend/utils",
+      "file_count": 3,
+      "loc": 131,
+      "technologies": []
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/scratch",
+      "file_count": 6,
+      "loc": 232,
+      "technologies": []
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/tests",
+      "file_count": 3,
+      "loc": 123,
+      "technologies": []
+    }
+  ],
+  "files": [
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/.gitignore",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 34
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/app.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 74
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/create_test_pdf.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 160
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/list_models.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 15
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/md_to_pdf.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 264
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/pdf_to_md.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 125
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/requirements.txt",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 5
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/test_auditor_refactor.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 84
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/test_imports.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 38
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/test_skills_integration.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 148
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/__init__.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 1
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/common/config.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 127
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/common/llm_client.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 61
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/common/prompts.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 470
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/common/__init__.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 1
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/scratch/test_embed.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 22
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/scratch/test_embed2.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 19
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/services/auditor.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 164
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/services/chatbot.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 47
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/services/pdf_parser.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 71
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/services/sota_analyzer.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 78
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/services/__init__.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 1
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/skills/auditor_skills.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 324
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/skills/base_skill.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 100
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/skills/chatbot_skills.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 90
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/skills/rag_extraction_skill.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 268
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/skills/regex_detection_skills.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 542
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/skills/sota_skills.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 334
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/skills/__init__.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 46
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/utils/logger.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 48
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/backend/utils/__init__.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 1
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/frontend/app.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 66
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/frontend/config.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 4
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/frontend/__init__.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 1
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/frontend/components/audit_results.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 270
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/frontend/components/chatbot.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 22
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/frontend/components/file_uploader.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 80
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/frontend/components/gauge_chart.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 67
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/frontend/components/sota_section.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 89
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/frontend/components/__init__.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 1
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/frontend/styles/custom_css.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 78
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/frontend/styles/__init__.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 1
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/frontend/utils/scoring.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 113
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/frontend/utils/session_state.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 17
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/frontend/utils/__init__.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 1
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/scratch/check_st.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 6
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/scratch/patch_skills.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 84
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/scratch/repro_hyperparams.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 23
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/scratch/test_checklist_health.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 34
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/scratch/test_llm_retry.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 50
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/scratch/test_rag_split.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 35
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/tests/test_audit_state.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 23
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/tests/test_rag_logical_splitter.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 32
+    },
+    {
+      "path": "TFG.-llm-paper-auditor-multimodels/tests/test_section_splitter.py",
+      "tech": "unknown",
+      "group": "other",
+      "loc": 68
+    }
+  ]
+}

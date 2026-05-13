@@ -31,8 +31,6 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 SEMANTIC_SCHOLAR_API_KEY = os.getenv("SEMANTIC_SCHOLAR_API_KEY")
 
 # Configuración de modelos
-# Modelo para Embeddings (RAG)
-EMBEDDING_MODEL_NAME = "gemini-embedding-2"
 # Modelo rápido y con razonamiento para Triage y Extracción Masiva (Fase Map)
 MAP_MODEL_NAME = "gemini-3.1-flash-lite-preview"
 # Modelo pesado y analítico para Orquestación y Consolidación (Fase Reduce) - Flash Lite para mayor velocidad
@@ -105,19 +103,27 @@ Name: models/gemini-3.1-flash-live-preview, Display Name: Gemini 3.1 Flash Live 
 """
 # Variables por compatibilidad o uso por defecto si no se especifica
 MODEL_NAME = EXTRACTION_MODEL_NAME
-RAG_MODEL_NAME = MAP_MODEL_NAME
 
 # Temperaturas por servicio
 AUDIT_TEMPERATURE = 0.0
 CHAT_TEMPERATURE = 0.2
-SOTA_TEMPERATURE = 0.1
+SOTA_TEMPERATURE = 0.3
 
-# Configuración de auditoría
+# Configuración de auditoría (Extracción)
 AUDIT_CONFIG = {
     "response_mime_type": "application/json",
     "temperature": AUDIT_TEMPERATURE,
     "top_k": 1,
     "top_p": 0.1,
+    "max_output_tokens": 16384
+}
+
+# Configuración de evaluación (Senior Area Chair) - Más creativa para mejores justificaciones
+EVALUATION_CONFIG = {
+    "response_mime_type": "application/json",
+    "temperature": 0.0,
+    "top_k": 40,
+    "top_p": 0.95,
     "max_output_tokens": 16384
 }
 
@@ -134,6 +140,6 @@ SOTA_CONFIG = {
 
 # Semantic Scholar
 SEMANTIC_SCHOLAR_BASE_URL = "https://api.semanticscholar.org/graph/v1/paper/search"
-SEMANTIC_SCHOLAR_YEAR_RANGE = "2023-2026"
-SEMANTIC_SCHOLAR_LIMIT = 5
+SEMANTIC_SCHOLAR_YEAR_RANGE = None  # Sin restricción de tiempo por defecto
+SEMANTIC_SCHOLAR_LIMIT = 15
 SEMANTIC_SCHOLAR_FIELDS = "paperId,title,authors,year,citationCount,abstract,url"

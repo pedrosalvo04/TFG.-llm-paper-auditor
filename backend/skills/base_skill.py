@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 from backend.common.llm_client import LLMClient
-from backend.utils.logger import get_logger
+from backend.common.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -78,6 +78,65 @@ class BaseSkill(ABC):
             logger.error(full_message)
         else:
             logger.debug(full_message)
+
+    def parse_json_response(self, text: str) -> Any:
+        """
+        Extrae y parsea JSON de una respuesta de texto, manejando markdown y texto extra.
+        
+        Args:
+            text: Texto que contiene el JSON.
+            
+        Returns:
+            Objeto Python parseado del JSON.
+            
+        Raises:
+            json.JSONDecodeError: Si no se puede parsear el JSON incluso tras limpieza.
+        """
+        import json
+        import re
+        
+        raw_text = text.strip()
+        
+        # 1. Limpiar bloques de código markdown si existen
+        if "```" in raw_text:
+            # Intentar extraer el contenido entre bloques ```json o ```
+            match = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', raw_text)
+            if match:
+                raw_text = match.group(1).strip()
+            else:
+                # Si no hay cierre, quitar el inicio
+                raw_text = re.sub(r'^```(?:json)?\n?', '', raw_text).strip()
+        
+        # 2. Extracción balanceada para evitar "Extra data"
+        start_idx = raw_text.find('{')
+        if start_idx == -1:
+            start_idx = raw_text.find('[')
+            
+        if start_idx != -1:
+            stack = 0
+            opener = raw_text[start_idx]
+            closer = '}' if opener == '{' else ']'
+            
+            for i in range(start_idx, len(raw_text)):
+                if raw_text[i] == opener:
+                    stack += 1
+                elif raw_text[i] == closer:
+                    stack -= 1
+                    if stack == 0:
+                        raw_text = raw_text[start_idx:i+1]
+                        break
+        
+        # 3. Intento de parseo
+        try:
+            return json.loads(raw_text)
+        except json.JSONDecodeError:
+            # 4. Intento de reparación simple (comas finales, etc.)
+            try:
+                fixed_text = re.sub(r',\s*([\]}])', r'\1', raw_text)
+                return json.loads(fixed_text)
+            except json.JSONDecodeError:
+                # Si falla, relanzar el original
+                raise
 
 
 class CompositeSkill(BaseSkill):

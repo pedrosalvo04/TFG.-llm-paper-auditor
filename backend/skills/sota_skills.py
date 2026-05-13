@@ -11,6 +11,12 @@ from backend.common.config import (
     SEMANTIC_SCHOLAR_LIMIT,
     SEMANTIC_SCHOLAR_FIELDS
 )
+from backend.common.prompt_engine import (
+    get_thematic_coverage_prompt,
+    get_query_generation_prompt,
+    get_coverage_gap_prompt,
+    get_cross_validation_prompt
+)
 
 
 class ThematicCoverageSkill(BaseSkill):
@@ -42,36 +48,11 @@ class ThematicCoverageSkill(BaseSkill):
         
         paper_text = context['paper_text']
         
-        prompt = f"""
-        Analiza este manuscrito científico e identifica:
-        1. Los 3-5 subtemas principales que aborda
-        2. Las áreas técnicas específicas que cubre
-        3. El año de publicación o envío (busca en: encabezado, pie de página, sección de metadata, fecha de envío/aceptación, copyright)
-        
-        IMPORTANTE para el año:
-        - Busca patrones como "2024", "Published: 2023", "Submitted: 2022", "Copyright © 2024"
-        - Si encuentras múltiples fechas (envío, revisión, aceptación), usa la más reciente
-        - Si no encuentras ninguna fecha clara, devuelve null
-        - NO inventes el año, debe estar explícitamente en el texto
-        
-        Devuelve EXCLUSIVAMENTE un JSON:
-        {{
-            "subtemas": ["subtema 1", "subtema 2", ...],
-            "areas_tecnicas": ["área 1", "área 2", ...],
-            "año_paper": 2024
-        }}
-        
-        TEXTO (primeras páginas y últimas páginas donde suelen estar las fechas):
-        INICIO:
-        {paper_text[:15000]}
-        
-        FINAL:
-        {paper_text[-5000:]}
-        """
+        prompt = get_thematic_coverage_prompt(paper_text)
         
         try:
             response = self.llm_client.generate(prompt)
-            thematic_data = json.loads(response.text)
+            thematic_data = self.parse_json_response(response.text)
             
             year = thematic_data.get("año_paper")
             if year:
@@ -119,31 +100,11 @@ class QueryGenerationSkill(BaseSkill):
         subtemas_str = ", ".join(thematic_data.get("subtemas", []))
         areas_str = ", ".join(thematic_data.get("areas_tecnicas", []))
         
-        prompt = f"""
-        Actúa como un investigador senior en Ciencias de la Computación.
-        Analiza el siguiente manuscrito científico.
-        
-        SUBTEMAS IDENTIFICADOS: {subtemas_str}
-        ÁREAS TÉCNICAS: {areas_str}
-        
-        Genera 3 búsquedas especializadas EN INGLÉS para encontrar SOTA reciente:
-        - 2 queries generales sobre el tema principal (amplias)
-        - 1 query específica sobre el subtema más relevante
-        
-        IMPORTANTE: Usa términos amplios y comunes, evita ser demasiado específico.
-        
-        Devuelve EXCLUSIVAMENTE un JSON:
-        {{
-            "queries": ["query 1", "query 2", "query 3"]
-        }}
-        
-        TEXTO DEL MANUSCRITO:
-        {paper_text[:8000]}
-        """
+        prompt = get_query_generation_prompt(subtemas_str, areas_str, paper_text)
         
         try:
             response = self.llm_client.generate(prompt)
-            queries = json.loads(response.text).get("queries", [])
+            queries = self.parse_json_response(response.text).get("queries", [])
             self.log_execution(f"✅ Queries generadas: {queries}")
             return {'search_queries': queries}
         except Exception as e:
@@ -192,10 +153,12 @@ class SemanticScholarSearchSkill(BaseSkill):
                 
             params = {
                 "query": q,
-                "year": SEMANTIC_SCHOLAR_YEAR_RANGE,
                 "limit": SEMANTIC_SCHOLAR_LIMIT,
                 "fields": SEMANTIC_SCHOLAR_FIELDS
             }
+            
+            if SEMANTIC_SCHOLAR_YEAR_RANGE:
+                params["year"] = SEMANTIC_SCHOLAR_YEAR_RANGE
             
             try:
                 self.log_execution(f"Buscando: {q}")
@@ -229,7 +192,7 @@ class SemanticScholarSearchSkill(BaseSkill):
             unique_papers, 
             key=lambda x: x.get('citationCount', 0), 
             reverse=True
-        )[:10]
+        )[:30]
         
         self.log_execution(f"✅ Total papers únicos: {len(sorted_papers)}")
         return {'sota_papers': sorted_papers}
@@ -266,31 +229,11 @@ class CoverageGapAnalysisSkill(BaseSkill):
         thematic_data = context['thematic_data']
         subtemas_str = ", ".join(thematic_data.get("subtemas", []))
         
-        prompt = f"""
-        Analiza la cobertura bibliográfica de este manuscrito.
-        
-        SUBTEMAS IDENTIFICADOS: {subtemas_str}
-        
-        TEXTO (inicio y referencias):
-        INICIO: {paper_text[:5000]}
-        REFERENCIAS: {paper_text[-10000:]}
-        
-        Identifica qué subtemas tienen POCA o NULA cobertura bibliográfica.
-        
-        Devuelve JSON:
-        {{
-            "areas_debiles": [
-                {{
-                    "subtema": "nombre del subtema",
-                    "diagnostico": "por qué tiene baja cobertura"
-                }}
-            ]
-        }}
-        """
+        prompt = get_coverage_gap_prompt(paper_text, subtemas_str)
         
         try:
             response = self.llm_client.generate(prompt)
-            coverage_gaps = json.loads(response.text)
+            coverage_gaps = self.parse_json_response(response.text)
             self.log_execution(f"✅ Gaps identificados: {len(coverage_gaps.get('areas_debiles', []))}")
             return {'coverage_gaps': coverage_gaps}
         except Exception as e:
@@ -354,51 +297,11 @@ class CrossValidationSkill(BaseSkill):
         
         subtemas_str = ", ".join(thematic_data.get("subtemas", []))
         
-        prompt = f"""
-        Actúa como Revisor Editorial Experto.
-        
-        MANUSCRITO ORIGINAL:
-        INICIO: {paper_text[:5000]}
-        REFERENCIAS: {paper_text[-15000:]}
-        
-        SUBTEMAS DEL MANUSCRITO: {subtemas_str}
-        
-        PAPERS SOTA CANDIDATOS (2023-2026):
-        {sota_context}
-        
-        TAREA:
-        Identifica papers OMITIDOS (no citados) que sean RELEVANTES para el manuscrito.
-        
-        CRITERIOS:
-        - Descartar si el título es similar al manuscrito (es el propio paper)
-        - Descartar si ya está citado en referencias
-        - Incluir si aporta valor al tema tratado
-        - Justificar por qué debería citarse
-        - Indicar qué subtema fortalece
-        
-        IMPORTANTE: Si encuentras papers relevantes, inclúyelos. No seas demasiado restrictivo.
-        Selecciona hasta 5 papers omitidos más relevantes, ordenados por importancia.
-        
-        Devuelve JSON:
-        {{
-            "papers_omitidos": [
-                {{
-                    "titulo": "título exacto",
-                    "año": 2024,
-                    "citas": 150,
-                    "url": "url",
-                    "relevancia": "Alta/Media",
-                    "subtema_relacionado": "subtema que fortalece",
-                    "justificacion": "Por qué es crucial citarlo y dónde encajaría (sección específica)"
-                }}
-            ],
-            "conclusion_sota": "Evaluación de la frescura bibliográfica y cobertura actual"
-        }}
-        """
+        prompt = get_cross_validation_prompt(paper_text, sota_context, subtemas_str)
         
         try:
             response = self.llm_client.generate(prompt)
-            validation_results = json.loads(response.text)
+            validation_results = self.parse_json_response(response.text)
             
             self.log_execution(
                 f"✅ Papers omitidos identificados: {len(validation_results.get('papers_omitidos', []))}"
@@ -416,7 +319,7 @@ class CrossValidationSkill(BaseSkill):
                     "url": p.get('url', 'N/A'),
                     "autores": p.get('authors', [])
                 }
-                for p in sota_papers[:10]
+                for p in sota_papers[:30]
             ]
             
             return {'validation_results': validation_results}

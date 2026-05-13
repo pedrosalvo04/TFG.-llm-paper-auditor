@@ -1,0 +1,230 @@
+{
+  "analysis": {
+    "current_metrics": {
+      "coverage_pct": 100.0,
+      "depth_pct": 100.0,
+      "gap_count": 29
+    },
+    "target_metrics": {
+      "coverage_pct": 95.0,
+      "depth_pct": 90.0
+    },
+    "batches_needs_reextraction": [],
+    "batches_needs_review": [],
+    "total_gaps_by_severity": {
+      "HIGH": 0,
+      "MEDIUM": 3,
+      "LOW": 26
+    },
+    "total_gaps_by_legitimacy": {
+      "legitimate_confirmed": 5,
+      "illegitimate_lazy": 3,
+      "cross_batch_resolvable": 20,
+      "malformed_format_only": 0,
+      "hallucinated_content": 1
+    },
+    "total_coverage_gaps": 24,
+    "cross_ref_summary": {
+      "resolved": 3,
+      "unresolved": 14,
+      "malformed": 56
+    },
+    "gap_inventory_source": "structured",
+    "notes": "Both reviewers assigned pass status (coverage_pct=100, depth_pct=100) despite finding 29 structured gaps. All gaps are LOW or MEDIUM severity. No batch requires full re-extraction. Fix agents address: 1 hallucinated count in backend_skills (purge), 1 spec-consistency wrong phase count in backend_core (targeted_fix), 2 missing-dependency annotations in root_tests_scratch (targeted_fix), 1 metadata LOC calibration in root_tests_scratch (reformat_only), and 20 cross-batch reference gaps resolvable from other clusters (2 cross_ref_resolution agents). 5 legitimate_confirmed gaps are accepted as-is with no agent."
+  },
+  "fix_agents": [
+    {
+      "id": "purge_backend_skills_g001",
+      "type": "purge_hallucination",
+      "clusters": ["cluster_backend_skills_01"],
+      "target_extracted_files": ["extracted_backend_skills_01.md"],
+      "files_to_read": [
+        "extracted_backend_skills_01.md",
+        "TFG.-llm-paper-auditor-multimodels/backend/skills/__init__.py"
+      ],
+      "gaps_to_fix": [
+        "FIDELITY_ISSUE | id: g_001 | severity: LOW | legitimacy: hallucinated_content | action: targeted_fix | source: extracted_backend_skills_01.md | location: backend/skills/__init__.py:36–51 | detail: Section 1.1 prose states \"The `__all__` list (lines 36-52) exports exactly **14** symbols\" — verified count against `__init__.py:36–51` is **15** (BaseSkill + 4 auditor + 2 chatbot + 5 sota + 3 regex). The accompanying table in the same section correctly lists 15 entries; the prose count is wrong. Additionally, `SOURCE: __init__.py:1` points to the module docstring line (`\"\"\"Módulo de skills para agentes IA\"\"\"`), not to the `__all__` declaration at lines 36–51. Fix: correct count to 15 and update SOURCE to `__init__.py:36`."
+      ],
+      "legitimacy_composition": {
+        "legitimate_confirmed": 0,
+        "illegitimate_lazy": 0,
+        "cross_batch_resolvable": 0,
+        "malformed_format_only": 0,
+        "hallucinated_content": 1
+      },
+      "output_file": null,
+      "engine": "cli",
+      "skills": ["re-generic", "re-extraction-fix"],
+      "scope": "In extracted_backend_skills_01.md Section 1.1, correct the prose count '14' to '15' and update the SOURCE annotation from '__init__.py:1' to '__init__.py:36'. The table already lists 15 symbols correctly and must NOT be changed. Do not add [GAP:] markers — this is a single wrong number in prose, the correct value is confirmed by both the table and the source file.",
+      "justification": "100% of this cluster's gaps are hallucinated_content; purge precedence applies even though the fix is a one-line correction rather than a full content removal.",
+      "priority": 1,
+      "estimated_complexity": "small"
+    },
+    {
+      "id": "targeted_fix_backend_core_g002",
+      "type": "targeted_fix",
+      "clusters": ["cluster_backend_core_01"],
+      "target_extracted_files": ["extracted_backend_core_01.md"],
+      "files_to_read": [
+        "extracted_backend_core_01.md",
+        "TFG.-llm-paper-auditor-multimodels/backend/services/auditor.py"
+      ],
+      "gaps_to_fix": [
+        "SPEC_CONSISTENCY_ISSUE | id: g_002 | severity: LOW | legitimacy: illegitimate_lazy | action: targeted_fix | source: extracted_backend_core_01.md | location: backend/services/auditor.py (file-index table row) | detail: File-index summary describes `auditor.py` as \"4-phase audit pipeline orchestrator\". Section 4.2 of the same document correctly identifies 6 named phases: FASE 1 (InformationExtraction), FASE 1.5 (HybridHyperparameterExtraction), FASE 2 (ReproducibilityEvaluation), FASE 2.5 (ChecklistVerification), FASE 3 (MetricsCalculation), FASE 4 (MetadataAggregation). Source code comments confirm all 6 phase labels. Fix: update file-index description to \"6-phase (1/1.5/2/2.5/3/4) audit pipeline orchestrator\"."
+      ],
+      "legitimacy_composition": {
+        "legitimate_confirmed": 0,
+        "illegitimate_lazy": 1,
+        "cross_batch_resolvable": 0,
+        "malformed_format_only": 0,
+        "hallucinated_content": 0
+      },
+      "output_file": null,
+      "engine": "cli",
+      "skills": ["re-generic", "re-extraction-fix"],
+      "scope": "In extracted_backend_core_01.md, locate the file-index table row for auditor.py and change its description from '4-phase audit pipeline orchestrator' to '6-phase (1/1.5/2/2.5/3/4) audit pipeline orchestrator'. Section 4.2 already correctly names all 6 phases and must not be changed. Only the file-index table row for auditor.py needs updating.",
+      "justification": "Single illegitimate_lazy gap (<8 gaps); targeted_fix is the correct surgical option.",
+      "priority": 2,
+      "estimated_complexity": "small"
+    },
+    {
+      "id": "targeted_fix_root_deps_g002_g003",
+      "type": "targeted_fix",
+      "clusters": ["cluster_root_tests_scratch_01"],
+      "target_extracted_files": ["extracted_root_tests_scratch_01.md"],
+      "files_to_read": [
+        "extracted_root_tests_scratch_01.md",
+        "TFG.-llm-paper-auditor-multimodels/requirements.txt",
+        "TFG.-llm-paper-auditor-multimodels/md_to_pdf.py",
+        "TFG.-llm-paper-auditor-multimodels/create_test_pdf.py"
+      ],
+      "gaps_to_fix": [
+        "DEPTH_GAP | id: g_002 | severity: MEDIUM | legitimacy: illegitimate_lazy | action: targeted_fix | source: extracted_root_tests_scratch_01.md | location: §2 requirements.txt table | detail: reportlab imported in md_to_pdf.py lines 7–13 and create_test_pdf.py throughout, but absent from requirements.txt; extraction §2 lists only the 5 packages that are present and does not flag reportlab as unlisted; pymupdf4llm was correctly flagged (GAP-021) but reportlab was omitted from missing-dependency analysis",
+        "DEPTH_GAP | id: g_003 | severity: LOW | legitimacy: illegitimate_lazy | action: targeted_fix | source: extracted_root_tests_scratch_01.md | location: §2 requirements.txt table and §10.5 | detail: markdown2 attempted in md_to_pdf.py:15-17 is not in requirements.txt; §10.5 documents the ImportError handler but does not state the package is absent from requirements.txt, leaving ambiguity"
+      ],
+      "legitimacy_composition": {
+        "legitimate_confirmed": 0,
+        "illegitimate_lazy": 2,
+        "cross_batch_resolvable": 0,
+        "malformed_format_only": 0,
+        "hallucinated_content": 0
+      },
+      "output_file": null,
+      "engine": "cli",
+      "skills": ["re-generic", "re-extraction-fix"],
+      "scope": "In extracted_root_tests_scratch_01.md, add two missing-dependency annotations: (1) In §2 requirements.txt table, add a note that 'reportlab' is imported by md_to_pdf.py (lines 7–13, all PDF generation) and create_test_pdf.py but is absent from requirements.txt — any environment built strictly from requirements.txt will fail to run these two utilities. (2) In §2 and §10.5, clarify that 'markdown2' is attempted in md_to_pdf.py:15-17 but is absent from requirements.txt; the ImportError is handled gracefully (HAS_MARKDOWN=False) so runtime does not fail, but the package is an optional unlisted dependency.",
+      "justification": "2 illegitimate_lazy gaps in the same cluster; both are small additive annotations to existing sections — targeted_fix is the correct choice, no re-extraction needed.",
+      "priority": 2,
+      "estimated_complexity": "small"
+    },
+    {
+      "id": "reformat_root_loc_g001",
+      "type": "reformat_only",
+      "clusters": ["cluster_root_tests_scratch_01"],
+      "target_extracted_files": ["extracted_root_tests_scratch_01.md"],
+      "files_to_read": [
+        "extracted_root_tests_scratch_01.md",
+        "inventory.json"
+      ],
+      "gaps_to_fix": [
+        "FIDELITY_ISSUE | id: g_001 | severity: LOW | legitimacy: legitimate_confirmed | action: reformat_only | source: extracted_root_tests_scratch_01.md | location: §1 File Index LOC column | detail: All 7 spot-checked files have LOC counts 10–25% higher than inventory.json (e.g. app.py: 89 vs 74, md_to_pdf.py: 325 vs 264); line references within extraction are accurate; content is not affected"
+      ],
+      "legitimacy_composition": {
+        "legitimate_confirmed": 1,
+        "illegitimate_lazy": 0,
+        "cross_batch_resolvable": 0,
+        "malformed_format_only": 0,
+        "hallucinated_content": 0
+      },
+      "output_file": null,
+      "engine": "cli",
+      "skills": ["re-generic", "re-extraction-fix"],
+      "scope": "In extracted_root_tests_scratch_01.md §1 File Index table, correct the LOC column for each file to match inventory.json authoritative values. The reviewer identified these specific discrepancies: app.py 89→74, md_to_pdf.py 325→264, pdf_to_md.py 159→125, create_test_pdf.py 184→160, test_skills_integration.py 164→148, test_auditor_refactor.py 101→84, test_imports.py 47→38. Apply the same correction for all remaining files in the table using inventory.json as the source of truth. Do NOT change any line references, content descriptions, or other sections — only the LOC column in §1.",
+      "justification": "Gap is legitimate_confirmed with reformat_only action — inventory.json provides authoritative LOC counts; the fix is a metadata calibration, not a content change. No re-extraction needed.",
+      "priority": 3,
+      "estimated_complexity": "small"
+    },
+    {
+      "id": "cross_ref_root_to_frontend",
+      "type": "cross_ref_resolution",
+      "clusters": ["cluster_root_tests_scratch_01", "cluster_frontend_01"],
+      "target_extracted_files": [],
+      "files_to_read": [
+        "extracted_root_tests_scratch_01.md",
+        "extracted_frontend_01.md"
+      ],
+      "gaps_to_fix": [
+        "COVERAGE_GAP | id: g_004 | severity: LOW | legitimacy: cross_batch_resolvable | action: cross_ref_resolution | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-001 | detail: process_uploaded_file(uploaded_file) signature and session_state contract (sets 'resultado', 'md_text') — resolvable from cluster_frontend_01",
+        "COVERAGE_GAP | id: g_005 | severity: LOW | legitimacy: cross_batch_resolvable | action: cross_ref_resolution | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-002 | detail: render_audit_results(resultado, uploaded_file) -> puntuacion — resolvable from cluster_frontend_01",
+        "COVERAGE_GAP | id: g_006 | severity: LOW | legitimacy: cross_batch_resolvable | action: cross_ref_resolution | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-003 | detail: generate_report(resultado, uploaded_file, puntuacion) -> bytes/str — resolvable from cluster_frontend_01",
+        "COVERAGE_GAP | id: g_007 | severity: LOW | legitimacy: cross_batch_resolvable | action: cross_ref_resolution | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-004 | detail: render_sota_analysis(md_text), render_chatbot(md_text) signatures — resolvable from cluster_frontend_01",
+        "COVERAGE_GAP | id: g_008 | severity: LOW | legitimacy: cross_batch_resolvable | action: cross_ref_resolution | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-005 | detail: TITLE, SIDEBAR_IMAGE, SIDEBAR_DESCRIPTION constants — resolvable from cluster_frontend_01",
+        "COVERAGE_GAP | id: g_013 | severity: LOW | legitimacy: cross_batch_resolvable | action: cross_ref_resolution | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-010 | detail: get_checklist_health(evaluation) -> dict with status/pending_count/total/items — resolvable from cluster_frontend_01",
+        "COVERAGE_GAP | id: g_026 | severity: LOW | legitimacy: cross_batch_resolvable | action: cross_ref_resolution | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-023 | detail: apply_custom_styles() -> None (injects CSS via st.markdown) — resolvable from cluster_frontend_01",
+        "COVERAGE_GAP | id: g_027 | severity: LOW | legitimacy: cross_batch_resolvable | action: cross_ref_resolution | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-024 | detail: initialize_session_state() -> None (sets 'resultado' and 'md_text' defaults in st.session_state) — resolvable from cluster_frontend_01"
+      ],
+      "legitimacy_composition": {
+        "legitimate_confirmed": 0,
+        "illegitimate_lazy": 0,
+        "cross_batch_resolvable": 8,
+        "malformed_format_only": 0,
+        "hallucinated_content": 0
+      },
+      "output_file": "cross_ref_resolution_root_to_frontend.md",
+      "engine": "cli",
+      "skills": ["re-generic", "re-extraction-fix"],
+      "scope": "Read extracted_root_tests_scratch_01.md and extracted_frontend_01.md. For each of the 8 cross-batch gaps, locate the answer in extracted_frontend_01.md and write a resolution appendix file (cross_ref_resolution_root_to_frontend.md) that for each gap provides: the GAP ID, the resolved signature/contract/constant value drawn from extracted_frontend_01.md, and the specific section of that extraction where the information was found. The appendix structure should be: one section per resolved gap, titled with the gap ID and the entity name. If any gap cannot be resolved (answer genuinely not in extracted_frontend_01.md), mark it UNRESOLVED with a brief explanation.",
+      "justification": "All 8 gaps are cross_batch_resolvable targeting cluster_frontend_01; cross_ref_resolution is the mandated option — re-extracting cluster_root_tests_scratch_01 in isolation cannot supply answers that live in cluster_frontend_01.",
+      "priority": 2,
+      "estimated_complexity": "medium"
+    },
+    {
+      "id": "cross_ref_root_to_backend",
+      "type": "cross_ref_resolution",
+      "clusters": ["cluster_root_tests_scratch_01", "cluster_backend_core_01", "cluster_backend_skills_01"],
+      "target_extracted_files": [],
+      "files_to_read": [
+        "extracted_root_tests_scratch_01.md",
+        "extracted_backend_core_01.md",
+        "extracted_backend_skills_01.md"
+      ],
+      "gaps_to_fix": [
+        "COVERAGE_GAP | id: g_009 | severity: LOW | legitimacy: cross_batch_resolvable | action: cross_ref_resolution | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-006 | detail: PaperAuditor.__init__(), _preprocess_paper(text) -> dict — resolvable from cluster_backend_core_01",
+        "COVERAGE_GAP | id: g_010 | severity: LOW | legitimacy: cross_batch_resolvable | action: cross_ref_resolution | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-007 | detail: get_extraction_prompt(text, flags) -> str, get_evaluation_prompt(info, flags) -> str — resolvable from cluster_backend_core_01",
+        "COVERAGE_GAP | id: g_011 | severity: LOW | legitimacy: cross_batch_resolvable | action: cross_ref_resolution | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-008 | detail: REGEX_PATTERNS list/dict with len > 0 — resolvable from cluster_backend_core_01",
+        "COVERAGE_GAP | id: g_012 | severity: LOW | legitimacy: cross_batch_resolvable | action: cross_ref_resolution | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-009 | detail: LLMClient(model_name) with generate(prompt) and retry logic (6 total calls, sleep) — resolvable from cluster_backend_core_01",
+        "COVERAGE_GAP | id: g_014 | severity: LOW | legitimacy: cross_batch_resolvable | action: cross_ref_resolution | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-011 | detail: AuditState, ExtractedInfo, ChecklistItem with full sub-model contracts — resolvable from cluster_backend_core_01",
+        "COVERAGE_GAP | id: g_015 | severity: LOW | legitimacy: cross_batch_resolvable | action: cross_ref_resolution | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-012 | detail: InformationExtractionSkill(llm_client) with internal section-fragmenting logic — resolvable from cluster_backend_skills_01",
+        "COVERAGE_GAP | id: g_016 | severity: LOW | legitimacy: cross_batch_resolvable | action: cross_ref_resolution | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-013 | detail: backend.skills.__init__ exporting 12 skill classes — resolvable from cluster_backend_skills_01",
+        "COVERAGE_GAP | id: g_017 | severity: LOW | legitimacy: cross_batch_resolvable | action: cross_ref_resolution | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-014 | detail: LimitationsQuality/SoftwareVersion/HardwareDetailDetectionSkill in regex_detection_skills.py — resolvable from cluster_backend_skills_01",
+        "COVERAGE_GAP | id: g_018 | severity: LOW | legitimacy: cross_batch_resolvable | action: cross_ref_resolution | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-015 | detail: SemanticScholarSearchSkill.execute({'search_queries': []}) -> {'sota_papers': ...} — resolvable from cluster_backend_skills_01",
+        "COVERAGE_GAP | id: g_019 | severity: LOW | legitimacy: cross_batch_resolvable | action: cross_ref_resolution | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-016 | detail: get_logger(name) -> logger with .info() — resolvable from cluster_backend_core_01",
+        "COVERAGE_GAP | id: g_020 | severity: LOW | legitimacy: cross_batch_resolvable | action: cross_ref_resolution | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-017 | detail: HyperparameterDetectionSkill.execute({'paper_text': str}) -> dict JSON-serializable — resolvable from cluster_backend_skills_01",
+        "COVERAGE_GAP | id: g_023 | severity: LOW | legitimacy: cross_batch_resolvable | action: cross_ref_resolution | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-020 | detail: backend.common.config.GOOGLE_API_KEY and MODEL_NAME attributes (patchable via unittest.mock.patch) — resolvable from cluster_backend_core_01"
+      ],
+      "legitimacy_composition": {
+        "legitimate_confirmed": 0,
+        "illegitimate_lazy": 0,
+        "cross_batch_resolvable": 12,
+        "malformed_format_only": 0,
+        "hallucinated_content": 0
+      },
+      "output_file": "cross_ref_resolution_root_to_backend.md",
+      "engine": "cli",
+      "skills": ["re-generic", "re-extraction-fix"],
+      "scope": "Read extracted_root_tests_scratch_01.md, extracted_backend_core_01.md, and extracted_backend_skills_01.md. For each of the 12 cross-batch gaps, locate the answer in the appropriate backend extraction (7 gaps resolve from extracted_backend_core_01.md: g_009, g_010, g_011, g_012, g_014, g_019, g_023; 5 gaps resolve from extracted_backend_skills_01.md: g_015, g_016, g_017, g_018, g_020). Write a resolution appendix (cross_ref_resolution_root_to_backend.md) with one section per gap: the GAP ID, the entity being resolved, the resolved contract/signature/value drawn from the backend extraction, and the source section. If any gap cannot be resolved, mark it UNRESOLVED. Group sections by source: '## From cluster_backend_core_01' and '## From cluster_backend_skills_01'.",
+      "justification": "All 12 gaps are cross_batch_resolvable targeting backend clusters; re-extracting cluster_root_tests_scratch_01 alone cannot supply answers that live in other clusters — cross_ref_resolution is the only effective tool.",
+      "priority": 2,
+      "estimated_complexity": "medium"
+    }
+  ],
+  "accepted_as_gap": [
+    "COVERAGE_GAP | id: g_021 | severity: MEDIUM | legitimacy: legitimate_confirmed | action: accept_as_gap | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-018 | detail: scratch/patch_skills.py requires class markers in regex_detection_skills.py in exact order; if absent str.index() raises ValueError — source genuinely lacks a documented ordering contract",
+    "COVERAGE_GAP | id: g_022 | severity: LOW | legitimacy: legitimate_confirmed | action: accept_as_gap | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-019 | detail: scratch/repro_hyperparams.py depends on paper_cientifico_3_CON_ERRORES.md in CWD; file is gitignored; verified absence",
+    "COVERAGE_GAP | id: g_024 | severity: MEDIUM | legitimacy: legitimate_confirmed | action: accept_as_gap | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-021 | detail: pymupdf4llm absent from requirements.txt — already documented via GAP-021 in the extraction itself",
+    "COVERAGE_GAP | id: g_025 | severity: LOW | legitimacy: legitimate_confirmed | action: accept_as_gap | source: cluster_root_tests_scratch_01 | location: GAP-cluster_root_tests_scratch_01-022 | detail: HAS_MARKDOWN flag set but never read — dead code path; verified in source",
+    "FIDELITY_ISSUE | id: g_001_root_note | severity: LOW | legitimacy: legitimate_confirmed | action: accept_as_gap | detail: The LOC overcount is corrected by the reformat_root_loc_g001 agent; remaining LOC count gaps for files not spot-checked by reviewer are covered by the same reformat agent using inventory.json as ground truth"
+  ],
+  "execution_order": "Run purge_backend_skills_g001 first (priority 1) to eliminate hallucinated content before any other agent reads extracted_backend_skills_01.md. Then run all priority-2 agents in parallel: targeted_fix_backend_core_g002, targeted_fix_root_deps_g002_g003, cross_ref_root_to_frontend, cross_ref_root_to_backend (4 agents simultaneously, matching the max_concurrent=4 config). Finally run reformat_root_loc_g001 (priority 3) last — it is a pure metadata calibration that does not affect any other agent's work and can be deferred until all content fixes are committed.",
+  "expected_improvement": "Current metrics are already at 100% coverage and 100% depth (both exceed the 95%/90% targets). Fix agents deliver accuracy improvements rather than metric improvements: (1) purge_backend_skills_g001 corrects a wrong symbol count claim in prose; (2) targeted_fix_backend_core_g002 aligns the file-index summary with the detailed section of the same document; (3) targeted_fix_root_deps_g002_g003 adds two missing-dependency annotations that would otherwise cause silent environment setup failures for operators; (4) reformat_root_loc_g001 calibrates LOC metadata to inventory.json ground truth; (5) the two cross_ref agents produce new appendix files that resolve 20 cross-batch interface gaps, making the extraction set a complete reference for downstream synthesis without requiring a reader to manually trace imports across cluster boundaries. Post-fix estimated metrics: coverage_pct ~100%, depth_pct ~100% (maintained), with materially improved cross-cluster traceability and zero known inaccuracies in the extraction corpus."
+}
