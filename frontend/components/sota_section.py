@@ -289,26 +289,26 @@ def _render_similarity_bars(user_similarities: list):
             )
         )
 
-        height = max(350, len(user_similarities) * 32)
+        height = max(350, len(user_similarities) * 42)
         fig.update_layout(
             title=dict(
                 text="Semantic Similarity to Your Paper — SOTA Papers",
-                font=dict(size=13, color="#e2e8f0"),
+                font=dict(size=14, color="#e2e8f0"),
             ),
             paper_bgcolor="rgba(15,23,42,0)",
             plot_bgcolor="rgba(15,23,42,0)",
-            font=dict(color="#cbd5e1", size=10),
+            font=dict(color="#cbd5e1", size=12),
             xaxis=dict(
                 range=[0, min(max(sims) * 1.15, 1.0)],
                 showgrid=True,
                 gridcolor="rgba(255,255,255,0.07)",
                 tickformat=".2f",
-                title=dict(text="Cosine Similarity", font=dict(size=10, color="#94a3b8")),
+                title=dict(text="Cosine Similarity", font=dict(size=12, color="#94a3b8")),
             ),
             yaxis=dict(
                 autorange="reversed",
                 showgrid=False,
-                tickfont=dict(size=9),
+                tickfont=dict(size=15),
             ),
             height=height,
             margin=dict(l=20, r=60, t=45, b=20),
