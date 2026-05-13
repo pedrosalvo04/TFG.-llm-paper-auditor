@@ -192,7 +192,7 @@ class SemanticScholarSearchSkill(BaseSkill):
             unique_papers, 
             key=lambda x: x.get('citationCount', 0), 
             reverse=True
-        )[:30]
+        )[:20]
         
         self.log_execution(f"✅ Total papers únicos: {len(sorted_papers)}")
         return {'sota_papers': sorted_papers}
@@ -263,7 +263,10 @@ class CrossValidationSkill(BaseSkill):
         if not self.validate_context(context, required_keys):
             return {'validation_results': {}}
         
-        sota_papers = context['sota_papers']
+        sota_papers = context.get('ranked_papers') or context['sota_papers']
+        self.log_execution(
+            f"📋 Usando {'ranked' if context.get('ranked_papers') else 'todos los'} papers: {len(sota_papers)}"
+        )
         if not sota_papers:
             return {
                 'validation_results': {
@@ -319,10 +322,132 @@ class CrossValidationSkill(BaseSkill):
                     "url": p.get('url', 'N/A'),
                     "autores": p.get('authors', [])
                 }
-                for p in sota_papers[:30]
+                for p in sota_papers[:20]
             ]
             
             return {'validation_results': validation_results}
         except Exception as e:
             self.log_execution(f"❌ Error en validación cruzada: {str(e)}", level="error")
             return {'validation_results': {"error": str(e)}}
+
+
+class PaperRankingSkill(BaseSkill):
+    """
+    Skill de selección de top-K papers para análisis profundo (CrossValidation).
+
+    Recibe los N papers recuperados (típ. 20) y selecciona los top-10
+    según el criterio elegido por el usuario:
+
+    - 'citations'   : Ordena por número de citas desc (determinista, sin LLM).
+    - 'similarity'  : Ordena por similitud coseno con el paper del usuario
+                      (requiere que PaperClusteringSkill ya haya corrido).
+    - 'llm'         : Pide al LLM que puntúe la relevancia subjetiva de
+                      cada paper y selecciona los 10 mejor valorados.
+    """
+
+    TOP_K = 10
+
+    def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        sota_papers = context.get('sota_papers', [])
+        if not sota_papers:
+            return {'ranked_papers': []}
+
+        target_cluster = context.get('target_cluster_id', 'all')
+        if target_cluster != 'all':
+            filtered_papers = [p for p in sota_papers if str(p.get('cluster_id', '')) == str(target_cluster)]
+            if filtered_papers:
+                sota_papers = filtered_papers
+                self.log_execution(f"🔍 Filtrando a {len(sota_papers)} papers del cluster '{target_cluster}'")
+            else:
+                self.log_execution(f"⚠️ Ningún paper en el cluster '{target_cluster}', usando todos", level="warning")
+
+        criterion = context.get('ranking_criterion', 'citations')
+        self.log_execution(f"🎯 Seleccionando top-{self.TOP_K} papers por criterio: '{criterion}'")
+
+        if criterion == 'citations':
+            ranked = self._rank_by_citations(sota_papers)
+        elif criterion == 'similarity':
+            ranked = self._rank_by_similarity(sota_papers)
+        elif criterion == 'llm':
+            ranked = self._rank_by_llm(sota_papers, context)
+        else:
+            self.log_execution(f"⚠️ Criterio desconocido '{criterion}', usando citations", level="warning")
+            ranked = self._rank_by_citations(sota_papers)
+
+        self.log_execution(f"✅ Top-{len(ranked)} papers seleccionados para análisis profundo")
+        return {'ranked_papers': ranked}
+
+    # ------------------------------------------------------------------
+    def _rank_by_citations(self, papers: List[Dict]) -> List[Dict]:
+        """Ordena por número de citas desc y devuelve top-K."""
+        return sorted(papers, key=lambda p: p.get('citationCount', 0), reverse=True)[: self.TOP_K]
+
+    def _rank_by_similarity(self, papers: List[Dict]) -> List[Dict]:
+        """Ordena por user_similarity desc (campo añadido por PaperClusteringSkill)."""
+        if not any('user_similarity' in p for p in papers):
+            self.log_execution(
+                "⚠️ 'user_similarity' no disponible, usando citations como fallback",
+                level="warning"
+            )
+            return self._rank_by_citations(papers)
+        return sorted(papers, key=lambda p: p.get('user_similarity', 0.0), reverse=True)[: self.TOP_K]
+
+    def _rank_by_llm(self, papers: List[Dict], context: Dict[str, Any]) -> List[Dict]:
+        """Pide al LLM que puntúe la relevancia (0-10) de cada paper y devuelve el top-K."""
+        if not self.llm_client:
+            self.log_execution("⚠️ Sin LLM, usando citations como fallback", level="warning")
+            return self._rank_by_citations(papers)
+
+        paper_text = context.get('paper_text', '')[:3000]
+        thematic_data = context.get('thematic_data', {})
+        subtemas_str = ", ".join(thematic_data.get('subtemas', []))
+
+        candidates_text = "\n".join([
+            f"[{i+1}] {p['title']} ({p['year']}, {p.get('citationCount', 0)} citas)\n"
+            f"Abstract: {(p.get('abstract') or '')[:300]}"
+            for i, p in enumerate(papers)
+        ])
+
+        prompt = (
+            f"You are an expert peer reviewer.\n\n"
+            f"PAPER BEING ANALYSED (excerpt):\n{paper_text}\n\n"
+            f"SUBTOPICS: {subtemas_str}\n\n"
+            f"CANDIDATE SOTA PAPERS:\n{candidates_text}\n\n"
+            f"TASK: For each candidate paper, assign a relevance score from 0 to 10 "
+            f"indicating how important it is for the author to be aware of and potentially "
+            f"cite it. Consider topical overlap, methodological similarity, and novelty.\n"
+            f"Return ONLY a valid JSON array (no markdown, no explanation): "
+            f'[{{"index": 1, "score": 8.5}}, {{"index": 2, "score": 3.0}}, ...]'
+        )
+
+        try:
+            response = self.llm_client.generate(prompt)
+            scores_raw = self.parse_json_response(response.text)
+
+            if isinstance(scores_raw, dict):
+                scores_raw = list(scores_raw.values())
+
+            score_map = {}
+            for item in scores_raw:
+                if isinstance(item, dict):
+                    idx = int(item.get('index', -1)) - 1  # 1-based → 0-based
+                    scr = float(item.get('score', 0.0))
+                    if 0 <= idx < len(papers):
+                        score_map[idx] = scr
+
+            scored = []
+            for i, p in enumerate(papers):
+                p_copy = dict(p)
+                p_copy['llm_relevance_score'] = score_map.get(i, 0.0)
+                scored.append(p_copy)
+
+            ranked = sorted(scored, key=lambda p: p['llm_relevance_score'], reverse=True)
+            self.log_execution(
+                f"✅ Scores LLM para {len(score_map)}/{len(papers)} papers"
+            )
+            return ranked[: self.TOP_K]
+
+        except Exception as e:
+            self.log_execution(f"❌ Error en scoring LLM: {e} — usando citations", level="error")
+            return self._rank_by_citations(papers)
+

@@ -13,3 +13,5 @@ pymupdf4llm         # Para conversión de PDF a Markdown (pdf_to_md.py)
 langchain-text-splitters # Para segmentación de texto
 plotly                  # Para gráficos interactivos (gauge chart)
 pandas                  # Para manejo de datos en tablas
+scikit-learn            # Para clustering (KMeans) y cosine_similarity
+sentence-transformers   # Para embeddings de abstracts (all-MiniLM-L6-v2)

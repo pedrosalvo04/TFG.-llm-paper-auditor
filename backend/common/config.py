@@ -141,5 +141,5 @@ SOTA_CONFIG = {
 # Semantic Scholar
 SEMANTIC_SCHOLAR_BASE_URL = "https://api.semanticscholar.org/graph/v1/paper/search"
 SEMANTIC_SCHOLAR_YEAR_RANGE = None  # Sin restricción de tiempo por defecto
-SEMANTIC_SCHOLAR_LIMIT = 15
+SEMANTIC_SCHOLAR_LIMIT = 10
 SEMANTIC_SCHOLAR_FIELDS = "paperId,title,authors,year,citationCount,abstract,url"

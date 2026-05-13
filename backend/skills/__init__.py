@@ -25,8 +25,12 @@ from backend.skills.sota_skills import (
     QueryGenerationSkill,
     SemanticScholarSearchSkill,
     CoverageGapAnalysisSkill,
-    CrossValidationSkill
+    CrossValidationSkill,
+    PaperRankingSkill
 )
+
+# Clustering Skill
+from backend.skills.clustering_skill import PaperClusteringSkill
 
 __all__ = [
     'BaseSkill',
@@ -42,4 +46,6 @@ __all__ = [
     'SemanticScholarSearchSkill',
     'CoverageGapAnalysisSkill',
     'CrossValidationSkill',
+    'PaperRankingSkill',
+    'PaperClusteringSkill',
 ]
