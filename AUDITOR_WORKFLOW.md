@@ -102,7 +102,7 @@ Es la base del análisis. Utiliza un enfoque de **Map-Reduce** para procesar pap
     - **Fase REDUCE (Consolidación)**: Unifica las extracciones y genera el objeto maestro `extracted_info`.
 - **Outputs**: `extracted_info` (JSON global), `paper_sections` (Diccionario de texto crudo).
 
-### 1.5. Mapeo de Contexto (`SectionMappingSkill`) [NUEVA FASE]
+### 1.5. Mapeo de Contexto (`SectionMappingSkill`)
 Actúa como un **Enrutador Inteligente** para dirigir el contexto adecuado a cada ítem del checklist.
 
 - **Inputs**: 
@@ -160,7 +160,7 @@ A continuación se detalla la lógica interna de "bajo nivel" de cada componente
 ### 🔍 Skill de Extracción (Map-Reduce + Domain Triage)
 Esta skill es la más compleja debido a la variabilidad de tamaño de los papers.
 1.  **Segmentación Inteligente**: En lugar de usar trozos por caracteres, detecta los encabezados de Docling (`#`, `##`) para agrupar fragmentos por secciones reales (Abstract, Intro, Method, etc.).
-2.  **Fase MAP**: Ejecuta llamadas paralelas al LLM (`Gemini 1.5 Flash`) para cada fragmento, extrayendo una mini-estructura JSON con contexto local.
+2.  **Fase MAP**: Ejecuta llamadas paralelas al LLM (`Gemini 3.1 Flash Lite`) para cada fragmento, extrayendo una mini-estructura JSON con contexto local.
 3.  **Fase REDUCE**: Unifica las extracciones locales. Si hay discrepancias (ej. la Intro dice una cosa y los Apéndices otra), el prompt de REDUCE prioriza la evidencia técnica de las secciones de "Experimentación".
 4.  **Triage de Dominio**: Realiza una clasificación tipo "zero-shot" para asegurar que el contenido es científico-técnico de IA.
 
@@ -169,11 +169,7 @@ Transforma hechos técnicos en cumplimiento de reglas NeurIPS.
 1.  **Ayudas del Extractor (Helps)**: Antes de la evaluación profunda, un puente de Python lee el JSON de la Fase 1 y genera pistas de ayuda (`evaluation_helps`) sobre la presencia de palabras clave (ej. "MIT License", "GitHub", "p < 0.05") para pre-calentar al evaluador.
 2.  **Chain-of-Thought (CoT)**: Obliga al LLM a generar un campo `thought_process` antes de decidir el estado `Yes/No`. Esto mejora drásticamente la precisión en criterios abstractos como "Broader Impacts".
 
-### 🛡️ Skill de Verificación (Auditor 2 / Self-Correction)
-Actúa como un filtro de calidad crítico.
-1.  **Selección de Items**: No verifica todo el checklist para optimizar costes. Selecciona los 8 ítems más propensos al error o aquellos marcados como "No".
-2.  **Ventana de Contexto Amplia**: A diferencia de la extracción, esta fase envía el ítem específico junto con una ventana de 60,000 caracteres (aprox. 15-20 páginas) para una búsqueda exhaustiva.
-3.  **Lógica de Corrección**: Si el Auditor 2 encuentra evidencia que contradice la Fase 2, sobrescribe el estado y añade un flag `verified: true` y `was_corrected: true`, lo que se visualiza con un icono especial en el dashboard.
+
 
 ### 📊 Skills de Soporte (Métricas y Metadatos)
 - **Métricas**: Calcula el rendimiento en tiempo total y volumen de datos, permitiendo auditar la eficiencia del sistema.
@@ -184,7 +180,7 @@ Actúa como un filtro de calidad crítico.
 
 ## 🛠️ Tecnologías y Stack Técnico
 
-- **LLM Core**: Familia **Gemini** (configurable por fase: extracción, evaluación, verificación).
+- **LLM Core**: Familia **Gemini** (configurable por fase: extracción, evaluación).
 - **Context Handling**: Ventanas de hasta 1M tokens con técnicas de Map-Reduce.
 - **PDF Intelligence**: **Docling (IBM)** con **detección automática de GPU (CUDA)**. Usa GPU si está disponible, CPU en caso contrario.
 - **Prompting**: Arquitectura **Markdown-to-JSON** con reglas por ítem en archivos `.md` individuales (`item_rules/`).

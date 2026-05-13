@@ -8,8 +8,7 @@ from backend.common.config import (
     EXTRACTION_MODEL_NAME, 
     EVALUATION_MODEL_NAME,
     MAP_MODEL_NAME,
-    REDUCE_MODEL_NAME,
-    VERIFICATION_MODEL_NAME
+    REDUCE_MODEL_NAME
 )
 from backend.common.logger import get_logger
 from backend.skills import (
@@ -72,7 +71,6 @@ class PaperAuditor:
         self.extraction_llm = LLMClient(model_name=EXTRACTION_MODEL_NAME, generation_config=AUDIT_CONFIG)
         self.section_mapping_llm = LLMClient(model_name=EXTRACTION_MODEL_NAME, generation_config=AUDIT_CONFIG)
         self.evaluation_llm = LLMClient(model_name=EVALUATION_MODEL_NAME, generation_config=EVALUATION_CONFIG)
-        self.verification_llm = LLMClient(model_name=VERIFICATION_MODEL_NAME, generation_config=AUDIT_CONFIG)
         
         # Skills
         self.extraction_skill = InformationExtractionSkill(llm_client=self.extraction_llm)

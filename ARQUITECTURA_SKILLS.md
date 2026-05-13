@@ -1,23 +1,15 @@
-# Arquitectura Basada en Skills - Auditor de Papers
+# Arquitectura de Skills - Auditor de Papers
 
 ## 📋 Resumen Ejecutivo
 
-Este documento describe la refactorización del sistema de auditoría de papers científicos hacia una **arquitectura basada en skills**. Esta arquitectura modular mejora la mantenibilidad, testabilidad y escalabilidad del sistema al descomponer la lógica de los agentes IA en habilidades especializadas y reutilizables.
+Este documento describe la **arquitectura basada en skills** del sistema de auditoría de papers científicos. Esta arquitectura modular facilita la mantenibilidad, testabilidad y escalabilidad del sistema al descomponer la lógica de los agentes IA en habilidades especializadas y reutilizables.
 
-## 🎯 Motivación
+## 🎯 Características Principales
 
-### Problemas del Código Original
-- **Monolítico**: Lógica compleja concentrada en métodos grandes
-- **Acoplamiento**: Difícil modificar un componente sin afectar otros
-- **Testing**: Complicado probar funcionalidades individuales
-- **Mantenimiento**: Código difícil de entender y modificar
-- **Reutilización**: Lógica duplicada entre servicios
-
-### Beneficios de la Nueva Arquitectura
 ✅ **Modularidad**: Cada skill tiene una responsabilidad única
 ✅ **Testabilidad**: Skills individuales son fáciles de probar
 ✅ **Reutilización**: Skills pueden compartirse entre servicios
-✅ **Mantenibilidad**: Código más claro y fácil de modificar
+✅ **Mantenibilidad**: Código claro y fácil de modificar
 ✅ **Escalabilidad**: Fácil agregar nuevos skills
 ✅ **Trazabilidad**: Logging automático de ejecución de skills
 
@@ -44,7 +36,9 @@ BaseSkill (Clase Abstracta)
         ├── QueryGenerationSkill
         ├── SemanticScholarSearchSkill
         ├── CoverageGapAnalysisSkill
-        └── CrossValidationSkill
+        ├── CrossValidationSkill
+        ├── PaperRankingSkill
+        └── PaperClusteringSkill
 ```
 
 ## 🔧 Componentes Principales
@@ -94,7 +88,7 @@ class BaseSkill:
 - **Función**: Map-Reduce para extraer datos técnicos e indexar el paper por secciones.
 - **LLM**: ✅ Sí (Gemini 3.1 Flash Lite)
 
-#### SectionMappingSkill [NUEVO]
+#### SectionMappingSkill
 - **Entrada**: `paper_sections`, `criterios_neurips`
 - **Salida**: `section_mapping`
 - **Función**: Mapea ítems de alto contexto a secciones específicas del paper.
@@ -168,6 +162,18 @@ class BaseSkill:
 - **Función**: Valida consistencia de resultados
 - **LLM**: ✅ Sí (Gemini)
 
+#### PaperRankingSkill
+- **Entrada**: `sota_papers`, `paper_text`
+- **Salida**: `sota_papers` (ordenados), `ranking_criteria`
+- **Función**: Evalúa y ordena los papers encontrados según su relevancia temática y metodológica respecto al paper del usuario.
+- **LLM**: ✅ Sí (Gemini)
+
+#### PaperClusteringSkill
+- **Entrada**: `sota_papers`, `paper_text`
+- **Salida**: `sota_papers` (enriquecidos con cluster_id), `user_similarities`, `diversity_score`, `cluster_summary`
+- **Función**: Analiza similitud y agrupa los papers recuperados usando clustering semántico (KMeans) y embeddings (SentenceTransformers).
+- **LLM**: ✅ Sí (Gemini - para nombrar los clusters)
+
 ## 🔄 Flujo de Ejecución
 
 ### Auditoría de Paper (PaperAuditor)
@@ -240,6 +246,12 @@ class BaseSkill:
 
 6. CrossValidationSkill.execute(context)
    └── Valida resultados
+
+7. PaperRankingSkill.execute(context)
+   └── Ordena por relevancia
+
+8. PaperClusteringSkill.execute(context)
+   └── Agrupa y calcula similitudes
    └── Retorna análisis completo
 ```
 
@@ -252,7 +264,8 @@ backend/
 │   ├── base_skill.py            # Clase base BaseSkill
 │   ├── auditor_skills.py        # 5 skills del auditor
 │   ├── chatbot_skills.py        # 2 skills del chatbot
-│   └── sota_skills.py           # 5 skills de SOTA
+│   ├── sota_skills.py           # 6 skills de SOTA
+│   └── clustering_skill.py      # Skill de clustering semántico
 │
 ├── services/
 │   ├── auditor.py               # PaperAuditor (pipeline de 5 fases)
@@ -300,7 +313,7 @@ backend/
 
 tests/
 ├── test_skills_integration.py   # Test de integración
-└── test_auditor_refactor.py     # Tests legacy
+└── test_auditor_refactor.py     # Tests adicionales
 ```
 
 ## 🧪 Testing
@@ -311,7 +324,7 @@ tests/
 
 **Tests Incluidos**:
 1. ✅ Importación de módulos
-2. ✅ Importación de servicios refactorizados
+2. ✅ Importación de servicios
 3. ✅ Inicialización de servicios
 4. ✅ Verificación de estructura de skills
 5. ✅ Verificación de herencia
@@ -335,7 +348,7 @@ Skills pueden ser compartidos entre diferentes servicios.
 ### 3. Testing Simplificado
 Cada skill puede ser testeado de forma independiente.
 
-### 4. Mantenimiento Mejorado
+### 4. Facilidad de Mantenimiento
 Cambios en un skill no afectan a otros.
 
 ### 5. Escalabilidad
@@ -346,39 +359,6 @@ Logging automático de ejecución de cada skill.
 
 ### 7. Flexibilidad
 Skills pueden ser combinados de diferentes maneras.
-
-## 📊 Comparación: Antes vs Después
-
-### Antes (Código Monolítico)
-
-```python
-class PaperAuditor:
-    def audit(self, paper_text):
-        # 200+ líneas de código
-        # Regex + Prompts + LLM + Métricas
-        # Todo en un solo método
-        # Difícil de testear
-        # Difícil de mantener
-```
-
-### Después (Arquitectura Skills)
-
-```python
-class PaperAuditor:
-    def __init__(self):
-        self.red_flag_skill = RedFlagDetectionSkill()
-        self.extraction_skill = InformationExtractionSkill(llm_client)
-        self.evaluation_skill = ReproducibilityEvaluationSkill(llm_client)
-        self.metrics_skill = MetricsCalculationSkill()
-        self.metadata_skill = MetadataAggregationSkill()
-    
-    def audit(self, paper_text):
-        context = {'paper_text': paper_text}
-        context.update(self.red_flag_skill.execute(context))
-        context.update(self.extraction_skill.execute(context))
-        context.update(self.evaluation_skill.execute(context))
-        # ... flujo claro y modular
-```
 
 ## 🚀 Cómo Extender la Arquitectura
 
@@ -438,6 +418,5 @@ class PaperAuditor:
 
 ## 📈 Métricas del Sistema
 
-### Código Refactorizado
-- **12 Skills** implementados
-- **1 Clase Base** (BaseSkill
+- **14 Skills** implementados
+- **1 Clase Base** (BaseSkill)

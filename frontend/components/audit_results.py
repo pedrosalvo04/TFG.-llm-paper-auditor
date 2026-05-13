@@ -2,7 +2,6 @@
 """Componente de resultados de auditoria NeurIPS 2026 - Tabla de Cumplimiento"""
 import streamlit as st
 from frontend.utils.scoring import get_checklist_health
-from frontend.components.gauge_chart import create_gauge_chart
 
 
 def _build_table_html(items):

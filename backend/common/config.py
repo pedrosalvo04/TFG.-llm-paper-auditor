@@ -40,7 +40,7 @@ EXTRACTION_MODEL_NAME = "gemini-3.1-flash-lite"
 # Modelo para Evaluación Final (Senior Area Chair) - Flash Lite para mayor cuota
 EVALUATION_MODEL_NAME = "gemini-3.1-flash-lite"
 # Modelo para Verificación Estricta (Auditor 2) - Pro para máxima precisión
-VERIFICATION_MODEL_NAME = "gemini-3.1-flash-lite-preview"
+VERIFICATION_MODEL_NAME = "gemini-3.1-flash-lite"
 
 #resto de modelos:
 """
@@ -70,7 +70,6 @@ Name: models/gemini-3-pro-preview, Display Name: Gemini 3 Pro Preview
 Name: models/gemini-3-flash-preview, Display Name: Gemini 3 Flash Preview
 Name: models/gemini-3.1-pro-preview, Display Name: Gemini 3.1 Pro Preview
 Name: models/gemini-3.1-pro-preview-customtools, Display Name: Gemini 3.1 Pro Preview Custom Tools
-Name: models/gemini-3.1-flash-lite-preview, Display Name: Gemini 3.1 Flash Lite Preview
 Name: models/gemini-3-pro-image-preview, Display Name: Nano Banana Pro
 Name: models/nano-banana-pro-preview, Display Name: Nano Banana Pro
 Name: models/gemini-3.1-flash-image-preview, Display Name: Nano Banana 2
