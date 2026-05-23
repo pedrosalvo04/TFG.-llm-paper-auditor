@@ -40,10 +40,4 @@ try:
 except Exception as e:
     print(f"ERROR frontend.components.sota_section: {e}")
 
-try:
-    from frontend.components.chatbot import render_chatbot
-    print("OK frontend.components.chatbot")
-except Exception as e:
-    print(f"ERROR frontend.components.chatbot: {e}")
-
 print("\nTodas las importaciones funcionan correctamente!")

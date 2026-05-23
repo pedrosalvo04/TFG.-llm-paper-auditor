@@ -5,6 +5,8 @@ Este documento describe detalladamente el funcionamiento interno del auditor de 
 ## 🌟 Descripción General
 El **NeurIPS 2026 Paper Auditor** evalúa la transparencia y reproducibilidad de papers de IA/ML siguiendo los criterios oficiales de **NeurIPS 2026**. Su motor combina razonamiento Chain-of-Thought (CoT), arquitectura Map-Reduce para documentos extensos y una evaluación exhaustiva mediante mapeo inteligente de secciones.
 
+> ℹ️ **Nota de Visualización en Frontend**: En la interfaz de usuario de Streamlit, la herramienta se presenta bajo el nombre comercial de **"Nature Auditor Pro"** y muestra un logo corporativo de la ACM, aunque su lógica interna audita exclusivamente los criterios oficiales de la conferencia NeurIPS 2026.
+
 ### ⚡ Flujo Automatizado (sin intervención del usuario)
 1. El usuario **sube el archivo** (PDF, TXT o MD).
 2. **Docling** parsea el PDF automáticamente, usando **GPU (CUDA) si está disponible** o CPU en caso contrario.
@@ -82,10 +84,10 @@ graph TD
 
 ### ⏱️ Cronología de Ejecución de Prompts
 Para entender el flujo temporal del agente:
-1.  **`map_extraction.md`** (Múltiple): Una vez por cada sección del paper.
-2.  **`reduce_extraction.md`** (1 vez): Para consolidar los hechos.
-3.  **`section_mapping.md`** (1 vez): Fase 1.5 para enrutar contexto a los 16 ítems.
-4.  **`evaluation_high_context.md` + `item_rules/<item>.md`** (8 veces): Evaluación profunda de los ítems agrupados en pares. En cada llamada, solo se inyectan las **2 reglas específicas** del par evaluado, cargadas dinámicamente desde `backend/prompts/auditor/item_rules/`.
+1.  **`1. map_extraction.md`** (Múltiple): Una vez por cada sección del paper.
+2.  **`2. reduce_extraction.md`** (1 vez): Para consolidar los hechos.
+3.  **`3a. section_mapping.md`** (1 vez): Fase 1.5 para enrutar contexto a los 16 ítems.
+4.  **`3c. evaluation_high_context.md` + `item_rules/<item>.md`** (8 veces): Evaluación profunda de los ítems agrupados en pares. En cada llamada, solo se inyectan las **2 reglas específicas** del par evaluado, cargadas dinámicamente desde `backend/prompts/auditor/item_rules/`.
 
 ---
 
@@ -150,6 +152,8 @@ El usuario puede descargar el informe de auditoría en formato Markdown. Incluye
 - **Tiempo de ejecución total** (segundos).
 - **Número de caracteres analizados** del paper.
 - **Tabla de cumplimiento** con respuesta y evidencia por ítem.
+
+> 💾 **Autoguardado en Escritorio**: Al completarse la auditoría con éxito, el sistema intenta escribir automáticamente el informe Markdown en la ruta `C:\Users\pedro\Desktop\papers IA resultado\`. Si la aplicación se ejecuta en una máquina donde el usuario de Windows no es `pedro`, esta acción fallará silenciosamente mostrando un warning de advertencia en la interfaz (`No se pudo guardar el informe automáticamente...`), pero **no interferirá con el análisis ni con el uso del botón de descarga manual** en la UI. Podrás personalizar esta ruta editando el componente `frontend/components/file_uploader.py`.
 
 ---
 

@@ -31,12 +31,11 @@ else:
 
 from frontend.components.sidebar import render_sidebar
 
-# 4. Importación de componentes de UI
 from frontend.components.header import render_header
 from frontend.components.file_uploader import extract_text_from_file, run_audit
 from frontend.components.audit_results import render_audit_results, generate_report
+from frontend.utils.pdf_generator import generate_pdf_report
 from frontend.components.sota_section import render_sota_analysis
-from frontend.components.chatbot import render_chatbot
 
 render_sidebar()
 render_header()
@@ -72,14 +71,31 @@ if uploaded_file:
         elif resultado.get("claims") or resultado.get("limitations") or len(resultado) > 5:
             puntuacion = render_audit_results(resultado, uploaded_file)
             render_sota_analysis(md_text)
-            render_chatbot(md_text)
             
             st.markdown("---")
             st.subheader("📄 Descargar Informe")
-            reporte = generate_report(resultado, uploaded_file, puntuacion)
-            st.download_button(
-                label="📥 Descargar Informe Completo (.md)",
-                data=reporte,
-                file_name=f"auditoria_{uploaded_file.name.replace('.pdf', '')}.md",
-                mime="text/markdown"
-            )
+            col_md, col_pdf = st.columns(2)
+            
+            with col_md:
+                reporte_md = generate_report(resultado, uploaded_file, puntuacion)
+                st.download_button(
+                    label="📥 Descargar Informe Markdown (.md)",
+                    data=reporte_md,
+                    file_name=f"auditoria_{uploaded_file.name.replace('.pdf', '')}.md",
+                    mime="text/markdown",
+                    use_container_width=True
+                )
+                
+            with col_pdf:
+                with st.spinner("Compilando PDF..."):
+                    try:
+                        reporte_pdf = generate_pdf_report(resultado, uploaded_file, puntuacion)
+                        st.download_button(
+                            label="📥 Descargar Informe PDF (.pdf)",
+                            data=reporte_pdf,
+                            file_name=f"auditoria_{uploaded_file.name.replace('.pdf', '')}.pdf",
+                            mime="application/pdf",
+                            use_container_width=True
+                        )
+                    except Exception as pdf_error:
+                        st.error(f"Error al generar PDF: {str(pdf_error)}")

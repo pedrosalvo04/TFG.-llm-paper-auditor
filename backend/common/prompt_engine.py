@@ -249,19 +249,6 @@ def get_evaluation_high_context_prompt(extracted_info: dict, items_to_evaluate: 
 
 
 # =======================================================
-# CHATBOT PROMPTS
-# =======================================================
-
-def get_chatbot_response_prompt(paper_text: str, question: str, history_text: str) -> str:
-    """Genera el prompt para la respuesta del chatbot."""
-    template = load_prompt("chatbot", "conversational")
-    return render_prompt(template,
-        paper_text=paper_text,
-        history_text=history_text,
-        question=question
-    )
-
-# =======================================================
 # SOTA PROMPTS
 # =======================================================
 

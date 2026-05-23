@@ -13,12 +13,6 @@ from backend.skills.auditor_skills import (
 )
 
 
-# Chatbot Skills
-from backend.skills.chatbot_skills import (
-    ConversationalResponseSkill,
-    ContextValidationSkill
-)
-
 # SOTA Skills
 from backend.skills.sota_skills import (
     ThematicCoverageSkill,
@@ -39,8 +33,6 @@ __all__ = [
     'NeurIPSComplianceSkill',
     'MetricsCalculationSkill',
     'MetadataAggregationSkill',
-    'ConversationalResponseSkill',
-    'ContextValidationSkill',
     'ThematicCoverageSkill',
     'QueryGenerationSkill',
     'SemanticScholarSearchSkill',

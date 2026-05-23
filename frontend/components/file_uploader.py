@@ -121,6 +121,7 @@ def run_audit(md_text):
             try:
                 from frontend.components.audit_results import generate_report
                 from frontend.utils.scoring import get_checklist_health
+                from frontend.utils.pdf_generator import generate_pdf_report
                 
                 health = get_checklist_health(st.session_state.resultado)
                 reporte_contenido = generate_report(st.session_state.resultado, st.session_state.uploaded_file_obj, health)
@@ -130,13 +131,20 @@ def run_audit(md_text):
                 if not os.path.exists(save_dir):
                     os.makedirs(save_dir)
                 
-                filename = f"auditoria_{st.session_state.archivo_actual.replace('.pdf', '')}.md"
-                save_path = os.path.join(save_dir, filename)
-                
-                with open(save_path, "w", encoding="utf-8") as f:
+                # Guardar reporte Markdown
+                filename_md = f"auditoria_{st.session_state.archivo_actual.replace('.pdf', '')}.md"
+                save_path_md = os.path.join(save_dir, filename_md)
+                with open(save_path_md, "w", encoding="utf-8") as f:
                     f.write(reporte_contenido)
                 
-                st.info(f"💾 Informe guardado en: {save_path}")
+                # Guardar reporte PDF
+                filename_pdf = f"auditoria_{st.session_state.archivo_actual.replace('.pdf', '')}.pdf"
+                save_path_pdf = os.path.join(save_dir, filename_pdf)
+                reporte_pdf = generate_pdf_report(st.session_state.resultado, st.session_state.uploaded_file_obj, health)
+                with open(save_path_pdf, "wb") as f:
+                    f.write(reporte_pdf)
+                
+                st.info(f"💾 Informes guardados automáticamente en: {save_dir}")
             except Exception as save_error:
                 st.warning(f"⚠️ No se pudo guardar el informe automáticamente: {str(save_error)}")
             # -------------------------------------------------------

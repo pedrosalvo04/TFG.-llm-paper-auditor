@@ -44,7 +44,7 @@ graph TD
     subgraph "3. Recuperación de Literatura"
         E --> F["📡 SemanticScholarSearchSkill"]
         SS --> F
-        F --> G["📚 SOTA Papers (Top 30 por Citas)"]
+        F --> G["📚 SOTA Papers (Top 20 por Citas)"]
     end
 
     subgraph "3b. Clustering Semántico"
@@ -121,10 +121,10 @@ Recuperación determinista de literatura de alta calidad.
 - **Inputs**: `search_queries`.
 - **Proceso**:
     - Ejecuta búsquedas paralelas en Semantic Scholar.
-    - Filtra resultados por relevancia y año (2023-2026 por defecto).
+    - Filtra resultados por relevancia y por el rango de años configurado (`SEMANTIC_SCHOLAR_YEAR_RANGE` en `backend/common/config.py`, que por defecto es `None` o sin límite).
     - **Ranking**: Ordena los resultados por `citationCount` para priorizar trabajos de alto impacto.
     - **Deduplicación**: Limpia resultados repetidos entre diferentes queries.
-- **Outputs**: `sota_papers` (Lista de hasta 30 objetos Paper).
+- **Outputs**: `sota_papers` (Lista de hasta 20 objetos Paper).
 - **Tecnología**: API REST de Semantic Scholar.
 
 ### 3b. Clustering Semántico (`PaperClusteringSkill`)
@@ -201,8 +201,8 @@ El "juez final" que decide qué papers del SOTA real faltan en el artículo.
 
 ### 🔍 Inteligencia en Búsqueda (Semantic Scholar)
 El sistema no solo busca palabras clave, sino que aplica filtros inteligentes:
-1. **Filtro de Actualidad**: Prioriza papers publicados entre 2023 y el año actual para asegurar que las recomendaciones sean SOTA real.
-2. **Filtro de Impacto**: Al limitar a 30 resultados ordenados por citaciones, el agente actúa como un filtro de ruido, enfocándose en la "literatura canónica" del área.
+1. **Filtro de Actualidad**: Permite acotar las publicaciones por rango de años. Por defecto, en `backend/common/config.py`, `SEMANTIC_SCHOLAR_YEAR_RANGE` es `None` (sin límites temporales), lo que maximiza los hallazgos en áreas con menos publicaciones recientes, pero puede limitarse (ej: a `"2023-2026"`) para buscar solo SOTA hiper-reciente.
+2. **Filtro de Impacto**: Al limitar a 20 resultados ordenados por citaciones tras la unificación y deduplicación de búsquedas, el agente actúa como un filtro de ruido, enfocándose en la "literatura canónica" del área.
 
 ### 🧮 Inteligencia en Clustering Semántico (`PaperClusteringSkill`)
 La skill implementa un pipeline de NLP clásico totalmente local:

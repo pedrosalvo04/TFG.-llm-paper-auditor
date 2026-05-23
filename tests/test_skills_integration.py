@@ -16,8 +16,6 @@ try:
         NeurIPSComplianceSkill,
         MetricsCalculationSkill,
         MetadataAggregationSkill,
-        ConversationalResponseSkill,
-        ContextValidationSkill,
         ThematicCoverageSkill,
         QueryGenerationSkill,
         SemanticScholarSearchSkill,
@@ -39,7 +37,6 @@ except Exception as e:
 print("\n2. Probando servicios refactorizados...")
 try:
     from backend.services.auditor import PaperAuditor
-    from backend.services.chatbot import Chatbot
     from backend.services.sota_analyzer import SotaAnalyzer
     print("   [OK] Importaciones de servicios exitosas")
 except Exception as e:
@@ -51,9 +48,6 @@ print("\n3. Inicializando servicios...")
 try:
     auditor = PaperAuditor()
     print("   [OK] PaperAuditor inicializado con skills")
-    
-    chatbot = Chatbot()
-    print("   [OK] Chatbot inicializado con skills")
     
     sota = SotaAnalyzer()
     print("   [OK] SotaAnalyzer inicializado con skills")
@@ -77,15 +71,8 @@ except AssertionError as e:
     print(f"   [ERROR] {e}")
     sys.exit(1)
 
-# Test 5: Verificar estructura de skills en Chatbot
-print("\n5. Verificando estructura de Chatbot...")
-try:
-    assert hasattr(chatbot, 'response_skill'), "Falta response_skill"
-    assert hasattr(chatbot, 'validation_skill'), "Falta validation_skill"
-    print("   [OK] Todos los skills del chatbot presentes")
-except AssertionError as e:
-    print(f"   [ERROR] {e}")
-    sys.exit(1)
+# Test 5: Obsoleto (Chatbot eliminado)
+print("\n5. Test de Chatbot omitido (Chatbot eliminado del backend)")
 
 # Test 6: Verificar estructura de skills en SotaAnalyzer
 print("\n6. Verificando estructura de SotaAnalyzer...")
@@ -104,7 +91,6 @@ except AssertionError as e:
 print("\n7. Verificando herencia de BaseSkill...")
 try:
     assert isinstance(auditor.extraction_skill, BaseSkill)
-    assert isinstance(chatbot.response_skill, BaseSkill)
     assert isinstance(sota.thematic_skill, BaseSkill)
     print("   [OK] Todos los skills heredan correctamente de BaseSkill")
 except AssertionError:
@@ -158,7 +144,6 @@ print("=" * 70)
 print("\nArquitectura basada en skills implementada correctamente:")
 print("  • BaseSkill: Clase base para todos los skills")
 print("  • Auditor: 5 skills especializados")
-print("  • Chatbot: 2 skills especializados")
 print("  • SOTA: 5 skills especializados")
-print("\nTotal: 12 skills implementados + 1 clase base")
+print("\nTotal: 10 skills implementados + 1 clase base")
 print("=" * 70)

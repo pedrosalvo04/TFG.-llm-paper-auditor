@@ -265,55 +265,158 @@ def render_audit_results(resultado, uploaded_file):
             st.caption("Datos finales refinados y validados.")
             st.json(resultado.get("informacion_extraida", {}))
 
-
-    # ── PIPELINE DE EVALUACIÓN ──────────────────────────────────────────────
-    with st.expander("🔍 Pipeline de Evaluación (Senior Area Chair)"):
-        st.write("Validación final de cumplimiento basada en señales pre-computadas e inyección de contexto profundo.")
-        
-        # 1. Ayudas del Extractor (Extraction Helps)
-        st.markdown("### 🚦 Ayudas del Extractor (Extraction Helps)")
-        helps = resultado.get("evaluation_helps", {})
-        if helps:
-            for key, msg in helps.items():
-                st.markdown(f"**Item {key.replace('_', ' ').title()}:**")
-                st.info(msg)
-        else:
-            st.warning("No se generaron ayudas dinámicas para esta evaluación.")
-            
-        st.markdown("---")
-        
-
-
     return health
 
 
 def generate_report(resultado, uploaded_file, health=None):
-    """Genera el informe descargable en formato Markdown."""
+    """Genera el informe descargable en formato Markdown con un diseño premium y detallado."""
     if health is None:
         health = get_checklist_health(resultado)
 
-    status_label = "Checklist Valido" if health["status"] == "valid" else "Requiere Atencion (Faltan justificaciones)"
+    paper_name = uploaded_file if isinstance(uploaded_file, str) else uploaded_file.name
+    status_label = "✅ CHECKLIST VÁLIDO" if health["status"] == "valid" else "⚠️ ATENCIÓN REQUERIDA"
     pending = health["pending_count"]
     total = health["total"]
+    
     metricas = resultado.get("metricas", {})
     tiempo = metricas.get("tiempo_segundos", "N/A")
     caracteres = metricas.get("caracteres_leidos", "N/A")
+    
+    import datetime
+    fecha = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    reporte = f"# NeurIPS 2026 Checklist Audit Report\n\n"
-    reporte += f"**Paper:** {uploaded_file.name}\n\n"
-    reporte += f"**Veredicto:** {status_label}\n"
-    reporte += f"**Items con problemas:** {pending} de {total}\n"
-    reporte += f"**Tiempo de ejecución:** {tiempo}s\n"
-    reporte += f"**Caracteres analizados:** {caracteres}\n\n"
-    reporte += "---\n\n## Tabla de Cumplimiento\n\n"
-    reporte += "| # | Item | Respuesta | Evidencia / Justificacion |\n"
-    reporte += "|---|------|-----------|---------------------------|\n"
+    reporte = f"# 🔬 Informe de Auditoría Científica - NeurIPS 2026\n\n"
+    
+    # Tabla de Metadatos
+    reporte += f"| Parámetro | Detalle |\n"
+    reporte += f"| :--- | :--- |\n"
+    reporte += f"| 📄 **Artículo** | `{paper_name}` |\n"
+    reporte += f"| 📅 **Fecha de Análisis** | {fecha} |\n"
+    reporte += f"| ⏳ **Tiempo de Ejecución** | {tiempo}s |\n"
+    reporte += f"| 📊 **Caracteres Analizados** | {caracteres:,} |\n\n"
+    
+    reporte += "### 🎯 Veredicto del Checklist\n"
+    if health["status"] == "valid":
+        reporte += f"> **{status_label}**\n"
+        reporte += f"> Todas las respuestas obligatorias del autor cuentan con una evidencia o justificación adecuada para los revisores. El checklist está en un estado óptimo para NeurIPS 2026.\n\n"
+    else:
+        reporte += f"> **{status_label}**\n"
+        reporte += f"> Se han detectado **{pending} de {total}** ítem(s) que requieren atención o justificación adicional antes del envío oficial.\n\n"
+
+    # Resumen de métricas de cumplimiento
+    yes_count = sum(1 for i in health["items"] if "yes" in i["answer"].lower())
+    no_count = sum(1 for i in health["items"] if "no" in i["answer"].lower())
+    na_count = sum(1 for i in health["items"] if "n/a" in i["answer"].lower())
+    
+    reporte += "### 📊 Métricas de Cumplimiento\n"
+    reporte += f"- **Cumple (Yes):** {yes_count}\n"
+    reporte += f"- **No Cumple (No):** {no_count}\n"
+    reporte += f"- **No Aplica (N/A):** {na_count}\n"
+    reporte += f"- **Ítems con Alerta:** {pending}\n\n"
+    
+    reporte += "---\n\n## 📋 Tabla de Cumplimiento Detallada\n\n"
+    reporte += "| # | Item del Checklist | Respuesta | Evidencia / Justificación |\n"
+    reporte += "|---|--------------------|-----------|---------------------------|\n"
 
     for idx, item in enumerate(health["items"], start=1):
         label = item["label"]
-        answer = item["answer"]
-        evidence = item["evidence"] if item["evidence"] and item["evidence"] != "-" else "-"
-        reporte += f"| {idx} | {label} | {answer} | {evidence} |\n"
+        # Limpiar label si contiene prefijo numérico redundante
+        if ". " in label:
+            num, name = label.split(". ", 1)
+            name_formatted = name
+        else:
+            num = str(idx)
+            name_formatted = label
+            
+        answer = item["answer"].strip()
+        
+        # Enriquecer celda de respuesta con indicador visual
+        a_lower = answer.lower()
+        if "yes" in a_lower:
+            ans_cell = "🟢 Yes"
+        elif "no" in a_lower:
+            ans_cell = "🔴 No"
+        else:
+            ans_cell = "🔵 N/A"
+            
+        evidence = item["evidence"].strip() if item["evidence"] and item["evidence"] != "-" else "—"
+        
+        # Añadir avisos de alerta directamente en la evidencia de la tabla
+        alert_notes = []
+        if item["pending_justification"]:
+            alert_notes.append("⚠️ *Falta justificación explícita del autor para la respuesta 'No'*")
+        elif item["missing_evidence"]:
+            alert_notes.append("⚠️ *Respuesta 'Yes' sin evidencia referenciada del paper*")
+            
+        if "compensacion" in item.get("alert_msg", "").lower() or "etica" in item.get("alert_msg", "").lower():
+            alert_notes.append("⚠️ *Código de Ética NeurIPS: Compensación obligatoria de crowdsourcing*")
+            
+        if alert_notes:
+            evidence_formatted = evidence + " <br><br> " + " <br> ".join(alert_notes)
+        else:
+            evidence_formatted = evidence
+            
+        # Limpiar saltos de línea dentro de la tabla markdown para que no se rompa la visualización de la fila
+        evidence_formatted = evidence_formatted.replace("\n", " ")
 
-    reporte += "\n---\n_Generado por Auditor NeurIPS 2026._\n"
+        reporte += f"| {num} | {name_formatted} | {ans_cell} | {evidence_formatted} |\n"
+
+    # Ficha Técnica Consolidada (Reduce Database)
+    info = resultado.get("informacion_extraida", {})
+    section_config = {
+        "hyperparameters": "Hiperparámetros",
+        "hardware": "Hardware & Compute",
+        "architecture": "Arquitectura del Modelo",
+        "data": "Dataset & Datos",
+        "code": "Código & Repositorio",
+        "statistics": "Estadística & Rigor Científico",
+        "baseline_comparison": "Comparativa con Baselines",
+        "theory_and_proofs": "Teoría & Demostraciones",
+        "software_versions": "Software & Versiones",
+        "limitations_quality": "Análisis de Limitaciones",
+        "licenses_extraction": "Licencias detectadas",
+        "broader_impacts_extraction": "Impacto Social (Broader Impacts)",
+        "llm_usage_extraction": "Declaración de uso de LLMs",
+        "human_subjects_extraction": "Sujetos Humanos & Crowdsourcing"
+    }
+    
+    has_tech_section = False
+    for key, label in section_config.items():
+        data = info.get(key)
+        if data and data != "NOT FOUND":
+            if not has_tech_section:
+                reporte += "\n---\n\n## 🔍 Ficha Técnica y Datos Consolidados\n\n"
+                reporte += "Esta sección consolida la base de datos técnica extraída y validada del artículo científico durante la auditoría.\n\n"
+                has_tech_section = True
+                
+            reporte += f"### {label}\n"
+            
+            if isinstance(data, dict):
+                for k, v in data.items():
+                    if v and v != "NOT FOUND":
+                        k_clean = k.replace('_', ' ').title()
+                        reporte += f"- **{k_clean}:** {v}\n"
+            elif isinstance(data, list):
+                for item in data:
+                    reporte += f"- {item}\n"
+            else:
+                reporte += f"{data}\n"
+            reporte += "\n"
+
+    # Razonamiento CoT
+    cot = info.get("thought_process")
+    if cot and cot != "No disponible":
+        reporte += "---\n\n## 🧠 Razonamiento de Consolidación (CoT)\n\n"
+        cot_indented = cot.replace('\n', '\n> ')
+        reporte += f"> {cot_indented}\n\n"
+
+    # Secciones Mapeadas
+    mapping = info.get("context_mapping", [])
+    if mapping:
+        reporte += "### 📍 Secciones Identificadas del Paper\n"
+        for section in mapping:
+            reporte += f"- `{section}`\n"
+        reporte += "\n"
+
+    reporte += "---\n_Informe generado automáticamente por Auditor NeurIPS 2026._\n"
     return reporte

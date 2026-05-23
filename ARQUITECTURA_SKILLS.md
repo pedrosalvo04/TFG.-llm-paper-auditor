@@ -43,6 +43,9 @@ BaseSkill (Clase Abstracta)
 
 ## 🔧 Componentes Principales
 
+### 0. Configuración de Modelos LLM (Gemini Core)
+Por defecto, todos los skills que interactúan con inteligencia artificial hacen uso del modelo de alto rendimiento y bajo costo **`gemini-3.1-flash-lite`** (configurado de manera centralizada en `backend/common/config.py` a través de variables como `EXTRACTION_MODEL_NAME`, `EVALUATION_MODEL_NAME`, etc.). Esto optimiza el consumo de cuota por segundo y por minuto sin comprometer la precisión, gracias a la inyección de contexto profundo (Fase 2) y a la estrategia Map-Reduce (Fase 1). Cualquier skill puede ser reconfigurado para usar modelos alternativos (ej: `gemini-2.5-pro` o `gemini-2.5-flash`) en dicho archivo de configuración.
+
 ### 1. BaseSkill (Clase Base)
 
 **Ubicación**: `backend/skills/base_skill.py`
@@ -312,8 +315,20 @@ backend/
         └── 4. cross_validation.md
 
 tests/
-├── test_skills_integration.py   # Test de integración
-└── test_auditor_refactor.py     # Tests adicionales
+├── check_st.py                  # Script rápido de comprobación de Streamlit
+├── create_test_pdf.py           # Generación de PDFs artificiales para pruebas locales
+├── patch_skills.py              # Parches para simulación (mocking) de ejecuciones de skills
+├── repro_hyperparams.py         # Test de consistencia en hiperparámetros
+├── test_auditor_refactor.py     # Cobertura del PaperAuditor refactorizado
+├── test_checklist_health.py     # Test de la lógica de Health Scoring y alertas NeurIPS
+├── test_criteria_injection.py   # Test de inyección dinámica de reglas en prompts
+├── test_imports.py              # Test básico de importaciones de paquetes y módulos
+├── test_llm_retry.py            # Validación de reintentos con backoff exponencial
+├── test_rag_logical_splitter.py # Test de división lógica RAG por bloques
+├── test_rag_split.py            # Test alternativo de particionamiento
+├── test_section_splitter.py     # Test de parsing de cabeceras de Docling
+├── test_skills_integration.py   # Test de integración general de herencia y base de skills
+└── data/                        # Datos y PDFs muestra para testing
 ```
 
 ## 🧪 Testing
