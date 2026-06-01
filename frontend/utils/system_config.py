@@ -9,8 +9,7 @@ def setup_environment():
     os.environ["TRANSFORMERS_VERBOSITY"] = "error"
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
     
-    # Desactivar telemetría de ChromaDB y OpenTelemetry
-    os.environ["ANONYMIZED_TELEMETRY"] = "False"
+    # Desactivar OpenTelemetry
     os.environ["OTEL_SDK_DISABLED"] = "true"
 
     # Filtros de warnings

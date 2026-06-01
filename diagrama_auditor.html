@@ -1,0 +1,1843 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeurIPS 2026 Paper Auditor - Diagrama de Flujo Interactivo</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Prism.js Syntax Highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    
+    <style>
+        :root {
+            --bg-dark: #0b0f19;
+            --bg-card: rgba(17, 24, 39, 0.7);
+            --bg-card-hover: rgba(31, 41, 55, 0.85);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-glow: rgba(99, 102, 241, 0.3);
+            
+            --primary: #6366f1; /* Indigo */
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --secondary: #10b981; /* Emerald */
+            --secondary-glow: rgba(16, 185, 129, 0.4);
+            --accent: #a855f7; /* Purple */
+            --accent-glow: rgba(168, 85, 247, 0.4);
+            --info: #3b82f6; /* Blue */
+            
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --text-accent: #818cf8;
+            
+            --transition-speed: 0.3s;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.05) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        header {
+            padding: 2rem 4rem;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(11, 15, 25, 0.8);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title h1 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 1.8rem;
+            background: linear-gradient(to right, #818cf8, #a855f7, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+
+        .header-title p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+        }
+
+        .badge-container {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .badge {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #a5b4fc;
+            padding: 0.3rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .badge.emerald {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #34d399;
+        }
+        
+        .badge.purple {
+            background: rgba(168, 85, 247, 0.15);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            color: #c084fc;
+        }
+
+        main {
+            max-width: 1600px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media (min-width: 1200px) {
+            main {
+                grid-template-columns: 45% 55%;
+                align-items: start;
+            }
+        }
+
+        /* CARD CONTENEDORA GENERAL */
+        .glass-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            backdrop-filter: blur(16px);
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            transition: all var(--transition-speed) ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .card-header-section {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header-section h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* PIPELINE VISUAL SYSTEM */
+        .pipeline-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            position: relative;
+        }
+
+        .pipeline-connector {
+            position: absolute;
+            left: 28px;
+            top: 20px;
+            bottom: 20px;
+            width: 3px;
+            background: linear-gradient(to bottom, var(--primary), var(--accent), var(--secondary));
+            opacity: 0.4;
+            z-index: 0;
+        }
+
+        .flow-node {
+            display: flex;
+            gap: 1.25rem;
+            z-index: 1;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .flow-node:hover {
+            transform: translateX(6px);
+        }
+
+        .node-icon-circle {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #1e293b;
+            border: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            flex-shrink: 0;
+            transition: all var(--transition-speed) ease;
+            position: relative;
+        }
+
+        .flow-node.active .node-icon-circle {
+            background: var(--primary);
+            border-color: #818cf8;
+            box-shadow: 0 0 15px var(--primary-glow);
+            color: white;
+        }
+
+        .flow-node.phase-1_5.active .node-icon-circle {
+            background: var(--accent);
+            border-color: #c084fc;
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .flow-node.phase-2.active .node-icon-circle {
+            background: var(--secondary);
+            border-color: #34d399;
+            box-shadow: 0 0 15px var(--secondary-glow);
+        }
+
+        .node-content-card {
+            flex-grow: 1;
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            transition: all var(--transition-speed) ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .flow-node.active .node-content-card {
+            background: rgba(99, 102, 241, 0.08);
+            border-color: rgba(99, 102, 241, 0.35);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.05);
+        }
+
+        .flow-node.phase-1_5.active .node-content-card {
+            background: rgba(168, 85, 247, 0.08);
+            border-color: rgba(168, 85, 247, 0.35);
+        }
+
+        .flow-node.phase-2.active .node-content-card {
+            background: rgba(16, 185, 129, 0.08);
+            border-color: rgba(16, 185, 129, 0.35);
+        }
+
+        .node-content-card h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .node-content-card p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .node-phase-tag {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--primary);
+        }
+        
+        .flow-node.phase-1_5 .node-phase-tag {
+            color: var(--accent);
+        }
+        
+        .flow-node.phase-2 .node-phase-tag {
+            color: var(--secondary);
+        }
+
+        /* DETAILS INSPECTOR PANEL */
+        .inspector-panel {
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .inspector-title-area {
+            margin-bottom: 1.5rem;
+        }
+
+        .inspector-title-area h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .inspector-title-area p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 0.3rem;
+        }
+
+        /* NAVIGATION TABS */
+        .tabs-header {
+            display: flex;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .tab-btn:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .tab-btn.active {
+            color: white;
+            background: var(--primary);
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+        }
+
+        .tab-pane {
+            display: none;
+            animation: fadeIn 0.35s ease;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* TECHNICAL BLOCKS & SCHEMAS */
+        .tech-summary-box {
+            background: rgba(15, 23, 42, 0.4);
+            border-left: 3px solid var(--primary);
+            border-radius: 0 8px 8px 0;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .tech-io-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            .tech-io-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .io-card {
+            background: rgba(15, 23, 42, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .io-card h4 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-accent);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .io-card ul {
+            list-style: none;
+            font-size: 0.85rem;
+        }
+
+        .io-card ul li {
+            margin-bottom: 0.3rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .io-card ul li span.key {
+            color: var(--text-muted);
+            font-family: 'Fira Code', monospace;
+        }
+        
+        .io-card ul li span.type {
+            color: #f43f5e;
+            font-size: 0.75rem;
+        }
+
+        /* CODE VIEW WINDOWS */
+        .code-window-header {
+            background: #1e293b;
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            padding: 0.5rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .code-window-header .dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .code-window-header .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .code-window-header .dot.red { background: #ef4444; }
+        .code-window-header .dot.yellow { background: #f59e0b; }
+        .code-window-header .dot.green { background: #10b981; }
+
+        .code-window-body {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        pre[class*="language-"] {
+            margin: 0;
+            border-radius: 0 0 8px 8px;
+            max-height: 480px;
+            font-size: 0.85rem !important;
+            font-family: 'Fira Code', monospace !important;
+        }
+
+        code[class*="language-"] {
+            font-family: 'Fira Code', monospace !important;
+        }
+
+        /* EXPLORADOR DE CRITERIOS CHECKLIST */
+        .checklist-explorer-section {
+            grid-column: 1 / -1;
+            margin-top: 1rem;
+        }
+
+        .explorer-grid {
+            display: grid;
+            grid-template-columns: 15% 85%;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.5rem;
+            min-height: 400px;
+        }
+
+        @media (max-width: 992px) {
+            .explorer-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .explorer-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        /* Custom Scrollbar for sidebar */
+        .explorer-sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .explorer-sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .item-selector-btn {
+            background: rgba(30, 41, 59, 0.3);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 0.6rem 0.8rem;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 0.8rem;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .item-selector-btn:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .item-selector-btn.active {
+            color: white;
+            background: rgba(99, 102, 241, 0.15);
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.1);
+        }
+
+        .item-display-card {
+            background: rgba(15, 23, 42, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .item-display-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+        }
+
+        .item-display-title h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .criteria-box-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-accent);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.4rem;
+        }
+
+        .criteria-literal-box {
+            background: rgba(30, 41, 59, 0.25);
+            border-left: 3px solid var(--accent);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+        }
+
+        .criteria-rule-box {
+            background: rgba(30, 41, 59, 0.25);
+            border-left: 3px solid var(--secondary);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .criteria-help-box {
+            background: rgba(99, 102, 241, 0.03);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-family: 'Fira Code', monospace;
+            color: #c084fc;
+        }
+
+        .empty-explorer {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: var(--text-muted);
+            gap: 1rem;
+        }
+
+        .empty-explorer svg {
+            width: 48px;
+            height: 48px;
+            stroke: var(--text-muted);
+            opacity: 0.5;
+        }
+        
+        .footer {
+            margin-top: 4rem;
+            padding: 2rem 4rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            background: rgba(11, 15, 25, 0.9);
+        }
+
+        /* SVG flow connectors */
+        .svg-icon {
+            width: 1.2rem;
+            height: 1.2rem;
+            fill: currentColor;
+            vertical-align: middle;
+        }
+
+        /* SCREENSHOT TFG CAPTURE VIEW */
+        .tfg-capture-view {
+            display: none;
+            max-width: 950px;
+            margin: 1.5rem auto;
+            background: #ffffff !important;
+            color: #1e293b !important;
+            padding: 2.5rem;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .tfg-capture-view h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.6rem;
+            color: #0f172a;
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 0.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            font-weight: 800;
+        }
+
+        .tfg-flow-step {
+            display: flex;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            margin-bottom: 1.25rem;
+            overflow: hidden;
+            background: #f8fafc;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            border-left: 5px solid #0f172a;
+        }
+
+        .tfg-step-num {
+            width: 55px;
+            background: #0f172a;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .tfg-step-details {
+            padding: 1rem 1.25rem;
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .tfg-step-header {
+            grid-column: 1 / -1;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 0.4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tfg-step-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .tfg-step-tech {
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #e2e8f0;
+            color: #334155;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        .tfg-step-io {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tfg-io-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin-bottom: 0.15rem;
+        }
+
+        .tfg-io-content {
+            font-size: 0.8rem;
+            color: #334155;
+            line-height: 1.4;
+        }
+
+        .tfg-step-desc {
+            grid-column: 1 / -1;
+            font-size: 0.8rem;
+            color: #475569;
+            background: #ffffff;
+            padding: 0.6rem 0.8rem;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            line-height: 1.45;
+        }
+
+        body.capture-mode {
+            background: #f1f5f9 !important;
+            background-image: none !important;
+            color: #1e293b !important;
+        }
+
+        /* CAPTURE FORMAT SELECTOR */
+        .tfg-selector-bar {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px dashed #cbd5e1;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+        .tfg-selector-bar span {
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+        .tfg-btn {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            padding: 0.45rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            outline: none;
+        }
+        .tfg-btn:hover {
+            background: #e2e8f0;
+        }
+        .tfg-btn.active {
+            background: #4f46e5;
+            color: #ffffff;
+            border-color: #4f46e5;
+        }
+        
+        .tfg-canvas {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        /* TABLE VIEW */
+        .tfg-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            color: #1e293b;
+            margin-top: 1rem;
+        }
+        .tfg-table th {
+            background: #f8fafc;
+            color: #0f172a;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #cbd5e1;
+            border-top: 1px solid #e2e8f0;
+            padding: 0.75rem 0.5rem;
+            text-align: left;
+        }
+        .tfg-table td {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0.85rem 0.5rem;
+            vertical-align: top;
+            line-height: 1.45;
+        }
+        .tfg-table tr:nth-child(even) {
+            background: #f8fafc;
+        }
+        .tfg-table-fase {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 0.95rem;
+            color: #0f172a;
+        }
+        .tfg-table-tech {
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: #e2e8f0;
+            color: #334155;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 0.25rem;
+            text-transform: uppercase;
+        }
+
+        /* HORIZONTAL FLOW DIAGRAM */
+        .tfg-horizontal-flow {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+        .tfg-h-step {
+            flex: 1 1 calc(33.33% - 1rem);
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background: #f8fafc;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease;
+        }
+        @media (min-width: 900px) {
+            .tfg-h-step {
+                flex: 1 1 calc(16.6% - 1rem);
+            }
+        }
+        .tfg-h-step-header {
+            color: #ffffff;
+            padding: 0.5rem;
+            text-align: center;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 0.9rem;
+        }
+        .tfg-h-step-body {
+            padding: 0.75rem;
+            font-size: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex-grow: 1;
+        }
+        .tfg-h-step-title {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 0.8rem;
+            line-height: 1.2;
+        }
+        .tfg-h-step-desc {
+            color: #475569;
+            font-size: 0.7rem;
+            line-height: 1.35;
+        }
+        .tfg-h-step-io {
+            border-top: 1px dashed #cbd5e1;
+            padding-top: 0.4rem;
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        .tfg-h-step-io-title {
+            font-weight: 700;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: #64748b;
+            letter-spacing: 0.02em;
+        }
+        .tfg-h-step-io-content {
+            font-size: 0.65rem;
+            color: #334155;
+            line-height: 1.2;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">
+            <h1>🔬 NeurIPS 2026 Paper Auditor</h1>
+            <p>Diagrama de Arquitectura de Flujo & Orquestación de Agente</p>
+        </div>
+        <div class="badge-container">
+            <button class="badge purple" onclick="toggleCaptureMode()" id="capture_mode_btn" style="cursor: pointer; outline: none;">📸 Modo Captura TFG</button>
+            <span class="badge">Pipeline de 5 Fases</span>
+            <span class="badge emerald">Gemini 3.5 Flash</span>
+        </div>
+    </header>
+
+    <!-- SIMPLE SCHEME FOR SCREENSHOTS (TFG MEMORY) -->
+    <div class="tfg-capture-view" id="tfg_capture_view">
+        <div class="tfg-selector-bar">
+            <span>Esquema para TFG:</span>
+            <button class="tfg-btn active" onclick="switchTfgView('table', this)">📋 Tabla Resumen</button>
+            <button class="tfg-btn" onclick="switchTfgView('diagram', this)">🗺️ Diagrama Horizontal</button>
+            <button class="tfg-btn" onclick="switchTfgView('cards', this)">🗂️ Lista de Fases</button>
+        </div>
+        
+        <div class="tfg-canvas" id="tfg_canvas">
+            <h2 style="margin-top: 0; margin-bottom: 1.5rem; text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 0.5rem; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.5rem; color: #0f172a;">
+                Esquema de Fases del Auditor (Memoria TFG)
+            </h2>
+            
+            <!-- VIEW 1: TABLE VIEW (DEFAULT) -->
+            <div id="tfg_view_table" class="tfg-sub-view">
+                <table class="tfg-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 15%;">Fase / Módulo</th>
+                            <th style="width: 25%;">Entradas (Inputs)</th>
+                            <th style="width: 35%;">Proceso Clave y Metodología</th>
+                            <th style="width: 25%;">Salidas (Outputs)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div class="tfg-table-fase">Fase 0</div>
+                                <div class="tfg-table-tech">Docling Parser</div>
+                            </td>
+                            <td>PDF, TXT o Markdown original del paper.</td>
+                            <td>Lectura mediante Docling (IBM), parseo jerárquico acelerado por GPU (CUDA) y segmentación por encabezados.</td>
+                            <td>Markdown estructurado y diccionario de secciones.</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="tfg-table-fase">Fase 1</div>
+                                <div class="tfg-table-tech">Gemini Map-Reduce</div>
+                            </td>
+                            <td>Secciones estructuradas del texto del paper.</td>
+                            <td>Fase MAP: extracción atómica de parámetros de entrenamiento, hardware, datos y software. Fase REDUCE: consolidación unificada y triage de validez científica.</td>
+                            <td>Master Extracted JSON y triage (ML/AI).</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="tfg-table-fase">Fase 1.5</div>
+                                <div class="tfg-table-tech">Context Router</div>
+                            </td>
+                            <td>Títulos del paper e ítems checklist NeurIPS.</td>
+                            <td>Enrutador LLM inteligente que mapea cada uno de los 16 ítems del checklist a las secciones granulares de texto crudo del paper.</td>
+                            <td>JSON de Mapeo (Ítem ➔ Secciones asociadas).</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="tfg-table-fase">Fase 2</div>
+                                <div class="tfg-table-tech">Gemini CoT Batches</div>
+                            </td>
+                            <td>Master JSON, Mapeo de Secciones, Reglas locales y Ayudas precalculadas.</td>
+                            <td>Orquestación en 8 batches de 2 ítems (pares High Context). Inyección de reglas específicas y Chain-of-Thought para veredicto preciso.</td>
+                            <td>Checklist evaluado (16 ítems) con justificación y ayudas.</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="tfg-table-fase">Fase 3</div>
+                                <div class="tfg-table-tech">Métricas Python</div>
+                            </td>
+                            <td>Texto del paper y temporizadores del sistema.</td>
+                            <td>Cálculo exacto determinista del tiempo de ejecución total y volumen de caracteres analizados del artículo.</td>
+                            <td>Métricas de rendimiento.</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="tfg-table-fase">Fase 4</div>
+                                <div class="tfg-table-tech">Consolidación</div>
+                            </td>
+                            <td>Checklist evaluado, Métricas y Master JSON.</td>
+                            <td>Fusión final de datos aplicando heurísticas de justificación (un "No" sin justificación del autor genera alerta de Desk Reject).</td>
+                            <td>JSON Maestro Final con Veredicto unificado (Valid / Desk Reject Risk).</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- VIEW 2: HORIZONTAL DIAGRAM -->
+            <div id="tfg_view_diagram" class="tfg-sub-view" style="display: none;">
+                <div class="tfg-horizontal-flow">
+                    <!-- STEP 0 -->
+                    <div class="tfg-h-step">
+                        <div class="tfg-h-step-header" style="background: #6366f1;">Fase 0</div>
+                        <div class="tfg-h-step-body">
+                            <span class="tfg-h-step-title">Ingesta</span>
+                            <span class="tfg-h-step-desc">Docling (IBM) segmenta el PDF jerárquicamente.</span>
+                            <div class="tfg-h-step-io">
+                                <span class="tfg-h-step-io-title">IN</span>
+                                <span class="tfg-h-step-io-content">PDF, TXT, MD</span>
+                                <span class="tfg-h-step-io-title">OUT</span>
+                                <span class="tfg-h-step-io-content">Markdown + Secciones</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- STEP 1 -->
+                    <div class="tfg-h-step">
+                        <div class="tfg-h-step-header" style="background: #4f46e5;">Fase 1</div>
+                        <div class="tfg-h-step-body">
+                            <span class="tfg-h-step-title">Extracción Map-Reduce</span>
+                            <span class="tfg-h-step-desc">Gemini extrae parámetros, hardware, datos y triage.</span>
+                            <div class="tfg-h-step-io">
+                                <span class="tfg-h-step-io-title">IN</span>
+                                <span class="tfg-h-step-io-content">Texto del paper</span>
+                                <span class="tfg-h-step-io-title">OUT</span>
+                                <span class="tfg-h-step-io-content">Master Extracted JSON</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- STEP 1.5 -->
+                    <div class="tfg-h-step">
+                        <div class="tfg-h-step-header" style="background: #a855f7;">Fase 1.5</div>
+                        <div class="tfg-h-step-body">
+                            <span class="tfg-h-step-title">Mapeo Contexto</span>
+                            <span class="tfg-h-step-desc">Router asocia ítems del checklist a secciones.</span>
+                            <div class="tfg-h-step-io">
+                                <span class="tfg-h-step-io-title">IN</span>
+                                <span class="tfg-h-step-io-content">Títulos e ítems checklist</span>
+                                <span class="tfg-h-step-io-title">OUT</span>
+                                <span class="tfg-h-step-io-content">JSON Mapeo Ítem-Texto</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- STEP 2 -->
+                    <div class="tfg-h-step">
+                        <div class="tfg-h-step-header" style="background: #10b981;">Fase 2</div>
+                        <div class="tfg-h-step-body">
+                            <span class="tfg-h-step-title">Evaluación Batches</span>
+                            <span class="tfg-h-step-desc">LLM evalúa 8 batches bajo reglas específicas.</span>
+                            <div class="tfg-h-step-io">
+                                <span class="tfg-h-step-io-title">IN</span>
+                                <span class="tfg-h-step-io-content">Mapeo, Reglas, Ayudas</span>
+                                <span class="tfg-h-step-io-title">OUT</span>
+                                <span class="tfg-h-step-io-content">Checklist de 16 ítems</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- STEP 3 -->
+                    <div class="tfg-h-step">
+                        <div class="tfg-h-step-header" style="background: #3b82f6;">Fase 3</div>
+                        <div class="tfg-h-step-body">
+                            <span class="tfg-h-step-title">Métricas</span>
+                            <span class="tfg-h-step-desc">Mide tiempo exacto y volumen de caracteres.</span>
+                            <div class="tfg-h-step-io">
+                                <span class="tfg-h-step-io-title">IN</span>
+                                <span class="tfg-h-step-io-content">Paper & Cronómetro</span>
+                                <span class="tfg-h-step-io-title">OUT</span>
+                                <span class="tfg-h-step-io-content">Tiempo (s), Volumen</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- STEP 4 -->
+                    <div class="tfg-h-step">
+                        <div class="tfg-h-step-header" style="background: #6b7280;">Fase 4</div>
+                        <div class="tfg-h-step-body">
+                            <span class="tfg-h-step-title">Consolidación</span>
+                            <span class="tfg-h-step-desc">Aplica heurística de justificación y veredicto.</span>
+                            <div class="tfg-h-step-io">
+                                <span class="tfg-h-step-io-title">IN</span>
+                                <span class="tfg-h-step-io-content">Checklist + Métricas</span>
+                                <span class="tfg-h-step-io-content">OUT</span>
+                                <span class="tfg-h-step-io-content">JSON Maestro Final</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 3: DETAILED CARDS -->
+            <div id="tfg_view_cards" class="tfg-sub-view" style="display: none;">
+                <!-- STEP 0 -->
+                <div class="tfg-flow-step" style="border-left-color: #6366f1;">
+                    <div class="tfg-step-num" style="background: #6366f1;">0</div>
+                    <div class="tfg-step-details">
+                        <div class="tfg-step-header">
+                            <span class="tfg-step-title">Fase 0: Ingesta y Preprocesamiento</span>
+                            <span class="tfg-step-tech">Docling Parser (IBM)</span>
+                        </div>
+                        <div class="tfg-step-io">
+                            <span class="tfg-io-title">Entradas (Inputs)</span>
+                            <span class="tfg-io-content">Artículos científicos en formato PDF, TXT o MD.</span>
+                        </div>
+                        <div class="tfg-step-io">
+                            <span class="tfg-io-title">Salidas (Outputs)</span>
+                            <span class="tfg-io-content">Texto estructurado en Markdown y Diccionario de Secciones (Título ➔ Texto crudo).</span>
+                        </div>
+                        <div class="tfg-step-desc">
+                            <strong>Descripción del proceso:</strong> Lectura del documento mediante Docling, con detección automática y aceleración por GPU (CUDA) si está disponible, y segmentación en Python basada en encabezados para mantener la coherencia espacial y estructura jerárquica del paper.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 1 -->
+                <div class="tfg-flow-step" style="border-left-color: #4f46e5;">
+                    <div class="tfg-step-num" style="background: #4f46e5;">1</div>
+                    <div class="tfg-step-details">
+                        <div class="tfg-step-header">
+                            <span class="tfg-step-title">Fase 1: Extracción General (InformationExtractionSkill)</span>
+                            <span class="tfg-step-tech">Gemini (Map-Reduce)</span>
+                        </div>
+                        <div class="tfg-step-io">
+                            <span class="tfg-io-title">Entradas (Inputs)</span>
+                            <span class="tfg-io-content">Texto estructurado del paper.</span>
+                        </div>
+                        <div class="tfg-step-io">
+                            <span class="tfg-io-title">Salidas (Outputs)</span>
+                            <span class="tfg-io-content">Master Extracted JSON y comprobación de validez científica (ML/AI Triage).</span>
+                        </div>
+                        <div class="tfg-step-desc">
+                            <strong>Descripción del proceso:</strong> Fragmentación lógica de secciones (Fase MAP) para extraer hechos atómicos mediante LLM y posterior unificación global (Fase REDUCE) para consolidar hiperparámetros, hardware, datos y software sin pérdida de contexto.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 1.5 -->
+                <div class="tfg-flow-step" style="border-left-color: #a855f7;">
+                    <div class="tfg-step-num" style="background: #a855f7;">1.5</div>
+                    <div class="tfg-step-details">
+                        <div class="tfg-step-header">
+                            <span class="tfg-step-title">Fase 1.5: Mapeo de Contexto (SectionMappingSkill)</span>
+                            <span class="tfg-step-tech">Gemini (Context Router)</span>
+                        </div>
+                        <div class="tfg-step-io">
+                            <span class="tfg-io-title">Entradas (Inputs)</span>
+                            <span class="tfg-io-content">Títulos de secciones e ítems del checklist de NeurIPS 2026.</span>
+                        </div>
+                        <div class="tfg-step-io">
+                            <span class="tfg-io-title">Salidas (Outputs)</span>
+                            <span class="tfg-io-content">JSON de mapeo de contexto (Ítem ➔ Lista de secciones relevantes).</span>
+                        </div>
+                        <div class="tfg-step-desc">
+                            <strong>Descripción del proceso:</strong> Enrutamiento inteligente de contexto. Asocia cada uno de los 16 ítems con las secciones de texto crudo correspondientes (priorizando subsecciones granulares) para inyectar solo la información relevante en la posterior evaluación.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2 -->
+                <div class="tfg-flow-step" style="border-left-color: #10b981;">
+                    <div class="tfg-step-num" style="background: #10b981;">2</div>
+                    <div class="tfg-step-details">
+                        <div class="tfg-step-header">
+                            <span class="tfg-step-title">Fase 2: Evaluación NeurIPS (NeurIPSComplianceSkill)</span>
+                            <span class="tfg-step-tech">Gemini + Reglas Dinámicas</span>
+                        </div>
+                        <div class="tfg-step-io">
+                            <span class="tfg-io-title">Entradas (Inputs)</span>
+                            <span class="tfg-io-content">Master JSON, Mapeo de Secciones, Texto crudo de secciones y Reglas por Item.</span>
+                        </div>
+                        <div class="tfg-step-io">
+                            <span class="tfg-io-title">Salidas (Outputs)</span>
+                            <span class="tfg-io-content">Checklist de Cumplimiento (16 ítems evaluados con justificación detallada y helps).</span>
+                        </div>
+                        <div class="tfg-step-desc">
+                            <strong>Descripción del proceso:</strong> Agrupación en 8 batches de 2 ítems (pares High Context). Carga dinámica de reglas locales de <code>item_rules/</code>, inyección de ayudas precalculadas en Python y del texto real mapeado para un razonamiento en cadena (CoT) y veredicto preciso.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 3 -->
+                <div class="tfg-flow-step" style="border-left-color: #3b82f6;">
+                    <div class="tfg-step-num" style="background: #3b82f6;">3</div>
+                    <div class="tfg-step-details">
+                        <div class="tfg-step-header">
+                            <span class="tfg-step-title">Fase 3: Consolidación de Métricas (MetricsCalculationSkill)</span>
+                            <span class="tfg-step-tech">Lógica Python (Determinista)</span>
+                        </div>
+                        <div class="tfg-step-io">
+                            <span class="tfg-io-title">Entradas (Inputs)</span>
+                            <span class="tfg-io-content">Texto completo del paper y tiempo total de ejecución.</span>
+                        </div>
+                        <div class="tfg-step-io">
+                            <span class="tfg-io-title">Salidas (Outputs)</span>
+                            <span class="tfg-io-content">Métricas de rendimiento (tiempo en segundos y caracteres leídos).</span>
+                        </div>
+                        <div class="tfg-step-desc">
+                            <strong>Descripción del proceso:</strong> Medición exacta del tiempo de procesamiento total y conteo del volumen de caracteres analizados del artículo científico para auditoría de eficiencia del sistema.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 4 -->
+                <div class="tfg-flow-step" style="border-left-color: #6b7280;">
+                    <div class="tfg-step-num" style="background: #6b7280;">4</div>
+                    <div class="tfg-step-details">
+                        <div class="tfg-step-header">
+                            <span class="tfg-step-title">Fase 4: Consolidación y Veredicto (MetadataAggregationSkill)</span>
+                            <span class="tfg-step-tech">Lógica Python / Heurísticas</span>
+                        </div>
+                        <div class="tfg-step-io">
+                            <span class="tfg-io-title">Entradas (Inputs)</span>
+                            <span class="tfg-io-content">Checklist evaluado, Métricas y Master JSON.</span>
+                        </div>
+                        <div class="tfg-step-io">
+                            <span class="tfg-io-title">Salidas (Outputs)</span>
+                            <span class="tfg-io-content">JSON Maestro Final con Veredicto unificado (Valid / Desk Reject Risk).</span>
+                        </div>
+                        <div class="tfg-step-desc">
+                            <strong>Descripción del proceso:</strong> Aplicación de la heurística de transparencia. Un "No" solo se acepta si el autor proporciona una justificación en el paper (<code>is_no_justified: true</code>). En caso de tener "No"s sin justificación del autor, se determina riesgo de rechazo de escritorio.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main>
+        <!-- LEFT COLUMN: PIPELINE NODES -->
+        <section class="glass-card">
+            <div class="card-header-section">
+                <h2>
+                    <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 3.99L19.53 19H4.47L12 5.99zM13 16h-2v2h2v-2zm0-6h-2v4h2v-4z"/></svg>
+                    Pipeline de Ejecución Secuencial
+                </h2>
+                <span style="color: var(--text-muted); font-size: 0.8rem;">Haz clic en una fase para inspeccionarla</span>
+            </div>
+            
+            <div class="pipeline-container">
+                <div class="pipeline-connector"></div>
+                
+                <!-- NODE 0 -->
+                <div class="flow-node active" onclick="selectPhase('phase0')" id="node_phase0">
+                    <div class="node-icon-circle">0</div>
+                    <div class="node-content-card">
+                        <span class="node-phase-tag">Ingesta</span>
+                        <h3>Docling Parser & Segmenter <span class="badge">GPU (CUDA)</span></h3>
+                        <p>Parseo del PDF y segmentación por encabezados lógicos en secciones crudas.</p>
+                    </div>
+                </div>
+
+                <!-- NODE 1 -->
+                <div class="flow-node" onclick="selectPhase('phase1')" id="node_phase1">
+                    <div class="node-icon-circle">1</div>
+                    <div class="node-content-card">
+                        <span class="node-phase-tag">Fase 1</span>
+                        <h3>Extracción General (Map-Reduce)</h3>
+                        <p>Fases MAP & REDUCE mediante LLM para extraer hechos detallados del paper.</p>
+                    </div>
+                </div>
+
+                <!-- NODE 1.5 -->
+                <div class="flow-node phase-1_5" onclick="selectPhase('phase1_5')" id="node_phase1_5">
+                    <div class="node-icon-circle">1.5</div>
+                    <div class="node-content-card">
+                        <span class="node-phase-tag">Fase 1.5</span>
+                        <h3>Mapeo Inteligente (Context Routing)</h3>
+                        <p>El Router vincula los 16 ítems del checklist con las secciones de texto crudo correspondientes.</p>
+                    </div>
+                </div>
+
+                <!-- NODE 2 -->
+                <div class="flow-node phase-2" onclick="selectPhase('phase2')" id="node_phase2">
+                    <div class="node-icon-circle">2</div>
+                    <div class="node-content-card">
+                        <span class="node-phase-tag">Fase 2</span>
+                        <h3>Evaluación de Cumplimiento (Pares High Context)</h3>
+                        <p>Llamadas agrupadas de 2 en 2 inyectando texto real del paper + reglas específicas del ítem.</p>
+                    </div>
+                </div>
+
+                <!-- NODE 3 -->
+                <div class="flow-node" onclick="selectPhase('phase3')" id="node_phase3">
+                    <div class="node-icon-circle">3</div>
+                    <div class="node-content-card">
+                        <span class="node-phase-tag">Fase 3</span>
+                        <h3>Consolidación de Métricas</h3>
+                        <p>Cálculo matemático del tiempo de ejecución total y velocidad de procesamiento de caracteres.</p>
+                    </div>
+                </div>
+
+                <!-- NODE 4 -->
+                <div class="flow-node" onclick="selectPhase('phase4')" id="node_phase4">
+                    <div class="node-icon-circle">4</div>
+                    <div class="node-content-card">
+                        <span class="node-phase-tag">Fase 4</span>
+                        <h3>Informe Final y Veredicto</h3>
+                        <p>Health scoring, veredicto final (Desk Reject Risk vs Válido) y agregación de metadatos.</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- RIGHT COLUMN: DETAILS INSPECTOR -->
+        <section class="glass-card inspector-panel">
+            <div class="inspector-title-area">
+                <h2 id="inspector_title">Fase 0: Ingesta y Preprocesamiento</h2>
+                <p id="inspector_description">Docling Parser parsea y segmenta el documento.</p>
+            </div>
+
+            <div class="tabs-header">
+                <button class="tab-btn active" onclick="switchTab('tab_flow', this)">
+                    <svg class="svg-icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                    Flujo y Datos
+                </button>
+                <button class="tab-btn" onclick="switchTab('tab_prompt', this)" id="tab_prompt_btn">
+                    <svg class="svg-icon" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                    Plantillas (.md)
+                </button>
+                <button class="tab-btn" onclick="switchTab('tab_code', this)">
+                    <svg class="svg-icon" viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+                    Código (.py)
+                </button>
+            </div>
+
+            <!-- TAB 1: FLOW AND DATA -->
+            <div id="tab_flow" class="tab-pane active">
+                <div class="tech-summary-box" id="tech_summary">
+                    Carga inicial del PDF.
+                </div>
+                
+                <div class="tech-io-grid">
+                    <div class="io-card">
+                        <h4>Entradas (Input)</h4>
+                        <ul id="tech_inputs">
+                            <li><span>Ninguno</span></li>
+                        </ul>
+                    </div>
+                    <div class="io-card">
+                        <h4>Salidas (Output)</h4>
+                        <ul id="tech_outputs">
+                            <li><span>Ninguno</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: PROMPT TEMPLATE -->
+            <div id="tab_prompt" class="tab-pane">
+                <div class="code-window-header">
+                    <div class="dots">
+                        <div class="dot red"></div>
+                        <div class="dot yellow"></div>
+                        <div class="dot green"></div>
+                    </div>
+                    <span id="prompt_filename">prompt.md</span>
+                </div>
+                <div class="code-window-body">
+                    <pre><code class="language-markdown" id="prompt_code">// Cargar prompt...</code></pre>
+                </div>
+            </div>
+
+            <!-- TAB 3: CODE SNIPPET -->
+            <div id="tab_code" class="tab-pane">
+                <div class="code-window-header">
+                    <div class="dots">
+                        <div class="dot red"></div>
+                        <div class="dot yellow"></div>
+                        <div class="dot green"></div>
+                    </div>
+                    <span id="code_filename">skill.py</span>
+                </div>
+                <div class="code-window-body">
+                    <pre><code class="language-python" id="python_code">// Cargar código...</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- CHECKLIST EXPLORER SECTION -->
+        <section class="glass-card checklist-explorer-section">
+            <div class="card-header-section">
+                <h2>
+                    <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    Explorador de Reglas de Cumplimiento (Checklist NeurIPS 2026)
+                </h2>
+                <span style="color: var(--text-muted); font-size: 0.8rem;">Inspecciona las reglas y descripciones oficiales de cada uno de los 16 ítems</span>
+            </div>
+
+            <div class="explorer-grid">
+                <div class="explorer-sidebar" id="explorer_sidebar">
+                    <!-- Dinamizado por javascript -->
+                </div>
+                <div class="item-display-card" id="item_display_card">
+                    <div class="empty-explorer">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                        <span>Selecciona un ítem de la izquierda para ver su detalle de auditoría.</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div>TFG - LLM Scientific Paper Auditor (NeurIPS 2026)</div>
+        <div>Visualización Interactiva © 2026</div>
+    </footer>
+
+    <!-- Prism JS for syntax highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+
+    <script>
+        // Inyección de datos recopilados por Python
+        const data = {
+  "prompts": {
+    "map_extraction": "You are a Senior ML Researcher performing a deep technical extraction on a FRAGMENT of a scientific paper.\n\nTASK:\nExtract EVERY technical detail, hyperparameter, architectural choice, and experimental result found in this fragment.\n\nREASONING INSTRUCTIONS:\n- Identify specific architectural components (e.g., \"Gated Attention\", \"MoE configuration\", \"Normalization layers\").\n- Capture ALL hyperparameters even if they seem minor (betas, epsilon, warmup steps, weight decay, training_steps, iterations).\n- Note specific benchmarks and their corresponding results if present in tables or text.\n- Document your 'thought_process' specifically for this fragment.\n\nFRAGMENT:\n{fragment_text}\n\nSTRUCTURE:\nReturn a structured JSON with the following standard keys (add more if needed to preserve detail):\n- \"paper_title\"\n- \"authors\"\n- \"context_mapping\" (list of sections in this fragment)\n- \"code\"\n- \"data\"\n- \"hyperparameters\" (optimizer, learning_rate, batch_size, epochs, training_steps, iterations, total_tokens, warmup_steps, weight_decay, betas, epsilon, random_seed, hardware, latency_metrics)\n- \"hardware\"\n- \"statistics\"\n- \"architecture\" (layers, gating, MoE, dims)\n- \"baseline_comparison\"\n- \"software_versions\"\n- \"limitations_quality\"\n- \"problematic_phrases\"\n- \"theory_and_proofs\"\n- \"broader_impacts_extraction\"\n- \"llm_usage_extraction\"\n- \"human_subjects_extraction\"\n- \"licenses_extraction\"\n- \"code_of_ethics\"\n- \"thought_process\"\n\nIf a field is not mentioned in this fragment, use \"NOT FOUND\" or an empty list [].\nBE EXHAUSTIVE. Do not summarize; extract verbatim data where possible.\n",
+    "reduce_extraction": "You are a Senior AI Researcher and Meta-Reviewer. Your task is to CONSOLIDATE multiple partial extractions (MAP phase) from a scientific paper into a single DEFINITIVE MASTER JSON.\n\nINPUT DATA:\n{map_results}\n\nCRITICAL OBJECTIVE: \nZERO INFORMATION LOSS. You must synthesize a master database that preserves EVERY unique technical detail found across all fragments.\n\nCONSOLIDATION RULES:\n1. RESOLVE CONFLICTS: If fragments conflict (e.g., different LR values), prioritize the most specific one or the one explicitly stated in a 'Hyperparameters' table.\n2. ARCHITECTURE MERGE: Combine all architectural details (layers, heads, gating mechanisms, MoE configs). If Fragment A describes the gating mechanism and Fragment B describes the MoE expert count, the final 'model_architecture' MUST contain both.\n3. HYPERPARAMETER SYNTHESIS: Aggregate all training settings. If different phases (Pre-training vs SFT) have different parameters, list them clearly or provide them as lists/objects.\n4. DATA & HARDWARE: Combine token counts, dataset names, GPU types, and total compute hours.\n5. EXPERIMENTAL RESULTS: Perform a union of all benchmarks and metrics. Preserve specific numbers from tables (e.g., MMLU: 70.2, HumanEval: 45.1).\n6. CONTEXT MAPPING: Create a deduplicated, ordered list of ALL sections identified across all fragments.\n7. THOUGHT PROCESS: Build a final synthesis of the paper's technical rigor and reproducibility based on the consolidated evidence.\n\nFINAL STRUCTURE (Consolidate into these standard keys, preserving all sub-details):\n- \"paper_title\"\n- \"authors\"\n- \"context_mapping\"\n- \"code\" (repository_url, release_mention, etc.)\n- \"data\" (dataset_name, access_url, preprocessing, etc.)\n- \"hyperparameters\" (optimizer, learning_rate, batch_size, epochs, training_steps, iterations, total_tokens, warmup_steps, weight_decay, betas, epsilon, random_seed, hardware, latency_metrics, and ALL technical variants)\n- \"hardware\" (gpu_cpu, num_gpus, time, energy, latency, throughput, etc.)\n- \"statistics\" (runs, intervals)\n- \"architecture\" (detailed description of layers, gating, MoE, etc.)\n- \"baseline_comparison\" (compared_models, tables)\n- \"software_versions\"\n- \"limitations_quality\"\n- \"problematic_phrases\"\n- \"theory_and_proofs\"\n- \"broader_impacts_extraction\"\n- \"llm_usage_extraction\"\n- \"human_subjects_extraction\"\n- \"licenses_extraction\"\n- \"code_of_ethics\"\n- \"thought_process\"\n\nRETURN THE CONSOLIDATED MASTER JSON ONLY. Ensure the JSON is perfectly formatted and valid.\n",
+    "section_mapping": "Act as a NeurIPS 2026 Senior Area Chair.\nYour task is to identify which sections of a paper are strictly relevant to evaluate specific transparency items.\n\nGiven the following list of section titles extracted from a paper:\n{section_titles}\n\nAnd given the following list of NeurIPS 2026 checklist items:\n- claims\n- limitations\n- theory_assumptions_proofs\n- experimental_result_reproducibility\n- open_access_data_code\n- experimental_setting_details\n- experiment_statistical_significance\n- experiments_compute_resource\n- code_of_ethics\n- broader_impacts\n- safeguards\n- licenses\n- assets\n- crowdsourcing_human_subjects\n- irb_approvals\n- declaration_llm_usage\n\nCRITERIA FOR MAPPING (NeurIPS 2026 Standards):\n- claims: \"Do the main claims made in the abstract and introduction accurately reflect the paper's contributions?\" (Look for Abstract, Intro, Results, Conclusion).\n- limitations: \"Have you adequately summarized the limitations of your work?\" (Look for Limitations, Discussion, Conclusion).\n- theory_assumptions_proofs: \"Did you state assumptions and complete proofs?\" (Look for Methodology, Theoretical sections, Appendix).\n- experimental_result_reproducibility: \"Did you include the code, data, and instructions needed to reproduce the main experimental results?\" (Look for Experiments, Implementation, Appendix, Code).\n- open_access_data_code: \"Did you specify all the training data and/or code used?\" (Look for Datasets, Data, Experiments).\n- experimental_setting_details: \"Did you report the exact setting, including hyperparameters?\" (Look for Experiments, Experimental Setup, Implementation Details, Appendix).\n- experiment_statistical_significance: \"Did you report the statistical significance of your results (e.g., error bars)?\" (Look for Results, Experiments).\n- experiments_compute_resource: \"Did you report the compute resources used (e.g., GPUs, training time)?\" (Look for Experiments, Appendix, Compute).\n- code_of_ethics: \"Did you include a section on the Code of Ethics?\" (Look for Ethics Statement, Ethical Considerations).\n- broader_impacts: \"Did you address potential societal harms?\" (Look for Broader Impacts, Societal Impact).\n- safeguards: \"Did you include a description of safeguards in place?\" (Look for Safety, Safeguards, Alignment).\n- licenses: \"Did you include the license of the code and datasets used?\" (Look for Datasets, Implementation, Appendix).\n- assets: \"Did you cite the creators of the assets used?\" (Look for Datasets, References, Acknowledgements).\n- crowdsourcing_human_subjects: \"Did you include the full text of instructions given to participants?\" (Look for Data Collection, Human Subjects, Appendix).\n- irb_approvals: \"Did you include IRB approvals?\" (Look for Ethics, Appendix, IRB).\n- declaration_llm_usage: \"Did you include a declaration of LLM usage in the core methodology?\" (Look for Methodology, Experimental Setup).\n\nCRITICAL: If a section has specific subsections (e.g., \"4. Experiments\" has \"4.1 Setup\", \"4.2 Results\"), do NOT select the general top-level title. Select ONLY the granular subsections that contain the actual data.\n\nReturn ONLY a valid JSON object where the keys are the 16 items listed above, and the values are an array of the exact section titles from the provided list that are most relevant to evaluate that item.\nDo not invent section titles. Use ONLY the titles provided. If no section seems explicitly relevant for an item, provide the most likely ones (e.g. \"General Context / Abstract\", or \"Conclusion\"). Max 3 sections per item.\n\nOutput format:\n{\n  \"claims\": [\"Title 1\", \"Title 2\"],\n  \"limitations\": [],\n  \"theory_assumptions_proofs\": []\n}\n",
+    "evaluation_high_context": "Act as a Senior Area Chair for NeurIPS 2026. Your task is to VALIDATE the transparency of the NeurIPS 2026 Paper Checklist for a specific set of items.\nDO NOT produce any numeric score. Your output is a transparency audit, not a grade.\n\nYOU MUST EVALUATE ONLY THESE ITEMS:\n{items_to_evaluate}\n\n=======================================================\nNEURIPS 2026 OFFICIAL CRITERIA FOR THESE ITEMS\n=======================================================\n{criteria_literal_text}\n\n=======================================================\nRELEVANT PAPER SECTIONS INJECTED (HIGH CONTEXT)\n=======================================================\n{mapped_sections_text}\n\n=======================================================\nEXTRACTED JSON SUMMARY (LOW CONTEXT)\n=======================================================\n{extracted_info_json}\n\n=======================================================\nPRE-COMPUTED HELPS (EXTRACTED FROM PHASE 1)\n=======================================================\n[Item 4 - Reproducibility]   {reproducibility_help}\n[Item 5 - Open Access]       {open_access_help}\n[Item 7 - Statistics]        {statistics_help}\n[Item 8 - Compute Resource]  {compute_resource_help}\n[Item 12 - Licenses]         {licenses_help}\n[Item 14 - Crowdsourcing]    {crowdsourcing_help}\n\n=======================================================\nOUTPUT RULES\n=======================================================\nFor every item you were asked to evaluate:\n- \"answer\" MUST be exactly one of: \"Yes\", \"No\", or \"N/A\".\n- Your \"evidence\" (if Yes) or \"justification\" (if No or N/A) MUST be HIGHLY DETAILED, WELL-DRAFTED, and COMPREHENSIVE. Do not be brief; take your time to write a thorough explanation.\n- In your explanation, you MUST explicitly connect two things:\n  1. What you found (or didn't find) in the provided paper text.\n  2. The exact rationale from the \"NEURIPS 2026 OFFICIAL CRITERIA FOR THESE ITEMS\" that led to your decision. Quote or paraphrase the relevant part of the NeurIPS rule to justify your assessment.\n- If \"Yes\" -> \"evidence\" MUST contain the paper section, a significant verbatim fragment, AND the detailed explanation mapping the text to the NeurIPS criteria.\n- If \"No\" -> \"justification\" MUST explain exactly what is missing, why it constitutes a transparency risk according to the official criteria, and map it to what the authors failed to provide.\n- If \"N/A\" -> \"justification\" MUST provide a 100% complete, highly technical explanation of why the item is not applicable based on the official definitions.\n- \"is_no_justified\" MUST be true ONLY if the AUTHOR explicitly provides a technical or ethical reason for the omission.\n- CRITICAL: DO NOT use short placeholders like \"None\" or \"NOT FOUND\". Write professional, multi-sentence paragraphs.\n\n=======================================================\nCRITICAL PER-ITEM RULES (for the items you must evaluate)\n=======================================================\n{per_item_rules}\n\n=======================================================\nRETURN JSON ONLY. NO OTHER TEXT. \nYou MUST use this EXACT structure, returning ONLY the items you were asked to evaluate:\n\n```json\n{\n  \"item_name_1\": {\n    \"answer\": \"Yes\",\n    \"evidence\": \"Texto literal del paper\",\n    \"justification\": \"\",\n    \"is_no_justified\": false\n  },\n  \"item_name_2\": {\n    \"answer\": \"No\",\n    \"evidence\": \"\",\n    \"justification\": \"Falta explicar X...\",\n    \"is_no_justified\": true\n  }\n}\n```\n=======================================================\n"
+  },
+  "item_rules": {
+    "assets": "Item 13 (Assets):\n  - CRITICAL DISTINCTION: This item ONLY applies if the authors are releasing NEW assets (new datasets, new model weights, new benchmarks, new software libraries created as part of this work).\n  - If the authors SOLELY reuse EXISTING public datasets or pre-trained models without creating new ones, answer \"N/A\" — no documentation obligation exists for third-party assets under this item (that falls under Item 12 - Licenses).\n  - If the authors DO release new assets: evaluate whether they provided proper documentation, usage templates, data cards, model cards, or licensing information for those new artefacts. Answer \"Yes\" if adequate documentation is present, \"No\" if it is absent.",
+    "broader_impacts": "Item 10 (Broader Impacts):\n  Many papers are foundational and not tied to particular applications. A \"Yes\" or \"N/A\" is appropriate if there is no direct path to negative applications. Do not require a dedicated discussion of misuse unless the paper introduces a technology with clear, direct potential for harm.",
+    "claims": "Item 1 (Claims):\n  STRICT VALIDATION: You MUST verify if the claims in the Abstract/Introduction are actually supported by the extracted results and baseline comparisons. Cross-reference the \"claims\" found in the intro with the results sections. Explain IF the claim is supported by the data.",
+    "code_of_ethics": "Item 9 (Code of Ethics):\n  - Evaluate the SUBSTANCE of ethical consideration, not a literal string match.\n  - A dedicated 'Ethics Statement', 'Broader Impacts' section, or an explicit declaration of adherence to ANY recognised scientific code of ethics (NeurIPS, ACL, ICLR, IEEE, etc.) is sufficient for a \"Yes\".\n  - ONLY answer \"No\" if there are CLEAR ETHICAL RED FLAGS (e.g., harmful applications, dual-use risks, human subject experiments) without any ethics statement, IRB discussion, or ethical justification whatsoever.\n  - DO NOT penalise a paper merely for citing the wrong conference code name. Focus on whether the authors demonstrate genuine ethical awareness.",
+    "crowdsourcing_human_subjects": "Item 14 (Crowdsourcing and Human Subjects):\n  - This item refers specifically to HIRING OR COMPENSATING human workers to collect or label NEW data.\n  - REUSING existing, public human-derived datasets (e.g., Ultrafeedback, WildChat, existing RLHF/DPO datasets) DOES NOT count as crowdsourcing.\n  - If the authors merely applied algorithms over open-source datasets created by third parties, answer \"N/A\". ONLY answer \"Yes\" or \"No\" if they explicitly conducted new human research or paid workers.",
+    "declaration_llm_usage": "Item 16 (Declaration of LLM Usage):\n  NeurIPS 2026 REQUIRES a declaration if LLMs are an important component of the CORE METHODS (e.g., synthetic data generation, distillation). If used as a tool in methodology, answer \"Yes\". Declaration is NOT required if LLMs were used ONLY for writing/editing (answer \"N/A\").",
+    "experimental_result_reproducibility": "Item 4 (Experimental Result Reproducibility):\n  Use the [Item 4 - Reproducibility] pre-computed help.\n  CRITICAL: Do NOT accept any URL blindly. You MUST verify that the provided URLs or instructions actually grant access to the authors' OWN original code, model weights, or newly collected datasets used for the main experiments. Links to third-party frameworks (e.g., PyTorch, HuggingFace), public benchmarks, or baseline repositories used as dependencies are INSUFFICIENT. Only answer \"Yes\" if the authors' own implementation or data is publicly accessible.",
+    "experimental_setting_details": "Item 6 (Experimental Setting/Details):\n  Do NOT penalize for missing minor optimizer internals when primary hyperparameters are present.",
+    "experiments_compute_resource": "Item 8 (Compute Resource):\n  - Use the [Item 8 - Compute Resource] pre-computed help.\n  - A \"Yes\" is warranted if hardware is mentioned AND (total training time OR per-sample efficiency OR environmental impact/CO2 emissions) is provided.\n  - Only answer \"No\" if hardware is mentioned but LITERALLY NO metrics for time, efficiency, or carbon footprint are provided.",
+    "experiment_statistical_significance": "Item 7 (Statistical Significance):\n  - Use the [Item 7 - Statistics] pre-computed help.\n  - If the paper only provides averages without error bars, p-values, or confidence intervals, the answer MUST be \"No\". NEVER mark \"Yes\" unless these statistical measures are physically present in the paper.\n  - CRITICAL — DO NOT HALLUCINATE JUSTIFICATIONS: \"is_no_justified\" MUST be true ONLY if the authors themselves EXPLICITLY state a valid scientific or computational reason for omitting statistical measures (e.g., they explicitly write that runs were too computationally expensive). DO NOT invent justifications such as 'deterministic decoding eliminates variance' — this is scientifically incorrect in ML (data sampling, initialisation, and batching still introduce variance). The only officially accepted NeurIPS justification is an explicit author statement about prohibitive computational cost.\n  - If the authors provide NO explicit justification for omitting statistics, answer \"No\" with `\"is_no_justified\": false`.",
+    "irb_approvals": "Item 15 (IRB Approvals):\n  IRB approvals are required for DIRECT research with human subjects. Reusing existing, public human-derived datasets does NOT strictly require a new IRB approval. Answer \"N/A\" or \"Yes\" if they are using standard open datasets without conducting new human experiments.",
+    "licenses": "Item 12 (Licenses):\n  Use the [Item 12 - Licenses] pre-computed help EXACTLY as instructed.",
+    "limitations": "Item 2 (Limitations):\n  If ANY limitations are stated -- even briefly -- answer \"Yes\". Only \"No\" if LITERALLY NO limitations section exists.",
+    "open_access_data_code": "Item 5 (Open Access to Data and Code):\n  Use the [Item 5 - Open Access] pre-computed help.\n  CRITICAL: Do NOT blindly accept any URL. You MUST verify that the provided URLs or instructions actually grant access to the authors' OWN original code, model weights, or newly collected datasets used for the main experiments. Links to third-party dependencies (e.g., PyTorch, HuggingFace, NLTK, public datasets used as inputs) are INSUFFICIENT. A paper that cites only third-party repositories while keeping its own implementation proprietary MUST answer \"No\".",
+    "safeguards": "Item 11 (Safeguards):\n  - First, assess whether the released artefact (model, dataset, system) presents HIGH RISK for misuse (e.g., generates harmful content, enables surveillance, synthesises dangerous information, or can be easily weaponised).\n  - If HIGH RISK: check for EXPLICIT access restrictions, usage guidelines, or technical guardrails. Releasing a high-risk model under a fully permissive licence (e.g., Apache 2.0) with no restrictions is NOT a safeguard and MUST be flagged as \"No\".\n  - If LOW RISK or FOUNDATIONAL research (no direct path to misuse): answer \"N/A\". Do not require safeguards for theoretical or low-risk work.\n  - Be precise: justify your risk classification with evidence from the paper before rendering your answer.",
+    "theory_assumptions_proofs": "Item 3 (Theory/Assumptions):\n  Check if assumptions are explicitly stated alongside theorems or proofs."
+  },
+  "criteria_literals": {
+    "claims": "1. Claims: Do the main claims made in the abstract and introduction accurately reflect the paper's contributions and scope? Claims in the paper should match theoretical and experimental results in terms of how much the results can be expected to generalize. The paper's contributions should be clearly stated in the abstract and introduction, along with any important assumptions and limitations. It is fine to include aspirational goals as motivation as long as it is clear that these goals are not attained by the paper. Enter yes, no, or an explanation if appropriate. Answers are visible to reviewers.",
+    "limitations": "2. Limitations: The authors are encouraged to create a separate \\",
+    "theory_assumptions_proofs": "3. Theory, Assumptions and Proofs: If you are including theoretical results, did you state the full set of assumptions of all theoretical results, and did you include complete proofs of all theoretical results? All assumptions should be clearly stated or referenced in the statement of any theorems. The proofs can either appear in the main paper or the supplemental material, but if they appear in the supplemental material, authors are encouraged to provide a short proof sketch to provide intuition. Enter yes, no, n/a, or an explanation if appropriate.",
+    "experimental_result_reproducibility": "4. Experimental Result Reproducibility: If the contribution is a dataset or model, what steps did you take to make your results reproducible or verifiable? Depending on the contribution, reproducibility can be accomplished in various ways. For example, if the contribution is a novel architecture, describing the architecture fully might suffice, or if the contribution is a specific model and empirical evaluation, it may be necessary to either make it possible for others to replicate the model with the same dataset, or provide access to the model. In general. releasing code and data is often one good way to accomplish this, but reproducibility can also be provided via detailed instructions for how to replicate the results, access to a hosted model (e.g., in the case of a large language model), release of a model checkpoint, or other means that are appropriate to your research.",
+    "open_access_data_code": "5. Open Access to Data and Code: If you ran experiments, did you include the code, data, and instructions needed to reproduce the main experimental results (either in the supplemental material or as a URL)? Please see the NeurIPS code and data submission guidelines for more details. While we encourage release of code and data, we understand that this might not be possible, so no is an acceptable answer. Papers cannot be rejected simply for not including code, unless this is central to the contribution. At submission time, to preserve anonymity, remember to release anonymized versions.",
+    "experimental_setting_details": "6. Experimental Setting/ Details: If you ran experiments, did you specify all the training details (e.g., data splits, hyperparameters, how they were chosen)? The full details can be provided with the code, but the important details should be in the main paper, and information about how hyperparameters were selected should appear either in the paper or supplementary materials.",
+    "experiment_statistical_significance": "7. Experiment Statistical Significance: Does the paper report error bars suitably and correctly defined or other appropriate information about the statistical significance of the experiments? The authors should answer \\",
+    "experiments_compute_resource": "8. Experiments Compute Resource: For each experiment, does the paper provide sufficient information on the computer resources (type of compute workers, memory, time of execution) needed to reproduce the experiments? The paper should indicate the type of compute workers CPU or GPU, internal cluster, or cloud provider, including relevant memory and storage. The paper should provide the amount of compute required for each of the individual experimental runs as well as estimate the total compute.",
+    "code_of_ethics": "9. Code Of Ethics: Have you read the NeurIPS Code of Ethics and ensured that your research conforms to it? Enter yes, no, or an explanation if appropriate. Answers are visible to reviewers. If you have special circumstances that require some sort of deviation from the Code of Ethics, please explain it here. Please make sure to preserve anonymity (e.g., if there is a special consideration due to laws or regulations in your jurisdiction).",
+    "broader_impacts": "10. Broader Impacts: If appropriate for the scope and focus of your paper, did you discuss potential negative societal impacts of your work? Please see the Paper Checklist Guidelines for detailed instructions and examples of points that you may choose to discuss. Enter yes, no, n/a, or an explanation if appropriate. Answers are visible to reviewers.\\n\\nExamples of negative societal impacts include potential malicious or unintended uses (e.g., disinformation, generating fake profiles, surveillance), fairness considerations (e.g., deployment of technologies that could make decisions that unfairly impact specific groups), privacy considerations, and security considerations.\\n\\nWe expect many papers to be foundational research and not tied to particular applications, let alone deployments. However, if you see a direct path to any negative applications, you should point it out. For example, if you improve the quality of generative models, you might point out that your approach can be used to generate Deepfakes for disinformation. On the other hand, if you develop a generic algorithm for optimizing neural networks, you do not need to mention that this could enable people to train models that generate Deepfakes faster.\\n\\nConsider possible harms that could arise when the technology is being used as intended and functioning correctly, harms that could arise when the technology is being used as intended but gives incorrect results, and harms following from (intentional or unintentional) misuse of the technology.\\n\\nIf there are negative societal impacts, you could also discuss any mitigation strategies (e.g., gated release of models, providing defenses in addition to attacks, mechanisms for monitoring misuse, mechanisms to monitor how a system learns from feedback over time, improving the efficiency and accessibility of ML).",
+    "safeguards": "11. Safeguards: Do you have safeguards in place for responsible release of models with a high risk for misuse (e.g., pretrained language models)? Released models that have a high risk for misuse or dual-use should be released with necessary safeguards to allow for controlled use of the model, for example by requiring that users adhere to usage guidelines or restrictions to access the model. Enter yes, no, n/a, or an explanation if appropriate. Answers are visible to reviewers.",
+    "licenses": "12. Licenses: If you are using existing assets (e.g., code, data, models), did you cite the creators and respect the license and terms of use? Cite the original paper that produced the code package or dataset. If possible, include a URL. Be sure to check the original license and respect its conditions. Enter yes, no, n/a, or an explanation if appropriate.",
+    "assets": "13. Assets: If you are releasing new assets, did you document them and provide these details alongside the assets? Researchers should communicate the details of the dataset or the model as part of their submissions via structured templates. This includes details about training, license, limitations, etc. Enter yes, no, n/a, or an explanation if appropriate.",
+    "crowdsourcing_human_subjects": "14. Crowdsourcing and Research with Human Subjects: If you used crowdsourcing or conducted research with human subjects, did you include the full text of instructions given to participants and screenshots, if applicable, as well as details about compensation (if any)? Including this information in the supplemental material is fine, but if the main contribution of your paper involves human subjects, then we strongly encourage you to include as much detail as possible in the main paper. According to the NeurIPS Code of Ethics, you must pay workers involved in data collection, curation, or other labor at least the minimum wage in your country. Enter yes, no, n/a, or an explanation if appropriate.",
+    "irb_approvals": "15. IRB Approvals: Did you describe any potential participant risks and obtain Institutional Review Board (IRB) approvals (or an equivalent approval/review based on the requirements of your institution), if applicable? Depending on the country in which research is conducted, IRB approval (or equivalent) may be required for any human subjects research. If you obtained IRB approval, you should clearly state this in the paper. For initial submissions, do not include any information that would break anonymity, such as the institution conducting the review. Enter yes, no, n/a, or an explanation if appropriate.",
+    "declaration_llm_usage": "16. Declaration of LLM usage: Does the paper describe the usage of LLMs if it is an important, original, or non-standard component of the core methods in this research? Note that if the LLM is used only for writing, editing, or formatting purposes and does not impact the core methodology, scientific rigorousness, or originality of the research, declaration is not required. The answer NA means that the core method development in this research does not involve LLMs as any important, original, or non-standard components."
+  },
+  "code_snippets": {
+    "auditor_init": "self.phases = [\n            {\n                \"index\": 1,\n                \"msg\": \"🔍 Fase 1: Extracción inicial de información clave...\",\n                \"skill\": self.extraction_skill,\n                \"processor\": self._process_extraction_result\n            },\n            {\n                \"index\": 2,\n                \"msg\": \"🗺️ Fase 1.5: Mapeo inteligente de secciones...\",\n                \"skill\": self.section_mapping_skill,\n                \"processor\": self._process_default_result\n            },\n            {\n                \"index\": 3,\n                \"msg\": \"⚖️ Fase 2: Evaluación de criterios de cumplimiento NeurIPS 2026...\",\n                \"skill\": self.compliance_skill,\n                \"processor\": self._process_evaluation_result\n            },\n            {\n                \"index\": 4,\n                \"msg\": \"📊 Fase 3: Consolidación de métricas y puntuaciones...\",\n                \"skill\": self.metrics_skill,\n                \"processor\": self._process_default_result\n            },\n            {\n                \"index\": 5,\n                \"msg\": \"🏁 Fase 4: Generación de informe final y metadatos...\",\n                \"skill\": self.metadata_skill,\n                \"processor\": self._process_default_result\n            }\n        ]",
+    "auditor_audit": "def audit(self, paper_text, status_callback=None):\n        \"\"\"\n        Analiza el paper usando arquitectura de skills en un pipeline multimodelo.\n        Analiza el paper ejecutando el pipeline de skills definido.\n        \"\"\"\n        caracteres = len(paper_text)\n        self._log_status(f\"🚀 Iniciando auditoría con skills. Tamaño: {caracteres} caracteres.\", phase_index=0, status_callback=status_callback)\n        start_time = time.time()\n        \n        try:\n            context = {'paper_text': paper_text}\n            final_result = {}\n            \n            for phase in self.phases:\n                # 1. Reportar progreso\n                self._log_status(phase[\"msg\"], phase_index=phase[\"index\"], status_callback=status_callback)\n                \n                # 2. Preparar input (Inyectar métricas de tiempo si es la fase de métricas)\n                skill_input = context\n                if phase[\"skill\"] == self.metrics_skill:\n                    execution_time = round(time.time() - start_time, 2)\n                    skill_input = {**context, 'execution_time': execution_time, 'caracteres': caracteres}\n                \n                # 3. Ejecutar Skill\n                result = phase[\"skill\"].execute(skill_input)\n                \n                # 4. Procesar resultado y posibles errores\n                error_response = phase[\"processor\"](result, context)\n                if error_response:\n                    return error_response\n                \n                # 5. Actualizar contexto\n                context.update(result)\n                final_result = result # El último skill suele ser el que genera el informe final\n            \n            # Asegurar que se exponga el resultado original para el frontend\n            if 'original_extraction_raw' in context:\n                final_result['original_extraction_raw'] = context['original_extraction_raw']\n            \n            execution_time = round(time.time() - start_time, 2)\n            self._log_status(f\"✅ Auditoría completada en {execution_time} segundos\", phase_index=5, status_callback=status_callback)\n            return final_result",
+    "extraction_skill": "def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:\n        if not self.validate_context(context, ['paper_text']):\n            return {'extracted_info': {}}\n        \n        if not self.llm_client:\n            self.log_execution(\"No hay cliente LLM configurado\", level=\"error\")\n            return {'extracted_info': {}}\n        \n        self.log_execution(\"🔍 Iniciando Análisis General (Map-Reduce + CoT + Context Mapping)...\")\n        paper_text = context['paper_text']\n        \n        try:\n            # 1. Fase MAP (Extracción Segmentada por Secciones)\n            self.log_execution(\"🧠 [Fase MAP] Segmentando paper por secciones lógicas...\")\n            \n            # Identificar secciones (líneas que empiezan con #) generadas por Docling\n            # Usamos una expresión regular que busque el inicio de línea con #\n            import re\n            paper_text_norm = paper_text.replace('\\r\\n', '\\n')\n            sections = re.split(r'\\n(?=#+ )', '\\n' + paper_text_norm)\n            sections = [s.strip() for s in sections if s.strip()]\n            \n            # NUEVO: Guardar las secciones como diccionario para la Fase 1.5\n            paper_sections_dict = {}\n            for s in sections:\n                lines = s.split('\\n')\n                if lines:\n                    title = lines[0].strip()\n                    # El contenido es todo lo que hay DESPUÉS de la primera línea (el título)\n                    content = '\\n'.join(lines[1:]).strip()\n                    \n                    if not title.startswith('#'):\n                        # Si no hay un encabezado claro (ej. primer fragmento sin #), le asignamos uno por defecto\n                        # y el contenido es el bloque entero\n                        title = \"General Context / Abstract\"\n                        content = s.strip()\n                    \n                    # Manejar posibles títulos duplicados (ej. varios \"Conclusion\" en distintas partes)\n                    if title in paper_sections_dict:\n                        paper_sections_dict[title] += \"\\n\\n\" + content\n                    else:\n                        paper_sections_dict[title] = content\n            context['paper_sections'] = paper_sections_dict\n\n            \n            if len(sections) > 1:\n                total_chars = sum(len(s) for s in sections)\n                target = total_chars / 4\n                fragments = []\n                current_fragment = \"\"\n                \n                for section in sections:\n                    # Si añadir la siguiente sección supera el objetivo y aún no tenemos 3 fragmentos\n                    if len(current_fragment) + len(section) > target and len(fragments) < 3:\n                        if current_fragment:\n                            fragments.append(current_fragment)\n                            current_fragment = section\n                        else:\n                            # Caso borde: una sola sección es gigante\n                            fragments.append(section)\n                            current_fragment = \"\"\n                    else:\n                        if current_fragment:\n                            current_fragment += \"\\n\\n\" + section\n                        else:\n                            current_fragment = section\n                            \n                if current_fragment:\n                    fragments.append(current_fragment)\n                \n                self.log_execution(f\"📄 Paper dividido en {len(fragments)} secciones lógicas (basadas en Docling).\")\n            else:\n                # Fallback: Chunks más manejables si no hay estructura de secciones clara\n                self.log_execution(\"⚠️ No se detectaron secciones claras. Usando fallback de segmentación por caracteres.\")\n                splitter = RecursiveCharacterTextSplitter(chunk_size=25000, chunk_overlap=2000)\n                fragments = splitter.split_text(paper_text)\n                fragments = fragments[:4] # Forzar a 4 partes como pide el usuario\n                self.log_execution(f\"📄 Paper dividido en {len(fragments)} bloques (fallback).\")\n            \n            map_results = []\n            import time\n            for i, fragment in enumerate(fragments):\n                self.log_execution(f\"⚙️ Procesando Bloque {i+1}...\")\n                prompt = get_map_extraction_prompt(fragment)\n                \n                try:\n                    # Usar el método generate que ya tiene lógica de reintento para 503\n                    response = self.llm_client.generate(prompt)\n                    raw_text = response.text.strip()\n                    \n                    try:\n                        fragment_data = self.parse_json_response(raw_text)\n                        map_results.append(fragment_data)\n                    except Exception as e:\n                        self.log_execution(f\"⚠️ Error parseando fragmento {i+1}: {str(e)}\", level=\"warning\")\n                    \n                    # Pequeña pausa para no saturar la cuota RPM\n                    if i < len(fragments) - 1:\n                        time.sleep(2)\n                except Exception as e:\n                    self.log_execution(f\"⚠️ Error en fragmento {i+1}: {str(e)}\", level=\"warning\")\n            \n            if not map_results:\n                self.log_execution(\"❌ No se pudo extraer información de ningún fragmento.\", level=\"error\")\n                return {'extracted_info': {}, 'extraction_error': \"Map phase produced no results\"}\n\n            # 2. Fase REDUCE (Consolidación)\n            self.log_execution(f\"🧠 [Fase REDUCE] Consolidando {len(map_results)} extracciones con {REDUCE_MODEL_NAME}...\")\n\n            reduce_prompt = get_reduce_extraction_prompt(map_results)\n            \n            try:\n                # Usar el método generate para reintentos automáticos\n                response = self.llm_client.generate(reduce_prompt)\n                raw_text = response.text.strip()\n            except Exception as e:\n                self.log_execution(f\"⚠️ Error en fase REDUCE: {str(e)}. Reintentando...\", level=\"warning\")\n                # Fallback manual con configuración JSON si falla el general\n                response = self.llm_client.client.models.generate_content(\n                    model=REDUCE_MODEL_NAME,\n                    contents=reduce_prompt,\n                    config={\"response_mime_type\": \"application/json\", \"temperature\": 0.0}\n                )\n                raw_text = response.text.strip()\n\n            try:\n                extracted_info = self.parse_json_response(raw_text)\n            except Exception as e:\n                self.log_execution(f\"❌ Error parseando consolidación final: {str(e)}\", level=\"error\")\n                return {'extracted_info': {}, 'extraction_error': f\"JSON parse error in REDUCE: {str(e)}\"}\n            \n            # Validar si el paper es ML/AI\n            if extracted_info.get('paper_type', '').startswith('INVALID'):\n                self.log_execution(\"❌ Paper no válido: No es ML/AI\", level=\"error\")\n                return {\n                    'extracted_info': extracted_info,\n                    'invalid_paper': True,\n                    'invalid_reason': extracted_info.get('invalid_reason', 'Not ML/AI paper')\n                }\n            \n            # Asegurar que campos críticos existan para el frontend\n            if 'thought_process' not in extracted_info:\n                extracted_info['thought_process'] = \"Resumen de consolidación no generado por el modelo.\"\n            if 'context_mapping' not in extracted_info:\n                # Reconstrucción manual si el modelo falló pero tenemos los MAP\n                all_sections = []\n                for m in map_results:\n                    sections = m.get('context_mapping', [])\n                    if isinstance(sections, list):\n                        all_sections.extend(sections)\n                extracted_info['context_mapping'] = list(set(all_sections)) if all_sections else [\"General Context\"]\n\n            self.log_execution(\"✅ Análisis general completado con Map-Reduce\")\n            return {\n                'extracted_info': extracted_info, \n                'invalid_paper': False,\n                'map_steps': map_results,\n                'reduce_step': extracted_info\n            }\n        except Exception as e:\n            self.log_execution(f\"❌ Error crítico en extracción general Map-Reduce: {str(e)}\", level=\"error\")\n            return {'extracted_info': {}, 'extraction_error': str(e)}\n\n\n",
+    "mapping_skill": "def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:\n        paper_sections_dict = context.get('paper_sections', {})\n        if not paper_sections_dict:\n            self.log_execution(\"No hay secciones detectadas para mapear.\", level=\"warning\")\n            return {'section_mapping': {}}\n            \n        if not self.llm_client:\n            self.log_execution(\"No hay cliente LLM configurado para SectionMappingSkill\", level=\"error\")\n            return {'section_mapping': {}}\n            \n        self.log_execution(\"🗺️ [Fase 1.5] Mapeando títulos de Docling con items de alto contexto...\")\n        \n        section_titles = list(paper_sections_dict.keys())\n        prompt = get_section_mapping_prompt(section_titles)\n        \n        try:\n            response = self.llm_client.generate(prompt)\n            raw_text = response.text.strip()\n            \n            try:\n                mapping = self.parse_json_response(raw_text)\n                self.log_execution(\"✅ Mapeo de secciones completado\")\n                return {'section_mapping': mapping}\n            except Exception as e:\n                self.log_execution(f\"❌ Error parseando JSON de mapeo: {str(e)}\", level=\"error\")\n                return {'section_mapping': {}}\n                \n        except Exception as e:\n            self.log_execution(f\"❌ Error general en mapeo: {str(e)}\", level=\"error\")\n            return {'section_mapping': {}}\n\n",
+    "compliance_skill": "def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:\n        extracted_info = context.get('extracted_info') or {}\n        section_mapping = context.get('section_mapping') or {}\n        paper_sections = context.get('paper_sections') or {}\n        \n        if not extracted_info:\n            return {'evaluation': {}}\n        \n        if not self.llm_client:\n            self.log_execution(\"No hay cliente LLM configurado\", level=\"error\")\n            return {'evaluation': {}}\n            \n        final_evaluation = {}\n        helps = get_extraction_assistance_helps(extracted_info)\n        \n        # EVALUACIÓN HIGH CONTEXT EN PAREJAS (16 Items)\n        all_items = [\n            'claims', 'limitations', \n            'theory_assumptions_proofs', 'experimental_result_reproducibility',\n            'open_access_data_code', 'experimental_setting_details',\n            'experiment_statistical_significance', 'experiments_compute_resource',\n            'code_of_ethics', 'broader_impacts',\n            'safeguards', 'licenses',\n            'assets', 'crowdsourcing_human_subjects',\n            'irb_approvals', 'declaration_llm_usage'\n        ]\n        \n        groups = [all_items[i:i + 2] for i in range(0, len(all_items), 2)]\n        \n        for i, group in enumerate(groups):\n            self.log_execution(f\"📊 Evaluando grupo {i+1}/{len(groups)} de items en alto contexto...\")\n            \n            # Recopilar secciones relevantes sin duplicados\n            relevant_titles = set()\n            for item in group:\n                titles = section_mapping.get(item, [])\n                if isinstance(titles, list):\n                    relevant_titles.update(titles)\n            \n            # Construir texto inyectado\n            injected_text = \"\"\n            for title in relevant_titles:\n                if title in paper_sections:\n                    injected_text += f\"\\n\\n=== {title} ===\\n{paper_sections[title]}\"\n            \n            if not injected_text.strip():\n                injected_text = \"No se encontraron secciones específicas mapeadas para estos items. Revisa el resumen general.\"\n                \n            # Extraer textos literales de NeurIPS para los items a evaluar\n            criteria_literal_list = []\n            for item in group:\n                if item in NEURIPS_CRITERIA_LITERAL:\n                    criteria_literal_list.append(NEURIPS_CRITERIA_LITERAL[item])\n                \n                # Inyectar el texto completo del Código de Ética si corresponde\n                if item == \"code_of_ethics\":\n                    import os\n                    ethics_path = os.path.join(os.path.dirname(__file__), '..', '..', 'code of ethics.md')\n                    try:\n                        with open(ethics_path, 'r', encoding='utf-8') as f:\n                            ethics_text = f.read()\n                            criteria_literal_list.append(\"--- NEURIPS FULL CODE OF ETHICS ---\\n\" + ethics_text)\n                            self.log_execution(\"📜 Código de Ética completo inyectado en el prompt.\")\n                    except Exception as e:\n                        self.log_execution(f\"⚠️ No se pudo leer 'code of ethics.md': {e}\", level=\"warning\")\n            \n            criteria_literal_text = \"\\n\\n\".join(criteria_literal_list)\n            \n            self.log_execution(f\"🔍 Items {group}: Inyectando {len(criteria_literal_list)} descripciones literales de NeurIPS.\")\n                \n            prompt = get_evaluation_high_context_prompt(extracted_info, group, injected_text, criteria_literal_text)\n            try:\n                response = self.llm_client.generate(prompt)\n                raw_text = response.text.strip()\n                group_eval = self.parse_json_response(raw_text)\n                \n                # Normalización robusta para grupos\n                normalized = {}\n                if isinstance(group_eval, dict):\n                    # Verificar si las claves del grupo están en el primer nivel\n                    if any(k in group_eval for k in group):\n                        normalized = group_eval\n                    else:\n                        # Buscar en niveles anidados\n                        for val in group_eval.values():\n                            if isinstance(val, dict) and any(k in val for k in group):\n                                normalized = val\n                                break\n                elif isinstance(group_eval, list):\n                    for item in group_eval:\n                        if isinstance(item, dict):\n                            # Si es un dict con claves de items\n                            if any(k in item for k in group):\n                                normalized.update(item)\n                            # Si es un dict tipo {\"item\": \"claims\", \"answer\": \"Yes\"}\n                            elif \"item\" in item and item[\"item\"] in group:\n                                normalized[item[\"item\"]] = item\n                \n                if normalized:\n                    final_evaluation.update(normalized)\n                    self.log_execution(f\"✅ Grupo {i+1} completado: {len(normalized)} ítems recuperados.\")\n                else:\n                    self.log_execution(f\"⚠️ Grupo {i+1} no devolvió ítems válidos en el formato esperado.\", level=\"warning\")\n                    self.log_execution(f\"🔍 Raw LLM Output (Grupo {i+1}): {raw_text[:500]}...\", level=\"warning\")\n            except Exception as e:\n                self.log_execution(f\"❌ Error en evaluación grupo {i+1}: {str(e)}\", level=\"error\")\n\n        self.log_execution(\"✅ Evaluación completada\")\n        return {\n            'evaluation': final_evaluation,\n            'evaluation_helps': helps # Para visualización en el frontend\n        }\n\n",
+    "metrics_skill": "def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:\n        if not self.validate_context(context, ['paper_text']):\n            return {'metrics': {}}\n        \n        self.log_execution(\"Calculando métricas...\")\n        \n        paper_text = context['paper_text']\n        metrics = {\n            \"tiempo_segundos\": context.get('execution_time', 0),\n            \"caracteres_leidos\": len(paper_text)\n        }\n        \n        self.log_execution(\"✅ Métricas calculadas\")\n        return {'metrics': metrics}\n\n\n",
+    "metadata_skill": "def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:\n        self.log_execution(\"Agregando metadatos y construyendo resultado final...\")\n        \n        evaluation = context.get('evaluation', {})\n        \n        result = {\n            \"claims\": evaluation.get('claims', {}),\n            \"limitations\": evaluation.get('limitations', {}),\n            \"theory_assumptions_proofs\": evaluation.get('theory_assumptions_proofs', {}),\n            \"experimental_result_reproducibility\": evaluation.get('experimental_result_reproducibility', {}),\n            \"open_access_data_code\": evaluation.get('open_access_data_code', {}),\n            \"experimental_setting_details\": evaluation.get('experimental_setting_details', {}),\n            \"experiment_statistical_significance\": evaluation.get('experiment_statistical_significance', {}),\n            \"experiments_compute_resource\": evaluation.get('experiments_compute_resource', {}),\n            \"code_of_ethics\": evaluation.get('code_of_ethics', {}),\n            \"broader_impacts\": evaluation.get('broader_impacts', {}),\n            \"safeguards\": evaluation.get('safeguards', {}),\n            \"licenses\": evaluation.get('licenses', {}),\n            \"assets\": evaluation.get('assets', {}),\n            \"crowdsourcing_human_subjects\": evaluation.get('crowdsourcing_human_subjects', {}),\n            \"irb_approvals\": evaluation.get('irb_approvals', {}),\n            \"declaration_llm_usage\": evaluation.get('declaration_llm_usage', {}),\n            \"informacion_extraida\": context.get('extracted_info', {}),\n            \"metricas\": context.get('metrics', {}),\n            \"general_analysis_map\": context.get('general_analysis_map', []),\n            \"general_analysis_reduce\": context.get('general_analysis_reduce', {}),\n            \"hybrid_triage_fragments\": context.get('hybrid_triage_fragments', []),\n            \"evaluation_helps\": context.get('evaluation_helps', {})\n        }\n        \n        self.log_execution(\"✅ Resultado final construido correctamente\")\n        return result\n\n\n",
+    "assistance_helps": "def get_extraction_assistance_helps(info: dict) -> dict:\n    \"\"\"\n    Convierte el JSON de extracción de la Fase 1 en pequeñas ayudas (helps)\n    para el evaluador de la Fase 2. No es un prompt final, sino fragmentos inyectables.\n    \"\"\"\n    helps = {}\n    \n    # Aseguramos que info sea un diccionario\n    if not isinstance(info, dict):\n        info = {}"
+  }
+};
+
+        const phasesConfig = {
+            phase0: {
+                title: "Fase 0: Ingesta y Preprocesamiento",
+                description: "Docling Parser y Segmentación de Secciones en Python",
+                summary: "En este paso inicial, se lee el archivo del artículo (PDF, TXT o MD). Si es un PDF, la librería **Docling (IBM)** lo procesa utilizando aceleración por GPU (CUDA) si está disponible para extraer el texto estructurado en Markdown. Posteriormente, la lógica en Python segmenta el texto crudo utilizando los encabezados lógicos (#, ##) creados por Docling.",
+                inputs: [
+                    { key: "paper_text (PDF/TXT/MD)", type: "Archivo crudo" }
+                ],
+                outputs: [
+                    { key: "paper_text", type: "string" },
+                    { key: "paper_sections", type: "Dictionary [Título -> Texto Crudo]" }
+                ],
+                prompt: null,
+                codeFile: "backend/services/pdf_parser.py",
+                codeSnippet: `def parse_pdf(file_path):\n    # Lógica de Docling Parser\n    # Detecta GPU/CUDA y parsea el archivo a Markdown\n    ...`
+            },
+            phase1: {
+                title: "Fase 1: Extracción General (InformationExtractionSkill)",
+                description: "Procesamiento de texto con Map-Reduce",
+                summary: "Debido a la gran longitud de los papers, el sistema utiliza un enfoque Map-Reduce para evitar pérdidas de contexto y desbordamiento de ventanas de tokens:\n1. **Fase MAP**: El texto se divide en fragmentos lógicos. Cada fragmento se envía de forma concurrente/secuencial al LLM para extraer hechos locales en un JSON atómico.\n2. **Fase REDUCE**: Un LLM consolida las extracciones en un único JSON maestro (Master Extracted JSON) resolviendo contradicciones y garantizando cero pérdida de información.",
+                inputs: [
+                    { key: "paper_text", type: "string" },
+                    { key: "paper_sections", type: "Dictionary" }
+                ],
+                outputs: [
+                    { key: "extracted_info", type: "Master JSON" },
+                    { key: "map_steps", type: "Array of JSONs" },
+                    { key: "reduce_step", type: "JSON" }
+                ],
+                prompt: "map_extraction", // custom loader keys
+                codeFile: "backend/skills/auditor_skills.py -> InformationExtractionSkill",
+                codeSnippet: data.code_snippets.extraction_skill || ""
+            },
+            phase1_5: {
+                title: "Fase 1.5: Mapeo de Secciones (SectionMappingSkill)",
+                description: "Indexador y Enrutador de Contexto Inteligente",
+                summary: "Esta fase actúa como un router inteligente. Recibe todos los títulos de secciones extraídos de Docling y los mapea a cada uno de los 16 ítems de la lista de verificación NeurIPS 2026. Utiliza un LLM para asociar, por ejemplo, '4.1 Data Collection' al ítem 'crowdsourcing_human_subjects'. Aplica una regla de granularidad para seleccionar subsecciones específicas en lugar de títulos principales genéricos, evitando inyectar ruido innecesario en la posterior evaluación.",
+                inputs: [
+                    { key: "paper_sections", type: "Dictionary [Títulos]" }
+                ],
+                outputs: [
+                    { key: "section_mapping", type: "JSON [Item -> [Títulos]]" }
+                ],
+                prompt: "section_mapping",
+                codeFile: "backend/skills/auditor_skills.py -> SectionMappingSkill",
+                codeSnippet: data.code_snippets.mapping_skill || ""
+            },
+            phase2: {
+                title: "Fase 2: Evaluación NeurIPS Contextual (NeurIPSComplianceSkill)",
+                description: "Evaluación exhaustiva por pares de ítems (Pares High Context)",
+                summary: "Es el motor crítico de la auditoría. Evalúa los 16 ítems agrupándolos de 2 en 2 (8 llamadas en total). En cada llamada, se inyectan en el prompt:\n- El JSON resumido maestro (Fase 1).\n- Las pistas precalculadas de ayuda (Helps).\n- El **texto crudo** de las secciones mapeadas para esos ítems en la Fase 1.5.\n- **Únicamente las 2 reglas de validación específicas** asociadas a esos dos ítems (cargadas desde item_rules/). Esto previene alucinaciones y focaliza la atención del LLM.",
+                inputs: [
+                    { key: "extracted_info", type: "Master JSON" },
+                    { key: "section_mapping", type: "JSON" },
+                    { key: "paper_sections", type: "Dictionary" }
+                ],
+                outputs: [
+                    { key: "evaluation", type: "JSON [Checklist de 16 Items]" },
+                    { key: "evaluation_helps", type: "JSON [Pistas de Ayuda]" }
+                ],
+                prompt: "evaluation_high_context",
+                codeFile: "backend/skills/auditor_skills.py -> NeurIPSComplianceSkill",
+                codeSnippet: data.code_snippets.compliance_skill || ""
+            },
+            phase3: {
+                title: "Fase 3: Consolidación de Métricas (MetricsCalculationSkill)",
+                description: "Cálculo determinista de rendimiento y volumen de datos",
+                summary: "Ejecuta cálculos deterministas en Python (sin llamadas de LLM) para medir las estadísticas del proceso de auditoría científica:\n- Calcula el tiempo de ejecución en segundos que le ha llevado a todas las fases procesar el paper.\n- Registra el tamaño total en caracteres analizados del paper científico parseado.",
+                inputs: [
+                    { key: "paper_text", type: "string" },
+                    { key: "execution_time", type: "float (seconds)" }
+                ],
+                outputs: [
+                    { key: "metrics", type: "JSON {tiempo_segundos, caracteres_leidos}" }
+                ],
+                prompt: null,
+                codeFile: "backend/skills/auditor_skills.py -> MetricsCalculationSkill",
+                codeSnippet: data.code_snippets.metrics_skill || ""
+            },
+            phase4: {
+                title: "Fase 4: Consolidación y Veredicto (MetadataAggregationSkill)",
+                description: "Generación de resultado final e informe maestro",
+                summary: "Fase de cierre que empaqueta todo el contexto recolectado y determina el veredicto final. Implementa la lógica de 'Health Scoring' y Veredicto NeurIPS:\n- **Checklist Válido (🟢)**: Si todos los ítems marcados como 'No' tienen una justificación explícita de los autores ('is_no_justified': true).\n- **Desk Reject Risk (🔴)**: Si hay ítems marcados como 'No' que no están justificados por el autor, constituyendo un riesgo de rechazo de escritorio por falta de transparencia.",
+                inputs: [
+                    { key: "evaluation", type: "JSON" },
+                    { key: "metrics", type: "JSON" },
+                    { key: "extracted_info", type: "JSON" }
+                ],
+                outputs: [
+                    { key: "Master Final JSON", type: "JSON completo" }
+                ],
+                prompt: null,
+                codeFile: "backend/skills/auditor_skills.py -> MetadataAggregationSkill",
+                codeSnippet: data.code_snippets.metadata_skill || ""
+            }
+        };
+
+        let currentActivePhase = 'phase0';
+        let currentActiveTab = 'tab_flow';
+
+        function toggleCaptureMode() {
+            const isCapture = document.body.classList.toggle('capture-mode');
+            const mainNode = document.querySelector('main');
+            const footerNode = document.querySelector('footer');
+            const tfgNode = document.getElementById('tfg_capture_view');
+            const headerNode = document.querySelector('header');
+            
+            if (isCapture) {
+                mainNode.style.display = 'none';
+                footerNode.style.display = 'none';
+                tfgNode.style.display = 'block';
+                document.getElementById('capture_mode_btn').innerText = "🌙 Modo Interactivo";
+                headerNode.style.background = '#ffffff';
+                headerNode.style.borderBottom = '1px solid #cbd5e1';
+                headerNode.querySelector('h1').style.background = 'none';
+                headerNode.querySelector('h1').style.webkitTextFillColor = '#0f172a';
+                headerNode.querySelector('p').style.color = '#64748b';
+            } else {
+                mainNode.style.display = '';
+                footerNode.style.display = '';
+                tfgNode.style.display = 'none';
+                document.getElementById('capture_mode_btn').innerText = "📸 Modo Captura TFG";
+                headerNode.style.background = '';
+                headerNode.style.borderBottom = '';
+                headerNode.querySelector('h1').style.background = '';
+                headerNode.querySelector('h1').style.webkitTextFillColor = '';
+                headerNode.querySelector('p').style.color = '';
+            }
+        }
+
+        function switchTfgView(viewType, btnElement) {
+            // Hide all sub-views inside the TFG canvas
+            document.querySelectorAll('.tfg-sub-view').forEach(view => {
+                view.style.display = 'none';
+            });
+            // Show the selected sub-view
+            document.getElementById(`tfg_view_${viewType}`).style.display = 'block';
+            
+            // Remove active class from all selector buttons
+            document.querySelectorAll('.tfg-selector-bar .tfg-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            // Add active class to clicked button
+            btnElement.classList.add('active');
+        }
+
+        function selectPhase(phaseKey) {
+            currentActivePhase = phaseKey;
+            
+            // Update active states in DOM list
+            document.querySelectorAll('.flow-node').forEach(node => {
+                node.classList.remove('active');
+            });
+            document.getElementById(`node_${phaseKey}`).classList.add('active');
+
+            // Update Inspector Panel Title & Descriptions
+            const config = phasesConfig[phaseKey];
+            document.getElementById('inspector_title').innerText = config.title;
+            document.getElementById('inspector_description').innerText = config.description;
+
+            // 1. Update Flow tab contents
+            document.getElementById('tech_summary').innerHTML = config.summary.replace(/\n/g, '<br>');
+            
+            const inputsList = document.getElementById('tech_inputs');
+            inputsList.innerHTML = '';
+            config.inputs.forEach(inp => {
+                inputsList.innerHTML += `<li><span class="key">${inp.key}</span><span class="type">${inp.type}</span></li>`;
+            });
+
+            const outputsList = document.getElementById('tech_outputs');
+            outputsList.innerHTML = '';
+            config.outputs.forEach(out => {
+                outputsList.innerHTML += `<li><span class="key">${out.key}</span><span class="type">${out.type}</span></li>`;
+            });
+
+            // 2. Update Prompt tab contents
+            const promptBtn = document.getElementById('tab_prompt_btn');
+            if (config.prompt) {
+                promptBtn.style.display = 'flex';
+                let promptFilename = "";
+                let promptContent = "";
+                if (config.prompt === "map_extraction") {
+                    promptFilename = "1. map_extraction.md";
+                    promptContent = data.prompts.map_extraction || "";
+                } else if (config.prompt === "reduce_extraction") {
+                    promptFilename = "2. reduce_extraction.md";
+                    promptContent = data.prompts.reduce_extraction || "";
+                } else if (config.prompt === "section_mapping") {
+                    promptFilename = "3a. section_mapping.md";
+                    promptContent = data.prompts.section_mapping || "";
+                } else if (config.prompt === "evaluation_high_context") {
+                    promptFilename = "3c. evaluation_high_context.md";
+                    promptContent = data.prompts.evaluation_high_context || "";
+                }
+                
+                document.getElementById('prompt_filename').innerText = promptFilename;
+                document.getElementById('prompt_code').textContent = promptContent;
+            } else {
+                promptBtn.style.display = 'none';
+                if (currentActiveTab === 'tab_prompt') {
+                    // Switch to flow tab if prompt tab is hidden
+                    const flowBtn = document.querySelector('.tab-btn');
+                    switchTab('tab_flow', flowBtn);
+                }
+            }
+
+            // 3. Update Code tab contents
+            document.getElementById('code_filename').innerText = config.codeFile;
+            document.getElementById('python_code').textContent = config.codeSnippet;
+
+            // Re-apply Prism syntax highlighting
+            Prism.highlightAll();
+        }
+
+        function switchTab(tabId, btnElement) {
+            currentActiveTab = tabId;
+            
+            // Update active states of tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            btnElement.classList.add('active');
+
+            // Hide/Show tab panes
+            document.querySelectorAll('.tab-pane').forEach(pane => {
+                pane.classList.remove('active');
+            });
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // Checklist Items metadata
+        const checklistItems = [
+            { key: 'claims', label: '1. Claims' },
+            { key: 'limitations', label: '2. Limitations' },
+            { key: 'theory_assumptions_proofs', label: '3. Theory & Proofs' },
+            { key: 'experimental_result_reproducibility', label: '4. Reproducibility' },
+            { key: 'open_access_data_code', label: '5. Open Access' },
+            { key: 'experimental_setting_details', label: '6. Experimental Setting' },
+            { key: 'experiment_statistical_significance', label: '7. Statistical Significance' },
+            { key: 'experiments_compute_resource', label: '8. Compute Resources' },
+            { key: 'code_of_ethics', label: '9. Code Of Ethics' },
+            { key: 'broader_impacts', label: '10. Broader Impacts' },
+            { key: 'safeguards', label: '11. Safeguards' },
+            { key: 'licenses', label: '12. Licenses' },
+            { key: 'assets', label: '13. Assets' },
+            { key: 'crowdsourcing_human_subjects', label: '14. Crowdsourcing' },
+            { key: 'irb_approvals', label: '15. IRB Approvals' },
+            { key: 'declaration_llm_usage', label: '16. LLM Usage' }
+        ];
+
+        // Renders the checklist items sidebar in the explorer section
+        function setupChecklistExplorer() {
+            const sidebar = document.getElementById('explorer_sidebar');
+            sidebar.innerHTML = '';
+
+            checklistItems.forEach(item => {
+                sidebar.innerHTML += `
+                    <button class="item-selector-btn" id="btn_item_${item.key}" onclick="selectChecklistItem('${item.key}')">
+                        ${item.label}
+                    </button>
+                `;
+            });
+        }
+
+        // Pre-computed help logic snippets mapping for visualization
+        const helpLogicMap = {
+            experimental_result_reproducibility: `// Lógica de Ayuda (helps['reproducibility'])
+// Detecta presencia de URLs de repositorios de código y pesos de modelos
+CODE/MODEL URLS: {url_str}. WEIGHTS: {weights}.
+NeurIPS Rule: If ANY code/model URL is present, answer 'Yes'.
+If NO code/URL is found, answer 'No' and set is_no_justified: false.`,
+            open_access_data_code: `// Lógica de Ayuda (helps['open_access'])
+// Busca si existen conjuntos de datos públicos
+DATA/RESOURCE URLS: {url_str}.
+If ANY public URL (project, demo, HF, github) exists -> 'Yes'.
+If only private/proprietary mentioned -> 'No' and set is_no_justified: true ONLY if they explain why.`,
+            experiment_statistical_significance: `// Lógica de Ayuda (helps['statistics'])
+// Busca intervalos de confianza, p-values, número de corridas
+CI/Variance: {ci}, Significance Tests: {st}, Runs: {runs}. {greedy_note}
+Rule: If NO intervals/variance/runs found -> answer 'No' and set is_no_justified: false.
+EXCEPTIONAL RULE: For deterministic LLM benchmarks, 'Yes' is acceptable if greedy decoding is used.`,
+            experiments_compute_resource: `// Lógica de Ayuda (helps['compute_resource'])
+// Busca hardware, clusters de cómputo y métricas de consumo ambiental (CO2)
+DETECTED hardware/cluster: {hw_str}.
+CRITICAL RULE: If ANY hardware, cluster, or CO2 emissions are mentioned -> answer 'Yes'.
+If hardware is mentioned but BOTH time and efficiency/CO2 are missing -> 'No'.`,
+            licenses: `// Lógica de Ayuda (helps['licenses'])
+// Detecta nombres de licencias de software/recursos (MIT, Apache, CC)
+LICENSES FOUND: {lic_found}.
+Rule: If NO specific license (MIT, Apache, CC) is named -> answer 'No' and set is_no_justified: false.`,
+            crowdsourcing_human_subjects: `// Lógica de Ayuda (helps['crowdsourcing'])
+// Identifica datos de feedback humano, RLHF, MTurk, compensación
+USES HUMAN/PREFERENCE DATA: {uses_human_flag}, COMP: {comp}.
+Rule: If human-derived data is used, Items 14/15 MUST be addressed (Yes/No).
+N/A is ONLY for purely algorithmic papers with NO human data interaction.`
+        };
+
+        function selectChecklistItem(itemKey) {
+            // Update active sidebar buttons
+            document.querySelectorAll('.item-selector-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`btn_item_${itemKey}`).classList.add('active');
+
+            const item = checklistItems.find(i => i.key === itemKey);
+            const literal = data.criteria_literals[itemKey] || "Literal oficial de NeurIPS 2026 no encontrado.";
+            const rule = data.item_rules[itemKey] || "Regla de validación CoT específica no definida.";
+            const helpLogic = helpLogicMap[itemKey] || "// No se requiere pre-cálculo de ayudas computadas en Python para este ítem.\n// Se valida directamente mediante LLM a partir de los fragmentos de texto crudo.";
+
+            const displayCard = document.getElementById('item_display_card');
+            displayCard.innerHTML = `
+                <div class="item-display-title">
+                    <h3>${item.label} (${itemKey})</h3>
+                    <span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);">Checklist Criterio</span>
+                </div>
+                
+                <div>
+                    <div class="criteria-box-title">Criterio NeurIPS 2026 Oficial (Pregunta Literal)</div>
+                    <div class="criteria-literal-box">${literal}</div>
+                </div>
+
+                <div>
+                    <div class="criteria-box-title">Instrucciones de Auditoría CoT (item_rules/${itemKey}.md)</div>
+                    <div class="criteria-rule-box">${rule.replace(/\n/g, '<br>')}</div>
+                </div>
+
+                <div>
+                    <div class="criteria-box-title">Ayudas & Lógica de Soporte Python (Fase 1 -> Fase 2)</div>
+                    <pre><code class="language-python">${helpLogic}</code></pre>
+                </div>
+            `;
+            Prism.highlightAll();
+        }
+
+        // Initialize view
+        window.addEventListener('DOMContentLoaded', () => {
+            selectPhase('phase0');
+            setupChecklistExplorer();
+        });
+    </script>
+</body>
+</html>

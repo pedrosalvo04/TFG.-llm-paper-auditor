@@ -105,6 +105,7 @@ SEMANTIC_SCHOLAR_API_KEY=TU_CLAVE_AQUI
 4. Copia la clave y pégala en `.env`
 
 > El sistema utiliza modelos de la familia Gemini de forma directa a través del SDK oficial de Google (`google-genai`). El uso gratuito tiene límites de cuota; para uso intensivo se recomienda una cuenta con facturación habilitada.
+> *Nota: Versiones anteriores mencionaban soporte experimental de OpenRouter, pero el backend actual está optimizado únicamente para Gemini directo.*
 
 #### Semantic Scholar (`SEMANTIC_SCHOLAR_API_KEY`) — Recomendada
 1. Ve a [api.semanticscholar.org](https://www.semanticscholar.org/product/api)
