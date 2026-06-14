@@ -130,12 +130,23 @@ class BaseSkill(ABC):
         try:
             return json.loads(raw_text)
         except json.JSONDecodeError:
-            # 4. Intento de reparación simple (comas finales, etc.)
+            # 4. Intento de reparación avanzada usando json_repair
+            try:
+                import json_repair
+                repaired_json = json_repair.loads(raw_text)
+                if repaired_json is not None:
+                    return repaired_json
+            except ImportError:
+                logger.warning("Librería json_repair no encontrada. Usando fallback de regex básico.")
+            except Exception as e:
+                logger.debug(f"json_repair falló: {e}")
+                
+            # 5. Intento de reparación simple (comas finales, etc.) como último recurso
             try:
                 fixed_text = re.sub(r',\s*([\]}])', r'\1', raw_text)
                 return json.loads(fixed_text)
             except json.JSONDecodeError:
-                # Si falla, relanzar el original
+                # Si falla todo, relanzar el original
                 raise
 
 

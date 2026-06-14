@@ -93,7 +93,7 @@ def run_audit(md_text):
                     st.error("### ⚠️ El servicio de IA está saturado")
                     
                     with st.expander("🔍 Detalles técnicos y solución", expanded=True):
-                        st.write("El modelo Gemini está experimentando una demanda extremadamente alta. Intentos fallidos tras 5 reintentos.")
+                        st.write("El modelo El LLM local está experimentando una demanda extremadamente alta. Intentos fallidos tras 5 reintentos.")
                     
                     col1, col2 = st.columns(2)
                     with col1:

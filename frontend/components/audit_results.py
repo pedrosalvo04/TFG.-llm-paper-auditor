@@ -287,11 +287,13 @@ def generate_report(resultado, uploaded_file, health=None):
 
     reporte = f"# 🔬 Informe de Auditoría Científica - NeurIPS 2026\n\n"
     
-    # Tabla de Metadatos
+    from backend.common.config import VERIFICATION_MODEL_NAME
+    
     reporte += f"| Parámetro | Detalle |\n"
     reporte += f"| :--- | :--- |\n"
     reporte += f"| 📄 **Artículo** | `{paper_name}` |\n"
     reporte += f"| 📅 **Fecha de Análisis** | {fecha} |\n"
+    reporte += f"| 🤖 **Modelo Local** | `{VERIFICATION_MODEL_NAME}` |\n"
     reporte += f"| ⏳ **Tiempo de Ejecución** | {tiempo}s |\n"
     reporte += f"| 📊 **Caracteres Analizados** | {caracteres:,} |\n\n"
     
@@ -407,7 +409,9 @@ def generate_report(resultado, uploaded_file, health=None):
     cot = info.get("thought_process")
     if cot and cot != "No disponible":
         reporte += "---\n\n## 🧠 Razonamiento de Consolidación (CoT)\n\n"
-        cot_indented = cot.replace('\n', '\n> ')
+        if isinstance(cot, list):
+            cot = "\n".join(str(item) for item in cot)
+        cot_indented = str(cot).replace('\n', '\n> ')
         reporte += f"> {cot_indented}\n\n"
 
     # Secciones Mapeadas
@@ -418,5 +422,5 @@ def generate_report(resultado, uploaded_file, health=None):
             reporte += f"- `{section}`\n"
         reporte += "\n"
 
-    reporte += "---\n_Informe generado automáticamente por Auditor NeurIPS 2026._\n"
+    reporte += f"---\n_Informe generado automáticamente por Auditor NeurIPS 2026 empleando el modelo local: {VERIFICATION_MODEL_NAME}_\n"
     return reporte

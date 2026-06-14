@@ -1,76 +1,113 @@
-"""Cliente LLM compartido para todos los servicios"""
-from google import genai
-from backend.common.config import GOOGLE_API_KEY, MODEL_NAME
+"""Cliente LLM compartido para todos los servicios (Versión Local - Ollama)"""
+import requests
+from dataclasses import dataclass
 from backend.common.logger import get_logger
 
 logger = get_logger(__name__)
 
+@dataclass
+class LLMResponse:
+    text: str
+
 class LLMClient:
-    """Cliente reutilizable para interactuar con Gemini"""
+    """Cliente reutilizable para interactuar con Ollama local"""
     
-    def __init__(self, model_name=None, generation_config=None):
+    def __init__(self, model_name="qwen2.5", generation_config=None):
         """
-        Inicializa el cliente LLM con configuración personalizada
+        Inicializa el cliente LLM con configuración para Ollama.
         
         Args:
-            model_name: Nombre del modelo a usar
-            generation_config: Diccionario con configuración de generación
+            model_name: Nombre del modelo a usar (ignorará los de Gemini si se fuerza qwen2.5)
+            generation_config: Diccionario con configuración de generación (temperatura, etc.)
         """
-        if not GOOGLE_API_KEY:
-            logger.error("ERROR: No se encontró la GOOGLE_API_KEY en el .env")
-            raise ValueError("No se encontró la GOOGLE_API_KEY en el .env")
-        
-        self.client = genai.Client(api_key=GOOGLE_API_KEY)
-        
-        self.model_name = model_name or MODEL_NAME
+        # Forzamos qwen2.5 si no se especifica o si viene un modelo de gemini por defecto
+        if not model_name or "gemini" in model_name.lower():
+            self.model_name = "qwen2.5"
+        else:
+            self.model_name = model_name
+            
         self.generation_config = generation_config or {}
+        self.api_url = "http://localhost:11434/api/generate"
         
-        logger.info(f"✅ Cliente LLM inicializado: {self.model_name}")
+        logger.info(f"✅ Cliente LLM inicializado: {self.model_name} (Local - Ollama)")
+        
+        # Verificar si Ollama está en ejecución
+        self._check_ollama_status()
+            
+    def _check_ollama_status(self):
+        """Verifica que el demonio de Ollama esté en ejecución y avisa si no lo está."""
+        import streamlit as st
+        try:
+            # Endpoint base de Ollama para verificar estado
+            requests.get("http://localhost:11434/", timeout=2)
+        except requests.exceptions.RequestException:
+            error_msg = "⚠️ OLLAMA NO ESTÁ EN EJECUCIÓN. Asegúrate de iniciar Ollama en tu máquina (puerto 11434)."
+            logger.warning(error_msg)
+            try:
+                st.warning(error_msg, icon="⚠️")
+            except Exception:
+                pass
     
     def generate(self, prompt):
         """
-        Genera contenido usando el modelo, con reintentos automáticos
-        y backoff exponencial en caso de saturación (503) o límites de cuota (429).
+        Genera contenido usando el modelo local.
+        Fuerza la salida en formato JSON y maneja errores de conexión.
         """
-        import time
         import streamlit as st
-        import random
         
-        max_retries = 5 # Aumentado para mayor resiliencia
-        base_delay = 2  # Reducido para que la espera no sea tan larga al principio
+        # Preparamos el payload base
+        payload = {
+            "model": self.model_name,
+            "prompt": prompt,
+            "stream": False,
+            "format": "json"  # Forzar salida en formato JSON estructurado (Ollama lo soporta nativamente)
+        }
         
-        for attempt in range(max_retries + 1):
+        # Opciones base obligatorias para lectura de documentos
+        options = {
+            "num_ctx": 32768  # 32k tokens de ventana de contexto (fundamental para no cortar los papers)
+        }
+        
+        # Si generation_config tiene parámetros compatibles, los mapeamos a 'options' en Ollama
+        if self.generation_config:
+            if "temperature" in self.generation_config:
+                options["temperature"] = self.generation_config["temperature"]
+            if "top_p" in self.generation_config:
+                options["top_p"] = self.generation_config["top_p"]
+            if "top_k" in self.generation_config:
+                options["top_k"] = self.generation_config["top_k"]
+            if "max_output_tokens" in self.generation_config:
+                options["num_predict"] = self.generation_config["max_output_tokens"]
+                
+        payload["options"] = options
+
+        try:
+            logger.info(f"Iniciando generación con modelo local: {self.model_name}...")
+            
+            # Realizamos la petición HTTP a Ollama sin timeout para inferencia local pesada
+            response = requests.post(self.api_url, json=payload, timeout=None)
+            response.raise_for_status()
+            
+            result = response.json()
+            
+            # Ollama devuelve la respuesta en la clave 'response'
+            # Envolvemos el resultado en LLMResponse para mantener compatibilidad con response.text
+            return LLMResponse(text=result.get("response", ""))
+            
+        except requests.exceptions.ConnectionError:
+            error_msg = "No se pudo conectar a Ollama. Por favor, verifica que el demonio de Ollama esté ejecutándose (localhost:11434)."
+            logger.error(f"❌ {error_msg}")
             try:
-                response = self.client.models.generate_content(
-                    model=self.model_name,
-                    contents=prompt,
-                    config=self.generation_config
-                )
-                return response
-            except Exception as e:
-                error_msg = str(e)
-                
-                # Identificar si el error es reintentable (Saturación o Cuota)
-                is_retryable = any(code in error_msg.upper() for code in ["503", "429", "UNAVAILABLE", "RESOURCE_EXHAUSTED", "DEADLINE_EXCEEDED"])
-                
-                if attempt < max_retries and is_retryable:
-                    # Backoff exponencial: delay = base * 2^attempt + jitter
-                    delay = base_delay * (2 ** attempt) + random.uniform(0, 1)
-                    
-                    logger.warning(f"⚠️ Error API Gemini [{self.model_name}]: {error_msg}. Reintento {attempt + 1}/{max_retries} en {delay:.1f}s...")
-                    
-                    # Mostrar el aviso visual en el frontend sin bloquear la interfaz
-                    try:
-                        st.toast(f"⏳ Gemini saturado (Alta demanda). Reintento {attempt + 1}/{max_retries} en {int(delay)}s...", icon="⏳")
-                    except Exception:
-                        pass # Por si se ejecuta fuera de Streamlit
-                        
-                    # Esperar antes del siguiente intento
-                    time.sleep(delay)
-                else:
-                    # Si no es reintentable o ya agotamos intentos, lanzamos el error
-                    if attempt >= max_retries:
-                        logger.error(f"❌ Error crítico tras {max_retries} reintentos: {error_msg}")
-                    else:
-                        logger.error(f"❌ Error no reintentable detectado: {error_msg}")
-                    raise
+                st.error(f"❌ {error_msg}", icon="🚨")
+            except Exception:
+                pass
+            raise ConnectionError(error_msg)
+            
+        except requests.exceptions.RequestException as e:
+            error_msg = f"Error en la petición a Ollama: {str(e)}"
+            logger.error(f"❌ {error_msg}")
+            try:
+                st.error(f"❌ {error_msg}", icon="🚨")
+            except Exception:
+                pass
+            raise Exception(error_msg)

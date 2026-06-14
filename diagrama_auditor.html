@@ -940,7 +940,7 @@
         <div class="badge-container">
             <button class="badge purple" onclick="toggleCaptureMode()" id="capture_mode_btn" style="cursor: pointer; outline: none;">📸 Modo Captura TFG</button>
             <span class="badge">Pipeline de 5 Fases</span>
-            <span class="badge emerald">Gemini 3.5 Flash</span>
+            <span class="badge emerald">Qwen 2.5 Local</span>
         </div>
     </header>
 
@@ -982,7 +982,7 @@
                         <tr>
                             <td>
                                 <div class="tfg-table-fase">Fase 1</div>
-                                <div class="tfg-table-tech">Gemini Map-Reduce</div>
+                                <div class="tfg-table-tech">Qwen Map-Reduce</div>
                             </td>
                             <td>Secciones estructuradas del texto del paper.</td>
                             <td>Fase MAP: extracción atómica de parámetros de entrenamiento, hardware, datos y software. Fase REDUCE: consolidación unificada y triage de validez científica.</td>
@@ -1000,7 +1000,7 @@
                         <tr>
                             <td>
                                 <div class="tfg-table-fase">Fase 2</div>
-                                <div class="tfg-table-tech">Gemini CoT Batches</div>
+                                <div class="tfg-table-tech">Qwen CoT Batches</div>
                             </td>
                             <td>Master JSON, Mapeo de Secciones, Reglas locales y Ayudas precalculadas.</td>
                             <td>Orquestación en 8 batches de 2 ítems (pares High Context). Inyección de reglas específicas y Chain-of-Thought para veredicto preciso.</td>
@@ -1050,7 +1050,7 @@
                         <div class="tfg-h-step-header" style="background: #4f46e5;">Fase 1</div>
                         <div class="tfg-h-step-body">
                             <span class="tfg-h-step-title">Extracción Map-Reduce</span>
-                            <span class="tfg-h-step-desc">Gemini extrae parámetros, hardware, datos y triage.</span>
+                            <span class="tfg-h-step-desc">Qwen extrae parámetros, hardware, datos y triage.</span>
                             <div class="tfg-h-step-io">
                                 <span class="tfg-h-step-io-title">IN</span>
                                 <span class="tfg-h-step-io-content">Texto del paper</span>
@@ -1148,7 +1148,7 @@
                     <div class="tfg-step-details">
                         <div class="tfg-step-header">
                             <span class="tfg-step-title">Fase 1: Extracción General (InformationExtractionSkill)</span>
-                            <span class="tfg-step-tech">Gemini (Map-Reduce)</span>
+                            <span class="tfg-step-tech">Qwen (Map-Reduce)</span>
                         </div>
                         <div class="tfg-step-io">
                             <span class="tfg-io-title">Entradas (Inputs)</span>
@@ -1170,7 +1170,7 @@
                     <div class="tfg-step-details">
                         <div class="tfg-step-header">
                             <span class="tfg-step-title">Fase 1.5: Mapeo de Contexto (SectionMappingSkill)</span>
-                            <span class="tfg-step-tech">Gemini (Context Router)</span>
+                            <span class="tfg-step-tech">Qwen (Context Router)</span>
                         </div>
                         <div class="tfg-step-io">
                             <span class="tfg-io-title">Entradas (Inputs)</span>
@@ -1192,7 +1192,7 @@
                     <div class="tfg-step-details">
                         <div class="tfg-step-header">
                             <span class="tfg-step-title">Fase 2: Evaluación NeurIPS (NeurIPSComplianceSkill)</span>
-                            <span class="tfg-step-tech">Gemini + Reglas Dinámicas</span>
+                            <span class="tfg-step-tech">Qwen + Reglas Dinámicas</span>
                         </div>
                         <div class="tfg-step-io">
                             <span class="tfg-io-title">Entradas (Inputs)</span>

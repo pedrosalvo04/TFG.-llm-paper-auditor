@@ -78,10 +78,11 @@ if uploaded_file:
             
             with col_md:
                 reporte_md = generate_report(resultado, uploaded_file, puntuacion)
+                from backend.common.config import VERIFICATION_MODEL_NAME
                 st.download_button(
                     label="📥 Descargar Informe Markdown (.md)",
                     data=reporte_md,
-                    file_name=f"auditoria_{uploaded_file.name.replace('.pdf', '')}.md",
+                    file_name=f"auditoria_{VERIFICATION_MODEL_NAME}_{uploaded_file.name.replace('.pdf', '')}.md",
                     mime="text/markdown",
                     use_container_width=True
                 )
@@ -90,10 +91,11 @@ if uploaded_file:
                 with st.spinner("Compilando PDF..."):
                     try:
                         reporte_pdf = generate_pdf_report(resultado, uploaded_file, puntuacion)
+                        from backend.common.config import VERIFICATION_MODEL_NAME
                         st.download_button(
                             label="📥 Descargar Informe PDF (.pdf)",
                             data=reporte_pdf,
-                            file_name=f"auditoria_{uploaded_file.name.replace('.pdf', '')}.pdf",
+                            file_name=f"auditoria_{VERIFICATION_MODEL_NAME}_{uploaded_file.name.replace('.pdf', '')}.pdf",
                             mime="application/pdf",
                             use_container_width=True
                         )

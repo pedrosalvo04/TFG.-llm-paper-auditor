@@ -1176,7 +1176,7 @@ def main():
                     <div class="tfg-step-details">
                         <div class="tfg-step-header">
                             <span class="tfg-step-title">Fase 1: Cobertura Temática (ThematicCoverageSkill)</span>
-                            <span class="tfg-step-tech">Gemini 3.1 Flash Lite</span>
+                            <span class="tfg-step-tech">Qwen 2.5 Local</span>
                         </div>
                         <div class="tfg-step-io">
                             <span class="tfg-io-title">Entradas (Inputs)</span>
@@ -1198,7 +1198,7 @@ def main():
                     <div class="tfg-step-details">
                         <div class="tfg-step-header">
                             <span class="tfg-step-title">Fase 2: Generación de Queries (QueryGenerationSkill)</span>
-                            <span class="tfg-step-tech">Gemini 3.1 Flash Lite</span>
+                            <span class="tfg-step-tech">Qwen 2.5 Local</span>
                         </div>
                         <div class="tfg-step-io">
                             <span class="tfg-io-title">Entradas (Inputs)</span>
@@ -1286,7 +1286,7 @@ def main():
                     <div class="tfg-step-details">
                         <div class="tfg-step-header">
                             <span class="tfg-step-title">Fase 4: Análisis de Gaps (CoverageGapAnalysisSkill)</span>
-                            <span class="tfg-step-tech">Gemini 3.1 Flash Lite</span>
+                            <span class="tfg-step-tech">Qwen 2.5 Local</span>
                         </div>
                         <div class="tfg-step-io">
                             <span class="tfg-io-title">Entradas (Inputs)</span>
@@ -1308,7 +1308,7 @@ def main():
                     <div class="tfg-step-details">
                         <div class="tfg-step-header">
                             <span class="tfg-step-title">Fase 5: Validación Cruzada (CrossValidationSkill)</span>
-                            <span class="tfg-step-tech">Gemini 3.1 Flash Lite</span>
+                            <span class="tfg-step-tech">Qwen 2.5 Local</span>
                         </div>
                         <div class="tfg-step-io">
                             <span class="tfg-io-title">Entradas (Inputs)</span>
@@ -1347,7 +1347,7 @@ def main():
                     <div class="node-content-card">
                         <span class="node-phase-tag">Fase 1</span>
                         <h3>Análisis Temático (ThematicCoverageSkill)</h3>
-                        <p>Extrae del paper original los subtemas, áreas técnicas y año usando Gemini.</p>
+                        <p>Extrae del paper original los subtemas, áreas técnicas y año usando Qwen.</p>
                     </div>
                 </div>
 
@@ -1418,7 +1418,7 @@ def main():
         <section class="glass-card inspector-panel">
             <div class="inspector-title-area">
                 <h2 id="inspector_title">Fase 1: Cobertura Temática</h2>
-                <p id="inspector_description">Extrae subtemas y áreas técnicas utilizando Gemini.</p>
+                <p id="inspector_description">Extrae subtemas y áreas técnicas utilizando Qwen.</p>
             </div>
 
             <div class="tabs-header">
@@ -1590,7 +1590,7 @@ def main():
             phase1: {
                 title: "Fase 1: Cobertura Temática (ThematicCoverageSkill)",
                 description: "Extracción del ADN conceptual y año del manuscrito",
-                summary: "En este primer paso, el LLM (Gemini 3.1 Flash Lite) analiza el manuscrito científico (primeras y últimas secciones) para identificar los 3-5 subtemas principales que trata, las áreas técnicas y el año de publicación (obtenido del copyright, cabeceras o fechas de revisión). Esta información es fundamental para contextualizar la búsqueda bibliográfica en las fases posteriores.",
+                summary: "En este primer paso, el LLM (Qwen 2.5 Local) analiza el manuscrito científico (primeras y últimas secciones) para identificar los 3-5 subtemas principales que trata, las áreas técnicas y el año de publicación (obtenido del copyright, cabeceras o fechas de revisión). Esta información es fundamental para contextualizar la búsqueda bibliográfica en las fases posteriores.",
                 inputs: [
                     { key: "paper_text", type: "string" }
                 ],

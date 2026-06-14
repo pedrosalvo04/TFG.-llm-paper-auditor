@@ -1,63 +1,45 @@
-
 import sys
 import os
 from unittest.mock import MagicMock, patch
 
-# Mocking modules that might not be available or needed for this test
-sys.modules['google'] = MagicMock()
-sys.modules['google.genai'] = MagicMock()
+# Mocking modules
 sys.modules['streamlit'] = MagicMock()
 
 # Add project root to path
 sys.path.append(os.getcwd())
 
 from backend.common.llm_client import LLMClient
+import requests
 
-def test_retry_logic():
-    client = LLMClient(model_name="test-model")
+def test_generate_success():
+    client = LLMClient(model_name="qwen2.5")
     
-    # Mock the internal client's generate_content method
-    mock_gen = MagicMock()
-    client.client.models.generate_content = mock_gen
+    # Mock requests.post
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"response": "Success response"}
     
-    # Simulate a 503 error for 2 attempts, then success
-    mock_gen.side_effect = [
-        Exception("503 UNAVAILABLE: High demand"),
-        Exception("503 UNAVAILABLE: High demand"),
-        MagicMock(text="Success response")
-    ]
-    
-    print("Testing retry logic (2 failures then success)...")
-    with patch('time.sleep') as mock_sleep: # Don't actually sleep
+    with patch('requests.post', return_value=mock_response) as mock_post:
+        print("Testing successful generation...")
         response = client.generate("test prompt")
-        print("Result: Success response")
-        assert mock_gen.call_count == 3
-        assert mock_sleep.call_count == 2
-        print("OK: Retry logic test passed!")
+        print(f"Result: {response.text}")
+        assert response.text == "Success response"
+        assert mock_post.call_count == 1
+        print("OK: Success logic test passed!")
 
-def test_final_failure():
-    client = LLMClient(model_name="test-model")
+def test_connection_failure():
+    client = LLMClient(model_name="qwen2.5")
     
-    # Mock the internal client's generate_content method
-    mock_gen = MagicMock()
-    client.client.models.generate_content = mock_gen
-    
-    # Always fail
-    mock_gen.side_effect = Exception("503 UNAVAILABLE: High demand")
-    
-    print("\nTesting final failure logic (all failures)...")
-    with patch('time.sleep') as mock_sleep:
+    # Mock requests.post to raise ConnectionError
+    with patch('requests.post', side_effect=requests.exceptions.ConnectionError("Connection Refused")) as mock_post:
+        print("\nTesting connection failure logic...")
         try:
             client.generate("test prompt")
-            assert False, "Should have raised an exception"
-        except Exception as e:
-            print(f"Caught expected final exception: {e}")
-            assert mock_gen.call_count == 6 # 1 original + 5 retries
-            print("OK: Final failure test passed!")
+            assert False, "Should have raised a ConnectionError"
+        except ConnectionError as e:
+            print(f"Caught expected connection exception: {e}")
+            assert mock_post.call_count == 1
+            print("OK: Connection failure test passed!")
 
 if __name__ == "__main__":
-    # Mocking config variables
-    with patch('backend.common.config.GOOGLE_API_KEY', "test-key"):
-        with patch('backend.common.config.MODEL_NAME', "test-model"):
-            test_retry_logic()
-            test_final_failure()
+    test_generate_success()
+    test_connection_failure()
