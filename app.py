@@ -40,23 +40,58 @@ from frontend.components.sota_section import render_sota_analysis
 render_sidebar()
 render_header()
 
-# 5. Carga de Documento
+# 5. Configuración de la Auditoría
+st.subheader("Configuración")
+criteria_mode = st.radio(
+    "Selecciona el modo de evaluación:",
+    options=["neurips", "free"],
+    format_func=lambda x: "NeurIPS 2026 (Por defecto)" if x == "neurips" else "Criterios Libres"
+)
+
+criteria_text = None
+if criteria_mode == "free":
+    from frontend.components.file_uploader import extract_text_from_file_generic
+    criteria_file = st.file_uploader(
+        "Sube el documento con los criterios (PDF, TXT o Markdown)", 
+        type=["pdf", "txt", "md"],
+        key="criteria_uploader"
+    )
+    if criteria_file:
+        criteria_text = extract_text_from_file_generic(criteria_file)
+        if not criteria_text:
+            st.warning("No se pudo extraer texto del archivo de criterios.")
+    else:
+        st.info("Sube un archivo con los criterios de evaluación para continuar.")
+
+st.markdown("---")
+# Carga de Documento Principal
 uploaded_file = st.file_uploader(
-    "Sube el artículo científico (PDF, TXT o Markdown)", 
+    "Sube el artículo científico a auditar (PDF, TXT o Markdown)", 
     type=["pdf", "txt", "md"]
 )
 
-if uploaded_file:
+# Solo ejecutar si tenemos el paper y, si es modo free, también los criterios
+can_run = uploaded_file is not None and (criteria_mode == "neurips" or (criteria_mode == "free" and criteria_text))
+
+if can_run:
+    current_file_hash = f"{uploaded_file.name}_{criteria_mode}"
+    if criteria_mode == "free" and criteria_file:
+        current_file_hash += f"_{criteria_file.name}"
+        
+    if st.session_state.get('last_file_hash') != current_file_hash:
+        st.session_state.resultado = None
+        st.session_state.last_file_hash = current_file_hash
+
     md_text = extract_text_from_file(uploaded_file)
     
     # Iniciar auditoría automáticamente si no hay resultados y no está en progreso
     if md_text and not st.session_state.get('resultado') and not st.session_state.get('audit_in_progress'):
         st.session_state.audit_in_progress = True
-        run_audit(md_text)
+        run_audit(md_text, criteria_mode, criteria_text)
         st.session_state.audit_in_progress = False
         st.rerun()
     else:
-        if st.button("🔄 Nueva Auditoría / Cambiar Opciones"):
+        if st.button("🔄 Nueva Auditoría / Forzar Recálculo"):
             st.session_state.resultado = None
             st.rerun()
 

@@ -3,6 +3,35 @@ import streamlit as st
 import os
 from backend.services.pdf_parser import convert_pdf_to_markdown
 
+def extract_text_from_file_generic(uploaded_file):
+    """Extrae el texto de un archivo sin afectar el session_state global."""
+    if not uploaded_file: return None
+    
+    file_content = uploaded_file.getvalue()
+    if not os.path.exists("temp"):
+        os.makedirs("temp")
+    
+    temp_path = os.path.join("temp", uploaded_file.name)
+    file_extension = uploaded_file.name.split('.')[-1].lower()
+    
+    with open(temp_path, "wb") as f:
+        f.write(file_content)
+    
+    extracted_text = None
+    with st.spinner(f"📂 Leyendo {uploaded_file.name}..."):
+        if file_extension == 'pdf':
+            extracted_text = convert_pdf_to_markdown(temp_path)
+        elif file_extension in ['txt', 'md']:
+            with open(temp_path, 'r', encoding='utf-8') as f:
+                extracted_text = f.read()
+        else:
+            st.error(f"❌ Formato no soportado: {file_extension}")
+            
+    if os.path.exists(temp_path):
+        os.remove(temp_path)
+        
+    return extracted_text
+
 def extract_text_from_file(uploaded_file):
     """Extrae el texto del archivo subido (PDF, TXT, MD) y lo guarda en session_state"""
     import hashlib
@@ -49,7 +78,7 @@ def extract_text_from_file(uploaded_file):
             
     return st.session_state.get('md_text')
 
-def run_audit(md_text):
+def run_audit(md_text, criteria_mode="neurips", criteria_text=None):
     """Ejecuta el proceso de auditoría sobre el texto proporcionado"""
     if not md_text:
         st.error("⚠️ No hay texto para auditar.")
@@ -77,7 +106,9 @@ def run_audit(md_text):
         try:
             st.session_state.resultado = st.session_state.auditor.audit(
                 md_text, 
-                status_callback=update_status
+                status_callback=update_status,
+                criteria_mode=criteria_mode,
+                criteria_text=criteria_text
             )
             
             # Si hubo un error en la auditoría, verificamos si es por saturación

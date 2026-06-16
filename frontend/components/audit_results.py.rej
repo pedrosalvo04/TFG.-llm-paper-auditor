@@ -1,0 +1,17 @@
+diff a/frontend/components/audit_results.py b/frontend/components/audit_results.py	(rejected hunks)
+@@ -285,7 +285,7 @@ def generate_report(resultado, uploaded_file, health=None):
+     import datetime
+     fecha = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+ 
+-    reporte = f"# 🔬 Informe de Auditoría Científica - NeurIPS 2026\n\n"
++    reporte = f"# 🔬 Informe de Auditoría Científica\n\n"
+     
+     from backend.common.config import VERIFICATION_MODEL_NAME
+     
+@@ -422,5 +422,5 @@ def generate_report(resultado, uploaded_file, health=None):
+             reporte += f"- `{section}`\n"
+         reporte += "\n"
+ 
+-    reporte += f"---\n_Informe generado automáticamente por Auditor NeurIPS 2026 empleando el modelo local: {VERIFICATION_MODEL_NAME}_\n"
++    reporte += f"---\n_Informe generado automáticamente empleando el modelo local: {VERIFICATION_MODEL_NAME}_\n"
+     return reporte

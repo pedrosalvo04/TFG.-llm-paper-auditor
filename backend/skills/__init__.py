@@ -5,6 +5,7 @@ from backend.skills.base_skill import BaseSkill
 
 # Auditor Skills
 from backend.skills.auditor_skills import (
+    CriteriaExtractionSkill,
     InformationExtractionSkill,
     SectionMappingSkill,
     NeurIPSComplianceSkill,

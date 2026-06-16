@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Componente de resultados de auditoria NeurIPS 2026 - Tabla de Cumplimiento"""
+"""Componente de resultados de auditoria - Tabla de Cumplimiento"""
 import streamlit as st
 from frontend.utils.scoring import get_checklist_health
 
@@ -61,7 +61,7 @@ def _build_table_html(items):
             alert_html = '<div style="color:#fde68a;font-size:0.78rem;margin-top:5px;font-style:italic;">&#9888; Respuesta Yes sin evidencia de seccion del paper</div>'
 
         if "compensacion" in item.get("alert_msg", "").lower() or "etica" in item.get("alert_msg", "").lower():
-            alert_html += '<div style="color:#fde68a;font-size:0.78rem;margin-top:3px;font-style:italic;">&#9888; NeurIPS Code of Ethics: compensacion minima obligatoria</div>'
+            alert_html += '<div style="color:#fde68a;font-size:0.78rem;margin-top:3px;font-style:italic;">&#9888; Code of Ethics: compensacion minima obligatoria</div>'
 
         rows += f"""
         <tr style="background:{bg};border-bottom:1px solid #1f2937;">
@@ -94,7 +94,7 @@ def _build_table_html(items):
 
 
 def render_audit_results(resultado, uploaded_file):
-    """Renderiza los resultados de la auditoria NeurIPS 2026."""
+    """Renderiza los resultados de la auditoria."""
     st.success("Auditoria Finalizada")
 
     health = get_checklist_health(resultado)
@@ -104,12 +104,12 @@ def render_audit_results(resultado, uploaded_file):
     # ── VEREDICTO PRINCIPAL ──────────────────────────────────────────────────
     st.markdown("---")
     
-    st.header("Veredicto del Checklist NeurIPS 2026")
+    st.header("Veredicto del Checklist")
     if health["status"] == "valid":
         st.markdown(
             '<div style="background:#064e3b;border-left:6px solid #10b981;padding:16px 20px;border-radius:8px;">'
             '<strong style="font-size:1.15rem;color:#6ee7b7;">&#x1F7E2; Checklist Valido</strong>'
-            '<p style="color:#a7f3d0;margin:6px 0 0 0;">Todas las respuestas tienen evidencia o justificacion documentada. El checklist esta listo para NeurIPS.</p>'
+            '<p style="color:#a7f3d0;margin:6px 0 0 0;">Todas las respuestas tienen evidencia o justificacion documentada. El checklist esta listo.</p>'
             '</div>',
             unsafe_allow_html=True,
         )
@@ -215,7 +215,7 @@ def render_audit_results(resultado, uploaded_file):
 
     # ── TABLA DE CUMPLIMIENTO ────────────────────────────────────────────────
     st.markdown("---")
-    st.header("Tabla de Cumplimiento NeurIPS 2026")
+    st.header("Tabla de Cumplimiento")
     st.caption(
         "🟢 Fila verde: Cumplimiento verificado | "
         "🟠 Fila naranja: 'No' justificado o falta evidencia | "
@@ -285,7 +285,7 @@ def generate_report(resultado, uploaded_file, health=None):
     import datetime
     fecha = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    reporte = f"# 🔬 Informe de Auditoría Científica - NeurIPS 2026\n\n"
+    reporte = f"# 🔬 Informe de Auditoría Científica\n\n"
     
     # Tabla de Metadatos
     reporte += f"| Parámetro | Detalle |\n"
@@ -298,10 +298,10 @@ def generate_report(resultado, uploaded_file, health=None):
     reporte += "### 🎯 Veredicto del Checklist\n"
     if health["status"] == "valid":
         reporte += f"> **{status_label}**\n"
-        reporte += f"> Todas las respuestas obligatorias del autor cuentan con una evidencia o justificación adecuada para los revisores. El checklist está en un estado óptimo para NeurIPS 2026.\n\n"
+        reporte += f"> Todas las respuestas obligatorias del autor cuentan con una evidencia o justificación adecuada para los revisores. El checklist está en un estado óptimo.\n\n"
     else:
         reporte += f"> **{status_label}**\n"
-        reporte += f"> Se han detectado **{pending} de {total}** ítem(s) que requieren atención o justificación adicional antes del envío oficial.\n\n"
+        reporte += f"> Se han detectado **{pending} de {total}** ítem(s) que requieren atención o justificación adicional.\n\n"
 
     # Resumen de métricas de cumplimiento
     yes_count = sum(1 for i in health["items"] if "yes" in i["answer"].lower())
@@ -349,7 +349,7 @@ def generate_report(resultado, uploaded_file, health=None):
             alert_notes.append("⚠️ *Respuesta 'Yes' sin evidencia referenciada del paper*")
             
         if "compensacion" in item.get("alert_msg", "").lower() or "etica" in item.get("alert_msg", "").lower():
-            alert_notes.append("⚠️ *Código de Ética NeurIPS: Compensación obligatoria de crowdsourcing*")
+            alert_notes.append("⚠️ *Código de Ética: Compensación obligatoria de crowdsourcing*")
             
         if alert_notes:
             evidence_formatted = evidence + " <br><br> " + " <br> ".join(alert_notes)
@@ -407,7 +407,9 @@ def generate_report(resultado, uploaded_file, health=None):
     cot = info.get("thought_process")
     if cot and cot != "No disponible":
         reporte += "---\n\n## 🧠 Razonamiento de Consolidación (CoT)\n\n"
-        cot_indented = cot.replace('\n', '\n> ')
+        if isinstance(cot, list):
+            cot = "\n".join(str(item) for item in cot)
+        cot_indented = str(cot).replace('\n', '\n> ')
         reporte += f"> {cot_indented}\n\n"
 
     # Secciones Mapeadas
@@ -418,5 +420,5 @@ def generate_report(resultado, uploaded_file, health=None):
             reporte += f"- `{section}`\n"
         reporte += "\n"
 
-    reporte += "---\n_Informe generado automáticamente por Auditor NeurIPS 2026._\n"
+    reporte += "---\n_Informe generado automáticamente._\n"
     return reporte

@@ -12,6 +12,7 @@ from backend.common.config import (
 )
 from backend.common.logger import get_logger
 from backend.skills import (
+    CriteriaExtractionSkill,
     InformationExtractionSkill,
     SectionMappingSkill,
     NeurIPSComplianceSkill,
@@ -32,6 +33,12 @@ class PaperAuditor:
         # Definición del pipeline de auditoría para ejecución secuencial
         self.phases = [
             {
+                "index": 0,
+                "msg": "📑 Fase 0: Extracción de criterios personalizados...",
+                "skill": self.criteria_extraction_skill,
+                "processor": self._process_default_result
+            },
+            {
                 "index": 1,
                 "msg": "🔍 Fase 1: Extracción inicial de información clave...",
                 "skill": self.extraction_skill,
@@ -45,7 +52,7 @@ class PaperAuditor:
             },
             {
                 "index": 3,
-                "msg": "⚖️ Fase 2: Evaluación de criterios de cumplimiento NeurIPS 2026...",
+                "msg": "⚖️ Fase 2: Evaluación de criterios de cumplimiento...",
                 "skill": self.compliance_skill,
                 "processor": self._process_evaluation_result
             },
@@ -71,8 +78,10 @@ class PaperAuditor:
         self.extraction_llm = LLMClient(model_name=EXTRACTION_MODEL_NAME, generation_config=AUDIT_CONFIG)
         self.section_mapping_llm = LLMClient(model_name=EXTRACTION_MODEL_NAME, generation_config=AUDIT_CONFIG)
         self.evaluation_llm = LLMClient(model_name=EVALUATION_MODEL_NAME, generation_config=EVALUATION_CONFIG)
+        self.criteria_extraction_llm = LLMClient(model_name=EXTRACTION_MODEL_NAME, generation_config=AUDIT_CONFIG)
         
         # Skills
+        self.criteria_extraction_skill = CriteriaExtractionSkill(llm_client=self.criteria_extraction_llm)
         self.extraction_skill = InformationExtractionSkill(llm_client=self.extraction_llm)
         self.section_mapping_skill = SectionMappingSkill(llm_client=self.section_mapping_llm)
         self.compliance_skill = NeurIPSComplianceSkill(llm_client=self.evaluation_llm)
@@ -143,20 +152,28 @@ class PaperAuditor:
             except TypeError:
                 status_callback(msg)
 
-    def audit(self, paper_text, status_callback=None):
+    def audit(self, paper_text, status_callback=None, criteria_mode="neurips", criteria_text=None):
         """
         Analiza el paper usando arquitectura de skills en un pipeline multimodelo.
         Analiza el paper ejecutando el pipeline de skills definido.
         """
         caracteres = len(paper_text)
-        self._log_status(f"🚀 Iniciando auditoría con skills. Tamaño: {caracteres} caracteres.", phase_index=0, status_callback=status_callback)
+        self._log_status(f"🚀 Iniciando auditoría con skills. Tamaño: {caracteres} caracteres. Modo: {criteria_mode}", phase_index=0, status_callback=status_callback)
         start_time = time.time()
         
         try:
-            context = {'paper_text': paper_text}
+            context = {
+                'paper_text': paper_text,
+                'criteria_mode': criteria_mode,
+                'criteria_text': criteria_text
+            }
             final_result = {}
             
             for phase in self.phases:
+                # Saltar la fase de extracción de criterios si no estamos en modo free
+                if phase["skill"] == self.criteria_extraction_skill and criteria_mode != "free":
+                    continue
+                    
                 # 1. Reportar progreso
                 self._log_status(phase["msg"], phase_index=phase["index"], status_callback=status_callback)
                 

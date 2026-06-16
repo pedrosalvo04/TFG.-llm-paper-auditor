@@ -263,10 +263,9 @@ class CrossValidationSkill(BaseSkill):
         if not self.validate_context(context, required_keys):
             return {'validation_results': {}}
         
-        sota_papers = context.get('ranked_papers') or context['sota_papers']
-        self.log_execution(
-            f"📋 Usando {'ranked' if context.get('ranked_papers') else 'todos los'} papers: {len(sota_papers)}"
-        )
+        # Usamos todos los papers descargados para poder filtrar instantáneamente después
+        sota_papers = context.get('sota_papers', [])
+        self.log_execution(f"📋 Evaluando todos los papers de la búsqueda general ({len(sota_papers)}) para validación cruzada.")
         if not sota_papers:
             return {
                 'validation_results': {
