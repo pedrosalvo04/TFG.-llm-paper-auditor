@@ -39,6 +39,12 @@ graph TD
         C -- "No" --> E["❌ Error de Carga"]
     end
 
+    subgraph "1.5. Extracción Criterios (Modo Libre)"
+        CR["📄 Texto de Criterios Libres"] --> CE["🧠 CriteriaExtractionSkill"]
+        PE -. "0. criteria_extraction.md" .-> CE
+        CE --> CD["📋 Criterios Personalizados JSON"]
+    end
+
     subgraph "2. Fase de Extracción (InformationExtractionSkill)"
         D --> F["🧠 Segmentador de Secciones"]
         F --> G["📦 Fragmentos de Paper"]
@@ -54,6 +60,7 @@ graph TD
 
     subgraph "2.5. Mapeo Inteligente (SectionMappingSkill)"
         LS --> M1["🗺️ Router: Mapeo Items <-> Secciones"]
+        CD -. "Inyección (Opcional)" .-> M1
         PE -. "section_mapping.md" .-> M1
         M1 --> M2["📍 Mapa de Contexto (JSON)"]
     end
@@ -62,7 +69,8 @@ graph TD
         PY -. "get_extraction_assistance_helps" .-> N1
         L --> N1["📡 Cálculo de Ayudas/Helps (Python)"]
         
-        M2 & LS --> N3["📊 8 Pares High Context (Inyección de Texto Crudo)"]
+        M2 & LS --> N3["📊 Evaluación High Context (Pares de Items)"]
+        CD -. "Inyección (Opcional)" .-> N3
         PE -. "evaluation_high_context.md + item_rules/<item>.md" .-> N3
         
         N1 & N3 --> O["📄 Evaluación Consolidada Final"]
@@ -91,7 +99,14 @@ Para entender el flujo temporal del agente:
 
 ---
 
-## 🚀 Pipeline de Auditoría: Detalle de las 5 Fases
+## 🚀 Pipeline de Auditoría: Detalle del Pipeline de 6 Fases (Índice 0 a 5)
+
+### 0. Extracción de Criterios (`CriteriaExtractionSkill` - Condicional)
+Fase preparatoria que se ejecuta únicamente cuando el usuario activa el **Modo de Criterios Libres**.
+
+- **Inputs**: Texto libre subido por el usuario con las directrices a evaluar.
+- **Proceso**: Usa el LLM para parsear texto inestructurado y convertirlo en un diccionario estructurado clave-valor de las reglas a auditar.
+- **Outputs**: `custom_criteria`.
 
 ### 1. Extracción General (`InformationExtractionSkill`)
 Es la base del análisis. Utiliza un enfoque de **Map-Reduce** para procesar papers de cualquier longitud sin pérdida de contexto.
@@ -99,9 +114,9 @@ Es la base del análisis. Utiliza un enfoque de **Map-Reduce** para procesar pap
 - **Inputs**: 
     - `paper_text` (Texto completo extraído por Docling).
 - **Proceso**:
-    - **Fase MAP (Extracción Segmentada)**: El paper se divide en secciones lógicas. Cada segmento se envía a un LLM para extraer entidades y contexto técnico.
+    - **Fase MAP (Extracción Segmentada)**: El paper se divide en secciones lógicas usando los encabezados de Docling. Para evitar pérdida de contexto y optimizar el rendimiento, **se agrupan de forma inteligente para forzar un máximo de 4 grandes fragmentos** (apuntando a `total_chars / 4` por fragmento). Cada uno se envía a un LLM para extraer entidades y contexto.
     - **Indexación de Secciones**: Además de la extracción, esta fase ahora construye un **Diccionario de Secciones** (`paper_sections`) que vincula cada título (`# Heading`) con su texto crudo íntegro.
-    - **Fase REDUCE (Consolidación)**: Unifica las extracciones y genera el objeto maestro `extracted_info`.
+    - **Fase REDUCE (Consolidación)**: Unifica las extracciones parciales en un solo documento consolidado y genera el objeto maestro `extracted_info`.
 - **Outputs**: `extracted_info` (JSON global), `paper_sections` (Diccionario de texto crudo).
 
 ### 1.5. Mapeo de Contexto (`SectionMappingSkill`)
@@ -122,8 +137,8 @@ Realiza un análisis profundo mediante inyección dinámica de contexto y reglas
     - `extracted_info` (JSON maestro y ayudas pre-calculadas).
     - `section_mapping` y `paper_sections`.
 - **Proceso**:
-    - **Pares High Context**: Los 16 ítems se agrupan en llamadas de 2 en 2. Para cada par, se busca el texto crudo en `paper_sections` según el mapeo y **se inyecta directamente en el prompt**.
-    - **Reglas Dinámicas por Ítem**: En cada llamada se inyectan **únicamente las 2 reglas del par evaluado**, cargadas desde archivos `.md` individuales en `backend/prompts/auditor/item_rules/`. Esto evita ruido de instrucciones irrelevantes.
+    - **Evaluación High Context**: Los ítems (ya sean los 16 de NeurIPS o los personalizados) se agrupan en llamadas de 2 en 2. Para cada par, se busca el texto crudo en `paper_sections` según el mapeo y **se inyecta directamente en el prompt**.
+    - **Reglas Dinámicas**: En cada llamada se inyectan **únicamente las reglas del par evaluado**, cargadas desde archivos `.md` individuales (o desde `custom_criteria` en modo libre). Esto evita ruido de instrucciones irrelevantes.
     - **Análisis de Evidencia**: El evaluador lee el texto crudo del paper y las ayudas computadas para emitir su juicio "Yes/No".
 - **Outputs**: `evaluation` (Checklist consolidado), `evaluation_helps`.
 

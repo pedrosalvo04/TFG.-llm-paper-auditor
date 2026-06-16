@@ -185,6 +185,10 @@ class BaseSkill:
 1. Preparar contexto inicial
    └── context = {'paper_text': texto}
 
+1.5. CriteriaExtractionSkill.execute(context) (Solo Modo Libre)
+   └── Extrae criterios desde texto libre
+   └── Actualiza context con 'custom_criteria'
+
 2. InformationExtractionSkill.execute(context)
    └── Extrae info y construye mapa de secciones
    └── Actualiza context con 'extracted_info' y 'paper_sections'
@@ -243,18 +247,21 @@ class BaseSkill:
    └── Busca papers
    └── Actualiza context con 'sota_papers'
 
-5. CoverageGapAnalysisSkill.execute(context)
+5. PaperClusteringSkill.execute(context)
+   └── Agrupa y calcula similitudes
+   └── Actualiza context con clustering info
+
+6. PaperRankingSkill.execute(context)
+   └── Ordena por relevancia (top-10)
+   └── Actualiza context con 'ranked_papers'
+
+7. CoverageGapAnalysisSkill.execute(context)
    └── Analiza gaps
    └── Actualiza context con 'analisis_gaps'
 
-6. CrossValidationSkill.execute(context)
-   └── Valida resultados
-
-7. PaperRankingSkill.execute(context)
-   └── Ordena por relevancia
-
-8. PaperClusteringSkill.execute(context)
-   └── Agrupa y calcula similitudes
+8. CrossValidationSkill.execute(context)
+   └── Valida todos los papers recuperados (para caché)
+   └── Filtra validaciones al top-10 ('ranked_papers')
    └── Retorna análisis completo
 ```
 
