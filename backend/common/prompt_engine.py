@@ -39,6 +39,11 @@ def render_prompt(template: str, **kwargs) -> str:
 # AUDITOR PROMPTS
 # =======================================================
 
+def get_criteria_extraction_prompt(criteria_text: str) -> str:
+    """Prompt para extraer criterios estructurados de un texto libre."""
+    template = load_prompt("auditor", "0. criteria_extraction")
+    return render_prompt(template, criteria_text=criteria_text)
+
 def get_extraction_prompt(paper_text: str) -> str:
     """Prompt monolítico (legacy/fallback)."""
     template = load_prompt("auditor", "extraction")
@@ -198,10 +203,37 @@ def get_extraction_assistance_helps(info: dict) -> dict:
     
     return helps
 
-def get_section_mapping_prompt(section_titles: list) -> str:
+def get_section_mapping_prompt(section_titles: list, criteria_dict: dict = None, criteria_mode="neurips") -> str:
     """Genera el prompt para mapear títulos de secciones a items de alto contexto."""
     template = load_prompt("auditor", "3a. section_mapping")
-    return render_prompt(template, section_titles="\n".join(f"- {title}" for title in section_titles))
+    
+    if criteria_mode == "neurips" or not criteria_dict:
+        system_role = "NeurIPS 2026 Senior Area Chair"
+        checklist_name = "NeurIPS 2026 checklist items"
+        standards_name = "NeurIPS 2026 Standards"
+        
+        from backend.common.neurips_criteria import NEURIPS_CRITERIA_LITERAL
+        criteria_list = "\n".join(f"- {k}" for k in NEURIPS_CRITERIA_LITERAL.keys())
+        criteria_mapping = "\n".join(f"- {k}: {v}" for k, v in NEURIPS_CRITERIA_LITERAL.items())
+        num_items = len(NEURIPS_CRITERIA_LITERAL)
+    else:
+        system_role = "Senior AI Auditor"
+        checklist_name = "custom evaluation criteria"
+        standards_name = "Custom Standards"
+        
+        criteria_list = "\n".join(f"- {k}" for k in criteria_dict.keys())
+        criteria_mapping = "\n".join(f"- {k}: {v}" for k, v in criteria_dict.items())
+        num_items = len(criteria_dict)
+        
+    return render_prompt(template,
+        system_role=system_role,
+        checklist_name=checklist_name,
+        standards_name=standards_name,
+        criteria_list=criteria_list,
+        criteria_mapping=criteria_mapping,
+        num_items=num_items,
+        section_titles="\n".join(f"- {title}" for title in section_titles)
+    )
 
 
 def load_item_rule(item_key: str) -> str:
@@ -218,13 +250,22 @@ def load_item_rule(item_key: str) -> str:
         return ""
 
 
-def get_evaluation_high_context_prompt(extracted_info: dict, items_to_evaluate: list, mapped_sections_text: str, criteria_literal_text: str = "") -> str:
+def get_evaluation_high_context_prompt(extracted_info: dict, items_to_evaluate: list, mapped_sections_text: str, criteria_literal_text: str = "", criteria_mode="neurips") -> str:
     """Genera el prompt para items de alto contexto.
     Inyecta dinámicamente SOLO las reglas de los items del batch actual,
     cargadas desde backend/prompts/auditor/item_rules/<item>.md."""
     template = load_prompt("auditor", "3c. evaluation_high_context")
 
-    helps = get_extraction_assistance_helps(extracted_info)
+    if criteria_mode == "neurips":
+        helps = get_extraction_assistance_helps(extracted_info)
+        system_role = "Senior Area Chair for NeurIPS 2026"
+        checklist_name = "NeurIPS 2026 Paper Checklist"
+        criteria_source = "NEURIPS 2026 OFFICIAL CRITERIA"
+    else:
+        helps = {}
+        system_role = "Senior AI Auditor"
+        checklist_name = "Custom Evaluation Checklist"
+        criteria_source = "CUSTOM OFFICIAL CRITERIA"
 
     # Cargar y concatenar SOLO las reglas de los 2 items de este batch
     per_item_rules = "\n\n".join(
@@ -233,6 +274,9 @@ def get_evaluation_high_context_prompt(extracted_info: dict, items_to_evaluate: 
     )
 
     return render_prompt(template,
+        system_role=system_role,
+        checklist_name=checklist_name,
+        criteria_source=criteria_source,
         items_to_evaluate=json.dumps(items_to_evaluate, indent=2),
         extracted_info_json=json.dumps(extracted_info, indent=2, ensure_ascii=False),
         mapped_sections_text=mapped_sections_text,

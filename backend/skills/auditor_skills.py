@@ -9,12 +9,49 @@ from backend.common.prompt_engine import (
     get_evaluation_high_context_prompt,
     get_map_extraction_prompt,
     get_reduce_extraction_prompt,
-    get_extraction_assistance_helps
+    get_extraction_assistance_helps,
+    get_criteria_extraction_prompt
 )
 from backend.common.neurips_criteria import NEURIPS_CRITERIA_LITERAL
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
+
+class CriteriaExtractionSkill(BaseSkill):
+    """Skill para extraer criterios de evaluación desde un texto libre subido por el usuario"""
+    
+    def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        # Si no está en modo libre, simplemente no hace nada
+        if context.get('criteria_mode') != 'free':
+            return {'custom_criteria': None}
+            
+        criteria_text = context.get('criteria_text')
+        if not criteria_text:
+            self.log_execution("No se proporcionó texto de criterios en modo libre", level="warning")
+            return {'custom_criteria': {}}
+            
+        if not self.llm_client:
+            self.log_execution("No hay cliente LLM configurado para CriteriaExtractionSkill", level="error")
+            return {'custom_criteria': {}}
+            
+        self.log_execution("📑 [Fase 0] Extrayendo criterios personalizados del documento subido...")
+        prompt = get_criteria_extraction_prompt(criteria_text)
+        
+        try:
+            response = self.llm_client.generate(prompt)
+            raw_text = response.text.strip()
+            custom_criteria = self.parse_json_response(raw_text)
+            
+            if custom_criteria and isinstance(custom_criteria, dict):
+                self.log_execution(f"✅ Extraídos {len(custom_criteria)} criterios personalizados.")
+                return {'custom_criteria': custom_criteria}
+            else:
+                self.log_execution("⚠️ El modelo no devolvió un diccionario JSON válido para los criterios.", level="warning")
+                return {'custom_criteria': {}}
+                
+        except Exception as e:
+            self.log_execution(f"❌ Error en la extracción de criterios: {str(e)}", level="error")
+            return {'custom_criteria': {}}
 
 class InformationExtractionSkill(BaseSkill):
     """Skill para extraer información estructurada del paper usando LLM"""
@@ -198,8 +235,15 @@ class SectionMappingSkill(BaseSkill):
             
         self.log_execution("🗺️ [Fase 1.5] Mapeando títulos de Docling con items de alto contexto...")
         
+        criteria_mode = context.get('criteria_mode', 'neurips')
+        custom_criteria = context.get('custom_criteria', {})
+        
         section_titles = list(paper_sections_dict.keys())
-        prompt = get_section_mapping_prompt(section_titles)
+        prompt = get_section_mapping_prompt(
+            section_titles, 
+            criteria_dict=custom_criteria, 
+            criteria_mode=criteria_mode
+        )
         
         try:
             response = self.llm_client.generate(prompt)
@@ -235,17 +279,24 @@ class NeurIPSComplianceSkill(BaseSkill):
         final_evaluation = {}
         helps = get_extraction_assistance_helps(extracted_info)
         
-        # EVALUACIÓN HIGH CONTEXT EN PAREJAS (16 Items)
-        all_items = [
-            'claims', 'limitations', 
-            'theory_assumptions_proofs', 'experimental_result_reproducibility',
-            'open_access_data_code', 'experimental_setting_details',
-            'experiment_statistical_significance', 'experiments_compute_resource',
-            'code_of_ethics', 'broader_impacts',
-            'safeguards', 'licenses',
-            'assets', 'crowdsourcing_human_subjects',
-            'irb_approvals', 'declaration_llm_usage'
-        ]
+        # EVALUACIÓN HIGH CONTEXT EN PAREJAS (Dinámico)
+        criteria_mode = context.get('criteria_mode', 'neurips')
+        custom_criteria = context.get('custom_criteria') or {}
+        
+        if criteria_mode == 'free' and custom_criteria:
+            all_items = list(custom_criteria.keys())
+            self.log_execution(f"📊 Evaluando {len(all_items)} ítems personalizados.")
+        else:
+            all_items = [
+                'claims', 'limitations', 
+                'theory_assumptions_proofs', 'experimental_result_reproducibility',
+                'open_access_data_code', 'experimental_setting_details',
+                'experiment_statistical_significance', 'experiments_compute_resource',
+                'code_of_ethics', 'broader_impacts',
+                'safeguards', 'licenses',
+                'assets', 'crowdsourcing_human_subjects',
+                'irb_approvals', 'declaration_llm_usage'
+            ]
         
         groups = [all_items[i:i + 2] for i in range(0, len(all_items), 2)]
         
@@ -262,8 +313,11 @@ class NeurIPSComplianceSkill(BaseSkill):
             # Construir texto inyectado
             injected_text = ""
             for title in relevant_titles:
-                if title in paper_sections:
-                    injected_text += f"\n\n=== {title} ===\n{paper_sections[title]}"
+                title_clean = title.strip().lower()
+                for real_title, content in paper_sections.items():
+                    real_title_clean = real_title.strip().lower()
+                    if title_clean in real_title_clean or real_title_clean in title_clean:
+                        injected_text += f"\n\n=== {real_title} ===\n{content}"
             
             if not injected_text.strip():
                 injected_text = "No se encontraron secciones específicas mapeadas para estos items. Revisa el resumen general."
@@ -271,26 +325,30 @@ class NeurIPSComplianceSkill(BaseSkill):
             # Extraer textos literales de NeurIPS para los items a evaluar
             criteria_literal_list = []
             for item in group:
-                if item in NEURIPS_CRITERIA_LITERAL:
-                    criteria_literal_list.append(NEURIPS_CRITERIA_LITERAL[item])
-                
-                # Inyectar el texto completo del Código de Ética si corresponde
-                if item == "code_of_ethics":
-                    import os
-                    ethics_path = os.path.join(os.path.dirname(__file__), '..', '..', 'code of ethics.md')
-                    try:
-                        with open(ethics_path, 'r', encoding='utf-8') as f:
-                            ethics_text = f.read()
-                            criteria_literal_list.append("--- NEURIPS FULL CODE OF ETHICS ---\n" + ethics_text)
-                            self.log_execution("📜 Código de Ética completo inyectado en el prompt.")
-                    except Exception as e:
-                        self.log_execution(f"⚠️ No se pudo leer 'code of ethics.md': {e}", level="warning")
+                if criteria_mode == 'free' and custom_criteria:
+                    criteria_literal_list.append(f"CRITERION '{item}': {custom_criteria.get(item, '')}")
+                else:
+                    if item in NEURIPS_CRITERIA_LITERAL:
+                        criteria_literal_list.append(NEURIPS_CRITERIA_LITERAL[item])
+                    
+                    # Inyectar el texto completo del Código de Ética si corresponde
+                    if item == "code_of_ethics":
+                        import os
+                        ethics_path = os.path.join(os.path.dirname(__file__), '..', '..', 'code of ethics.md')
+                        try:
+                            with open(ethics_path, 'r', encoding='utf-8') as f:
+                                ethics_text = f.read()
+                                criteria_literal_list.append("--- NEURIPS FULL CODE OF ETHICS ---\n" + ethics_text)
+                                self.log_execution("📜 Código de Ética completo inyectado en el prompt.")
+                        except Exception as e:
+                            self.log_execution(f"⚠️ No se pudo leer 'code of ethics.md': {e}", level="warning")
             
             criteria_literal_text = "\n\n".join(criteria_literal_list)
             
-            self.log_execution(f"🔍 Items {group}: Inyectando {len(criteria_literal_list)} descripciones literales de NeurIPS.")
+            label = "personalizados" if criteria_mode == 'free' else "de NeurIPS"
+            self.log_execution(f"🔍 Items {group}: Inyectando {len(criteria_literal_list)} descripciones literales {label}.")
                 
-            prompt = get_evaluation_high_context_prompt(extracted_info, group, injected_text, criteria_literal_text)
+            prompt = get_evaluation_high_context_prompt(extracted_info, group, injected_text, criteria_literal_text, criteria_mode)
             try:
                 response = self.llm_client.generate(prompt)
                 raw_text = response.text.strip()
@@ -361,29 +419,19 @@ class MetadataAggregationSkill(BaseSkill):
         evaluation = context.get('evaluation', {})
         
         result = {
-            "claims": evaluation.get('claims', {}),
-            "limitations": evaluation.get('limitations', {}),
-            "theory_assumptions_proofs": evaluation.get('theory_assumptions_proofs', {}),
-            "experimental_result_reproducibility": evaluation.get('experimental_result_reproducibility', {}),
-            "open_access_data_code": evaluation.get('open_access_data_code', {}),
-            "experimental_setting_details": evaluation.get('experimental_setting_details', {}),
-            "experiment_statistical_significance": evaluation.get('experiment_statistical_significance', {}),
-            "experiments_compute_resource": evaluation.get('experiments_compute_resource', {}),
-            "code_of_ethics": evaluation.get('code_of_ethics', {}),
-            "broader_impacts": evaluation.get('broader_impacts', {}),
-            "safeguards": evaluation.get('safeguards', {}),
-            "licenses": evaluation.get('licenses', {}),
-            "assets": evaluation.get('assets', {}),
-            "crowdsourcing_human_subjects": evaluation.get('crowdsourcing_human_subjects', {}),
-            "irb_approvals": evaluation.get('irb_approvals', {}),
-            "declaration_llm_usage": evaluation.get('declaration_llm_usage', {}),
             "informacion_extraida": context.get('extracted_info', {}),
             "metricas": context.get('metrics', {}),
             "general_analysis_map": context.get('general_analysis_map', []),
             "general_analysis_reduce": context.get('general_analysis_reduce', {}),
             "hybrid_triage_fragments": context.get('hybrid_triage_fragments', []),
-            "evaluation_helps": context.get('evaluation_helps', {})
+            "evaluation_helps": context.get('evaluation_helps', {}),
+            "criteria_mode": context.get('criteria_mode', 'neurips'),
+            "custom_criteria": context.get('custom_criteria', {})
         }
+        
+        # Añadir todos los resultados de evaluación dinámicamente
+        for k, v in evaluation.items():
+            result[k] = v
         
         self.log_execution("✅ Resultado final construido correctamente")
         return result

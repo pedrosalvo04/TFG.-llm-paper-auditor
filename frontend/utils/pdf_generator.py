@@ -73,6 +73,11 @@ def md_to_reportlab_html(text):
     """
     if not text or text == "—":
         return "—"
+        
+    if isinstance(text, list):
+        text = " ".join(str(x) for x in text)
+    else:
+        text = str(text)
     
     # Escapar caracteres HTML reservados que romperían el parseador de ReportLab
     text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")

@@ -64,7 +64,16 @@ def get_checklist_health(evaluation: dict) -> dict:
     items = []
     pending_count = 0
 
-    for key in CHECKLIST_KEYS:
+    criteria_mode = evaluation.get("criteria_mode", "neurips")
+    if criteria_mode == "neurips":
+        keys_to_evaluate = CHECKLIST_KEYS
+        labels = CHECKLIST_LABELS
+    else:
+        custom_criteria = evaluation.get("custom_criteria", {})
+        keys_to_evaluate = list(custom_criteria.keys())
+        labels = {k: k.replace("_", " ").title() for k in keys_to_evaluate}
+
+    for key in keys_to_evaluate:
         val = evaluation.get(key, {})
         answer_raw = (val.get("answer") or "").strip()
         answer_norm = answer_raw.lower()
@@ -115,7 +124,7 @@ def get_checklist_health(evaluation: dict) -> dict:
 
         items.append({
             "key": key,
-            "label": CHECKLIST_LABELS.get(key, key),
+            "label": labels.get(key, key),
             "answer": answer_raw if answer_raw else "—",
             "evidence": display_evidence,
             "justification": justification,

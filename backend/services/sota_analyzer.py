@@ -105,9 +105,30 @@ class SotaAnalyzer:
         gap_result = self.gap_skill.execute(context)
         context.update(gap_result)
 
-        # Paso 5: Validación cruzada — usa 'ranked_papers' (top-10)
+        # Paso 5: Validación cruzada — se ejecuta sobre todos para cachear
         validation_result = self.validation_skill.execute(context)
-        final_results = validation_result.get('validation_results', {})
+        cached_validation = validation_result.get('validation_results', {})
+        context['cached_validation'] = cached_validation
+        
+        final_results = dict(cached_validation)
+        
+        # Filtrar para devolver solo los del top-10 inicial (ranked_papers)
+        ranked_papers = context.get('ranked_papers', [])
+        ranked_titles_lower = [p['title'].lower().strip() for p in ranked_papers]
+        
+        def is_ranked(t):
+            t_omit = t.lower().strip()
+            for rt in ranked_titles_lower:
+                if t_omit in rt or rt in t_omit:
+                    return True
+            return False
+
+        final_results['papers_analizados'] = [
+            p for p in final_results.get('papers_analizados', []) if is_ranked(p.get('titulo', ''))
+        ]
+        final_results['papers_omitidos'] = [
+            p for p in final_results.get('papers_omitidos', []) if is_ranked(p.get('titulo', ''))
+        ]
 
         # Metadata
         thematic_data = context.get('thematic_data', {})
@@ -160,13 +181,27 @@ class SotaAnalyzer:
         ranking_result = self.ranking_skill.execute(context)
         context.update(ranking_result)
 
-        # Paso 4: Analizar gaps (ahora con el nuevo top-10)
-        gap_result = self.gap_skill.execute(context)
-        context.update(gap_result)
+        # Paso 4 y 5: Analizar gaps y Validación cruzada (YA NO ES NECESARIO REEJECUTAR)
+        # Reutilizamos los resultados originales y filtramos localmente para respuesta instantánea.
+        cached_validation = context.get('cached_validation', {})
+        final_results = dict(cached_validation)
+        
+        ranked_papers = context.get('ranked_papers', [])
+        ranked_titles_lower = [p['title'].lower().strip() for p in ranked_papers]
+        
+        def is_ranked(t):
+            t_omit = t.lower().strip()
+            for rt in ranked_titles_lower:
+                if t_omit in rt or rt in t_omit:
+                    return True
+            return False
 
-        # Paso 5: Validación cruzada
-        validation_result = self.validation_skill.execute(context)
-        final_results = validation_result.get('validation_results', {})
+        final_results['papers_analizados'] = [
+            p for p in final_results.get('papers_analizados', []) if is_ranked(p.get('titulo', ''))
+        ]
+        final_results['papers_omitidos'] = [
+            p for p in final_results.get('papers_omitidos', []) if is_ranked(p.get('titulo', ''))
+        ]
 
         # Reconstruir Metadata
         thematic_data = context.get('thematic_data', {})
@@ -185,9 +220,19 @@ class SotaAnalyzer:
             "target_cluster_id": target_cluster_id,
         }
 
-        # Mantener los resultados del clustering original
+        # Mantener los resultados del clustering original, pero filtrar visualización si es necesario
+        user_similarities = context.get("user_similarities", [])
+        if target_cluster_id != "all":
+            target_cluster_str = str(target_cluster_id)
+            # Encontrar los títulos que pertenecen al cluster
+            filtered_titles = {
+                p.get('title') for p in sota_papers 
+                if str(p.get('cluster_id', '')) == target_cluster_str
+            }
+            user_similarities = [us for us in user_similarities if us.get('title') in filtered_titles]
+
         final_results["clustering"] = {
-            "user_similarities": context.get("user_similarities", []),
+            "user_similarities": user_similarities,
             "diversity_score": context.get("diversity_score"),
             "cluster_summary": context.get("cluster_summary", {}),
         }
