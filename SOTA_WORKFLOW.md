@@ -85,14 +85,14 @@ graph TD
 3. **Llamada API SS**: Recupera candidatos reales de la web científica.
 4. **`PaperClusteringSkill`**: Embebe abstracts, calcula similitud coseno, agrupa por clusters usando KMeans y nombra descriptivamente con el LLM.
 5. **`PaperRankingSkill`**: Selecciona el "Top-10" usando el criterio elegido (Citas, Similitud o LLM) y permite filtrar por un clúster específico.
-6. **`3. gap_analysis.md`**: Compara la bibliografía del autor con los temas del paper, enfocándose en el top-10.
-7. **`4. cross_validation.md`**: Cruza los resultados de búsqueda (top-10) con el paper para detectar omisiones específicas.
+6. **`3. gap_analysis.md`**: Compara la bibliografía y el texto del autor con los temas técnicos extraídos en la Fase 1.
+7. **`4. cross_validation.md`**: Cruza TODOS los resultados de búsqueda (hasta 20) con el paper para cachear resultados, y luego filtra la salida final para mostrar solo las omisiones del top-10 seleccionado.
 
 *Nota: La arquitectura permite **Re-análisis en Caché**. Si el usuario cambia el criterio de ranking o el clúster desde la UI, el sistema salta directamente al paso 5 recuperando los datos en memoria, actualizándose instantáneamente (ahorra ~15-20s).*
 
 ---
 
-## 🚀 Pipeline SOTA: Detalle de las 6 Fases
+## 🚀 Pipeline SOTA: Detalle de las 7 Fases
 
 ### 1. Cobertura Temática (`ThematicCoverageSkill`)
 Analiza el "ADN" técnico del paper para guiar las fases posteriores.
@@ -189,9 +189,10 @@ El "juez final" que decide qué papers del SOTA real faltan en el artículo.
     - `coverage_gaps` (Gaps detectados en la Fase 4).
     - `4. cross_validation.md` (Plantilla para validación cruzada final).
 - **Proceso**:
-    - Compara los títulos y abstracts de los papers encontrados contra el texto completo del manuscrito analizado.
+    - Compara los títulos y abstracts de **todos los papers encontrados (hasta 20)** contra el texto completo del manuscrito analizado.
     - Filtra falsos positivos (papers que sí están citados pero con nombres ligeramente distintos).
     - Genera una justificación técnica de por qué cada paper omitido es relevante.
+    - **Filtrado final**: Extrae del caché únicamente las validaciones correspondientes al top-10 actual (`ranked_papers`) para enviarlas a la interfaz gráfica.
 - **Outputs**: `validation_results` (Papers omitidos, nivel de cobertura, conclusión final).
 - **Modelo**: `Gemini 3.1 Flash Lite`.
 
