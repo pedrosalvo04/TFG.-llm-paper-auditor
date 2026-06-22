@@ -7,7 +7,6 @@ from backend.skills.sota_skills import (
     ThematicCoverageSkill,
     QueryGenerationSkill,
     SemanticScholarSearchSkill,
-    CoverageGapAnalysisSkill,
     CrossValidationSkill,
     PaperRankingSkill
 )
@@ -26,8 +25,7 @@ class SotaAnalyzer:
     3. SemanticScholarSearchSkill – recupera hasta 20 papers
     3b. PaperClusteringSkill    – clustering semántico + similitud vs usuario
     3c. PaperRankingSkill       – selecciona top-10 por criterio configurable
-    4. CoverageGapAnalysisSkill – detecta gaps bibliográficos
-    5. CrossValidationSkill     – validación cruzada sobre el top-10
+    4. CrossValidationSkill     – validación cruzada sobre el top-10
     """
 
     def __init__(self):
@@ -39,7 +37,6 @@ class SotaAnalyzer:
         self.search_skill = SemanticScholarSearchSkill()
         self.clustering_skill = PaperClusteringSkill(llm_client=llm_client)
         self.ranking_skill = PaperRankingSkill(llm_client=llm_client)
-        self.gap_skill = CoverageGapAnalysisSkill(llm_client=llm_client)
         self.validation_skill = CrossValidationSkill(llm_client=llm_client)
 
         logger.info("✅ Analizador SOTA inicializado con skills")
@@ -101,11 +98,7 @@ class SotaAnalyzer:
         ranking_result = self.ranking_skill.execute(context)
         context.update(ranking_result)
 
-        # Paso 4: Analizar gaps de cobertura
-        gap_result = self.gap_skill.execute(context)
-        context.update(gap_result)
-
-        # Paso 5: Validación cruzada — se ejecuta sobre todos para cachear
+        # Paso 4: Validación cruzada — se ejecuta sobre todos para cachear
         validation_result = self.validation_skill.execute(context)
         cached_validation = validation_result.get('validation_results', {})
         context['cached_validation'] = cached_validation
@@ -181,7 +174,7 @@ class SotaAnalyzer:
         ranking_result = self.ranking_skill.execute(context)
         context.update(ranking_result)
 
-        # Paso 4 y 5: Analizar gaps y Validación cruzada (YA NO ES NECESARIO REEJECUTAR)
+        # Paso 4: Validación cruzada (YA NO ES NECESARIO REEJECUTAR)
         # Reutilizamos los resultados originales y filtramos localmente para respuesta instantánea.
         cached_validation = context.get('cached_validation', {})
         final_results = dict(cached_validation)

@@ -313,15 +313,6 @@ def get_query_generation_prompt(subtemas_str: str, areas_str: str, paper_text: s
         paper_text_snippet=paper_text[:8000]
     )
 
-def get_coverage_gap_prompt(paper_text: str, subtemas_str: str) -> str:
-    """Prompt para analizar gaps de cobertura bibliográfica."""
-    template = load_prompt("sota", "3. gap_analysis")
-    return render_prompt(template,
-        subtemas_str=subtemas_str,
-        paper_text_start=paper_text[:5000],
-        paper_text_refs=paper_text[-10000:]
-    )
-
 def get_cross_validation_prompt(paper_text: str, sota_context: str, subtemas_str: str) -> str:
     """Prompt para validación cruzada y detección de omisiones."""
     template = load_prompt("sota", "4. cross_validation")

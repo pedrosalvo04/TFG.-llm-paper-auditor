@@ -19,7 +19,6 @@ from backend.skills.sota_skills import (
     ThematicCoverageSkill,
     QueryGenerationSkill,
     SemanticScholarSearchSkill,
-    CoverageGapAnalysisSkill,
     CrossValidationSkill,
     PaperRankingSkill
 )
@@ -37,7 +36,6 @@ __all__ = [
     'ThematicCoverageSkill',
     'QueryGenerationSkill',
     'SemanticScholarSearchSkill',
-    'CoverageGapAnalysisSkill',
     'CrossValidationSkill',
     'PaperRankingSkill',
     'PaperClusteringSkill',

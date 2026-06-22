@@ -14,7 +14,6 @@ from backend.common.config import (
 from backend.common.prompt_engine import (
     get_thematic_coverage_prompt,
     get_query_generation_prompt,
-    get_coverage_gap_prompt,
     get_cross_validation_prompt
 )
 
@@ -198,49 +197,6 @@ class SemanticScholarSearchSkill(BaseSkill):
         return {'sota_papers': sorted_papers}
 
 
-class CoverageGapAnalysisSkill(BaseSkill):
-    """
-    Skill para analizar gaps de cobertura bibliográfica.
-    
-    Identifica qué subtemas tienen poca o nula cobertura en las
-    referencias del paper analizado.
-    """
-    
-    def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Analiza gaps de cobertura.
-        
-        Args:
-            context: Debe contener 'paper_text' y 'thematic_data'.
-        
-        Returns:
-            Diccionario con 'coverage_gaps'.
-        """
-        if not self.validate_context(context, ['paper_text', 'thematic_data']):
-            return {'coverage_gaps': {}}
-        
-        if not self.llm_client:
-            self.log_execution("No hay cliente LLM configurado", level="error")
-            return {'coverage_gaps': {}}
-        
-        self.log_execution("📉 Analizando gaps de cobertura bibliográfica...")
-        
-        paper_text = context['paper_text']
-        thematic_data = context['thematic_data']
-        subtemas_str = ", ".join(thematic_data.get("subtemas", []))
-        
-        prompt = get_coverage_gap_prompt(paper_text, subtemas_str)
-        
-        try:
-            response = self.llm_client.generate(prompt)
-            coverage_gaps = self.parse_json_response(response.text)
-            self.log_execution(f"✅ Gaps identificados: {len(coverage_gaps.get('areas_debiles', []))}")
-            return {'coverage_gaps': coverage_gaps}
-        except Exception as e:
-            self.log_execution(f"❌ Error analizando gaps: {str(e)}", level="error")
-            return {'coverage_gaps': {"areas_debiles": []}}
-
-
 class CrossValidationSkill(BaseSkill):
     """
     Skill para validación cruzada y detección de omisiones.
@@ -254,7 +210,7 @@ class CrossValidationSkill(BaseSkill):
         Realiza validación cruzada.
         
         Args:
-            context: Debe contener 'paper_text', 'sota_papers', 'thematic_data', 'coverage_gaps'.
+            context: Debe contener 'paper_text', 'sota_papers', 'thematic_data'.
         
         Returns:
             Diccionario con 'validation_results'.
@@ -283,7 +239,6 @@ class CrossValidationSkill(BaseSkill):
         
         paper_text = context['paper_text']
         thematic_data = context['thematic_data']
-        coverage_gaps = context.get('coverage_gaps', {"areas_debiles": []})
         
         # Mostrar los primeros papers para debugging
         for i, p in enumerate(sota_papers[:3]):
@@ -308,9 +263,6 @@ class CrossValidationSkill(BaseSkill):
             self.log_execution(
                 f"✅ Papers omitidos identificados: {len(validation_results.get('papers_omitidos', []))}"
             )
-            
-            # Añadir análisis de gaps de cobertura
-            validation_results["cobertura_tematica"] = coverage_gaps
             
             # Añadir lista de papers analizados para referencia
             validation_results["papers_analizados"] = [
