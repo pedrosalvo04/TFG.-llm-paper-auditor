@@ -1,0 +1,2344 @@
+{
+    "auditorias_neurips_2026": [
+        {
+            "paper": "Paper 1: Gemma 2",
+            "items": [
+                {
+                    "item": "1. Claims",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "In the Introduction, the authors claim: 'Overall, Gemma 2 significantly advances state-of-the-art performance...'",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Identifica las afirmaciones y las vincula con las Tablas 6-11, citando textualmente: \"Gemma 2 significantly advances state-of-the-art performance\"."
+                },
+                {
+                    "item": "2. Limitations",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Section 9 explicitly states: 'there are still many limitations... future research is required to investigate and improve factuality...'",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Cita con precisión la Sección 9 sobre factualidad, extrayendo: \"there are still many limitations to these models\"."
+                },
+                {
+                    "item": "3. Theory, Assumptions & Proofs",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "The paper focuses on empirical model architecture, scaling laws, and performance evaluations.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Reconoce impecablemente que es un reporte técnico empírico sin postulados teóricos."
+                },
+                {
+                    "item": "4. Experimental Result Reproducibility",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "The paper fails to provide direct access to the authors' own implementation code, training scripts, or model weights.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Falso negativo flagrante. La IA dicta 'No' afirmando que ocultan pesos, cuando la primera página reza: \"We release all our models to the community\"."
+                },
+                {
+                    "item": "5. Open Access to Data and Code",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "The paper fails to provide a URL or direct instructions for accessing the authors' original code, training data, or model weights.",
+                    "mi_valoracion": "Medianamente correcto",
+                    "mi_justificacion": "El veredicto es válido por la falta de código original, pero arrastra la falsedad del ítem 4 repitiendo que no hay pesos."
+                },
+                {
+                    "item": "6. Experimental Setting",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "The paper provides comprehensive details regarding... specific hyperparameters such as soft_cap values (50.0).",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extracción soberbia de hiperparámetros oscuros. Cita correctamente: \"soft_cap values (50.0 for self-attention, 30.0 for final layer)\"."
+                },
+                {
+                    "item": "7. Experiment Statistical Significance",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Reports results for human-participant studies with explicit confidence intervals, such as 'Mean amount donated: £3.72 ± £1.07'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Excelente búsqueda. Descubre que en la Sección 8.4 usan intervalos estadísticos: \"95% bootstrapped confidence intervals are indicated by ± figures\"."
+                },
+                {
+                    "item": "8. Compute Resource",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Provides detailed hardware specifications, including TPUv4, TPUv5e, and TPUv5p... total carbon footprint as '1247.61 tCO2eq'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extrae trazabilidad de hardware y coste con exactitud: \"1247.61 tCO2eq\"."
+                },
+                {
+                    "item": "9. Code of Ethics",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Includes a dedicated section '8. Responsibility, Safety, Security' which explicitly references the NeurIPS-aligned ethical framework.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Deduce positivamente que la extensa sección 8 suple la burocracia sin exigir la palabra literal 'Ethics'."
+                },
+                {
+                    "item": "10. Broader Impacts",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Explicitly identify potential negative societal impacts... risk of malicious uses, such as the creation of deepfake imagery.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Mapea análisis de impacto social acertadamente. Cita: \"risk of malicious uses, such as the creation of deepfake imagery\"."
+                },
+                {
+                    "item": "11. Safeguards",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Section 8.2 states: 'We undertook considerable safety filtering... we also use both SFT and RLHF to steer the model'.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Confusión conceptual. Toma el alineamiento de pesos (\"use both SFT and RLHF\") como una salvaguarda de despliegue/acceso, lo cual es erróneo para un modelo Open Weights."
+                },
+                {
+                    "item": "12. Licenses",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "The pre-computed analysis confirms the inclusion of MIT-licensed components.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Alucinación completa. Afirma categóricamente el uso de la \"MIT License\", pero esta palabra no existe ni una vez en el documento original."
+                },
+                {
+                    "item": "13. Assets",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "The paper includes detailed sections... which serve as the structured templates required by NeurIPS.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Reconoce pragmáticamente que la Sección 8 ejerce la función de una Model Card estructurada."
+                },
+                {
+                    "item": "14. Crowdsourcing",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Conducted 'Human-participant studies on Prolific' involving '100 human participants'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extrae con exactitud la plataforma y muestra: \"studies on Prolific... with a sample of 100 human participants\"."
+                },
+                {
+                    "item": "15. IRB Approvals",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "The paper explicitly mentions conducting human-participant studies on Prolific.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Fallo evaluativo. Justifica 'Yes' asumiendo erróneamente que confesar haber usado sujetos de Prolific equivale a poseer o declarar el permiso de un comité ético IRB."
+                },
+                {
+                    "item": "16. LLM Usage",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "The paper states: 'We also run distillation from the teacher on the student's distribution.'",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Acierta en la extracción metodológica. Cita: \"run distillation from the teacher on the student's distribution\"."
+                }
+            ]
+        },
+        {
+            "paper": "Paper 2: Phi-3",
+            "items": [
+                {
+                    "item": "1. Claims",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "The paper states: 'Phi-3-mini is a 3.8B parameter language model... that achieves performance levels comparable to models like Mixtral 8x7B'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extracción y asociación exitosa comparativa. Cita: \"achieves performance levels comparable to models like Mixtral 8x7B\"."
+                },
+                {
+                    "item": "2. Limitations",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "These sections discuss issues such as 'Significant performance drop when testing the 128K context window'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Localiza debilidades reales y específicas. Cita: \"Significant performance drop when testing the 128K context window\"."
+                },
+                {
+                    "item": "3. Theory, Assumptions & Proofs",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "The paper is a technical report focused on the development, training methodology, and empirical evaluation.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Veredicto sólidamente respaldado; entiende que el artículo es empírico."
+                },
+                {
+                    "item": "4. Reproducibility",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Does not provide a direct link to the authors' own implementation code or the specific model weights used.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Castiga con 'No' la falta de repositorios exactos pese a las descripciones vastas de la arquitectura."
+                },
+                {
+                    "item": "5. Open Access",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Fails to provide a URL or direct access to the authors' own original training code.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Penalización concurrente y justificada al Ítem 4."
+                },
+                {
+                    "item": "6. Experimental Setting",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Lists architectural choices like 'Grouped-query attention', 'GEGLU' activations, and 'Maximal Update Parametrization (muP)'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extrae parametrización avanzada. Cita: \"Maximal Update Parametrization (muP)\"."
+                },
+                {
+                    "item": "7. Experiment Statistical Significance",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Reports benchmark results as single point estimates without providing error bars or confidence intervals.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Rigor implacable, negando validación empírica ante la falta de medidas de variabilidad."
+                },
+                {
+                    "item": "8. Compute Resource",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Mentions hardware used for deployment testing (iPhone 14) but fails to provide the compute resources used for the training experiments.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Distingue impecablemente el hardware de inferencia del de entrenamiento. Cita la falta de reporte de \"horas de GPU\"."
+                },
+                {
+                    "item": "9. Code of Ethics",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "References adherence to 'Microsoft's responsible AI principles' and includes dedicated sections on 'Safety'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Acepta lógicamente que el análisis extenso de alineamiento corporativo atiende al requerimiento general."
+                },
+                {
+                    "item": "10. Broader Impacts",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Includes comprehensive discussions on safety and robustness alignment, red-teaming...",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Asocia los esfuerzos corporativos de red-teaming como cumplimiento de evaluación de impacto."
+                },
+                {
+                    "item": "11. Safeguards",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Detail the implementation of safety alignment, including Supervised Fine-Tuning (SFT) on safety datasets, Direct Preference Optimization (DPO).",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Fallo crítico conceptual. Vuelve a confundir 'SFT y DPO' (alineamiento nativo) con 'Restricciones de despliegue', que es la definición real de salvaguarda de acceso."
+                },
+                {
+                    "item": "12. Licenses",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "The paper utilizes the MIT license for the Phi-3 model family.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Alucinación de texto estricta. Dicta la existencia categórica de 'Licencia MIT', pero Phi-3 en el documento no la menciona jamás."
+                },
+                {
+                    "item": "13. Assets",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Fails to provide a comprehensive, structured 'model card' or 'data card' that explicitly details the licensing.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Asigna un 'No' justificado porque, pese a liberar la tabla de datos, no anexan la estructura de model cards exigida por el comité."
+                },
+                {
+                    "item": "14. Crowdsourcing",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Human-derived data used for alignment consists of existing public datasets or in-house generated data, rather than new crowdsourced labor.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A validado ya que los datos de feedback humano para DPO procedían de sets preexistentes."
+                },
+                {
+                    "item": "15. IRB Approvals",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Use of an 'independent red team at Microsoft' for safety and robustness alignment, but does not involve direct human-subject experimentation.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A sustentado; el red team corporativo no son 'sujetos humanos' susceptibles a evaluación IRB biomédica o social tradicional."
+                },
+                {
+                    "item": "16. LLM Usage",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "The paper explicitly states: 'GPT-4 used to simulate multi-turn conversations for RAI benchmarks'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Captura extracción literal de generadores sintéticos. Cita: \"GPT-4 used to simulate multi-turn conversations\"."
+                }
+            ]
+        },
+        {
+            "paper": "Paper 3: OLMo",
+            "items": [
+                {
+                    "item": "1. Claims",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "The abstract states: 'We release the full training corpus, Dolma, as well as the training code...'",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Valida las claims del abstract sobre el corpus Dolma. Cita: \"We release the full training corpus, Dolma\"."
+                },
+                {
+                    "item": "2. Limitations",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Includes a dedicated 'Limitations' section which states: 'models exhibit bias, toxicity, and hallucinations...'",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extracción precisa de problemas éticos textuales. Cita: \"models exhibit bias, toxicity, and hallucinations\"."
+                },
+                {
+                    "item": "3. Theory, Assumptions & Proofs",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Focuses on the empirical development, training, and evaluation of the OLMo language model framework.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A metodológicamente validado para investigación aplicativa y empírica sin teoremas."
+                },
+                {
+                    "item": "4. Reproducibility",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Section 5, 'Artifacts Released', states: 'We release the full OLMo framework...'",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Respaldo y citación perfecta de los entregables. Cita: \"We release the full OLMo framework\"."
+                },
+                {
+                    "item": "5. Open Access",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "The authors are releasing the full pretraining corpus (Dolma), the training code, and the model weights.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Concordante y fáctico sin requerir excusas terceras."
+                },
+                {
+                    "item": "6. Experimental Setting",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Detail the training framework, optimizer configurations (AdamW), learning rate schedules... batch sizes (4M tokens).",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Hiperparámetros extraídos minuciosamente. Cita: \"batch sizes (4M tokens)\"."
+                },
+                {
+                    "item": "7. Experiment Statistical Significance",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Fails to report error bars... While the authors acknowledge that evaluation is 'noisy', they do not provide the required statistical measures.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Rigor excelente en el 'No'. Penaliza la falla formal y rechaza usar la excusa de que los resultados son 'noisy' como salvoconducto."
+                },
+                {
+                    "item": "8. Compute Resource",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Hardware specifications: 'LUMI: 256 nodes, AMD MI250X'... environmental impact: 'carbon_emissions_lumi: 69.78 tCO2eq'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Sintetiza consumo del cluster LUMI. Cita huella: \"69.78 tCO2eq\"."
+                },
+                {
+                    "item": "9. Code of Ethics",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "The paper includes a dedicated 'Ethics Statement' section which explicitly addresses the authors' commitment to open science.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Flexibilidad evaluativa correcta valorando la adherencia real sobre el léxico exacto del checklist."
+                },
+                {
+                    "item": "10. Broader Impacts",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Provide a detailed analysis of the environmental impact, including carbon footprint estimation.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Discusión bien vinculada al impacto medioambiental como repercusión social."
+                },
+                {
+                    "item": "11. Safeguards",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Released as a base model for research purposes rather than a deployed, high-risk application with direct potential for weaponization.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A maduro. Entiende que OLMo es ciencia fundacional sin despliegue comercial directo con interfaz riesgosa."
+                },
+                {
+                    "item": "12. Licenses",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "The OLMo framework and the Dolma dataset are released under the Apache 2.0 license.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Sin alucinaciones. Captura mención explícita a la licencia: \"Apache 2.0\"."
+                },
+                {
+                    "item": "13. Assets",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Provides a comprehensive framework for these assets, including detailed documentation on the data composition.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Validación de nuevas liberaciones documentadas estructuradamente en la Sección 5."
+                },
+                {
+                    "item": "14. Crowdsourcing",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Utilizes existing, publicly available human-derived datasets for instruction tuning (TÜLU, ShareGPT).",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A validado por depender de dataset humanos ya procesados y no reclutar anotadores propios."
+                },
+                {
+                    "item": "15. IRB Approvals",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Did not conduct new human-subject experiments or collect primary data from human participants.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A verificado, sin experimentación humana originaria ni clínica."
+                },
+                {
+                    "item": "16. LLM Usage",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Explicitly states the use of LLMs... 'We use gpt-3.5-turbo for data distillation' and 'GPT-4 for AlpacaEval annotation'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Cita el rol auxiliar explícito. Cita: \"GPT-4 for AlpacaEval annotation\"."
+                }
+            ]
+        },
+        {
+            "paper": "Paper 4: Attention Is All You Need",
+            "items": [
+                {
+                    "item": "1. Claims",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Our model establishes a new single-model state-of-the-art BLEU score of 41.8.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Recupera la afirmación central de rendimiento. Cita: \"new single-model state-of-the-art BLEU score of 41.8\"."
+                },
+                {
+                    "item": "2. Limitations",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Fails to provide a dedicated 'Limitations' section as encouraged by the NeurIPS 2026 criteria.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Aplica criterio severo retrospectivo detectando su carencia seccional (el paper es de 2017) frente a los estándares de 2026."
+                },
+                {
+                    "item": "3. Theory, Assumptions & Proofs",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Provide a mathematical justification for the scaling factor... 'we scale the dot products by 1/sqrt(dk)'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Recupera la derivación de complejidad algorítmica y el escalado de atención. Cita: \"scale the dot products by 1/sqrt(dk)\"."
+                },
+                {
+                    "item": "4. Reproducibility",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Confirms the availability of the authors' implementation: 'repository_url: https://github.com/tensorflow/tensor2tensor'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Referencia correctamente el marco de trabajo original. Cita: \"https://github.com/tensorflow/tensor2tensor\"."
+                },
+                {
+                    "item": "5. Open Access",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "The authors provide a direct link to the 'tensor2tensor' repository.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "URL de código fuente extraída de manera exitosa para cumplir el acceso abierto."
+                },
+                {
+                    "item": "6. Experimental Setting",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Lists the optimizer hyperparameters: 'Adam optimizer with β1=0.9, β2=0.98... warmup_steps=4000'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extrae configuraciones precisas de la época fundacional. Cita: \"warmup_steps=4000\"."
+                },
+                {
+                    "item": "7. Experiment Statistical Significance",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Reports performance metrics such as BLEU scores... but fails to provide error bars or confidence intervals.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Rigor contemporáneo. Emite 'No' por reportar un BLEU puntual sin la varianza estocástica exigida hoy en día."
+                },
+                {
+                    "item": "8. Compute Resource",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "We trained our models on one machine with 8 NVIDIA P100 GPUs... The big models were trained for 300,000 steps (3.5 days).",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extracción quirúrgica de recursos absolutos. Cita: \"8 NVIDIA P100 GPUs... for 300,000 steps (3.5 days)\"."
+                },
+                {
+                    "item": "9. Code of Ethics",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "The paper does not contain an explicit statement regarding adherence to the NeurIPS Code of Ethics.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Evaluación fáctica y fría; deniega la falta de adherencia normativa de 2026 a un paper de 2017."
+                },
+                {
+                    "item": "10. Broader Impacts",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "The authors state: 'We plan to extend the Transformer to problems involving input and output modalities other than text... images, audio and video.'",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Fallo analítico grave. Otorga 'Yes' asumiendo que expandir el paper a \"imágenes/video\" cuenta como \"Impacto Social y Ético\". Demuestra falta de comprensión semántica de la norma."
+                },
+                {
+                    "item": "11. Safeguards",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Focuses on architectural innovation rather than the release of a specific pretrained language model capable of generating harmful content.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A intachable al ser puramente una arquitectura algorítmica base y no un LLM instanciado."
+                },
+                {
+                    "item": "12. Licenses",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "The authors failed to explicitly state the license under which their code (tensor2tensor) or the datasets used are released.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Castiga justamente que el manuscrito original no incluye la estipulación formal de licencia de código en el texto."
+                },
+                {
+                    "item": "13. Assets",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "The code we used to train and evaluate our models is available at https://github.com/tensorflow/tensor2tensor.",
+                    "mi_valoracion": "Medianamente correcto",
+                    "mi_justificacion": "Laxo. Otorga 'Yes' por el mero enlace a GitHub sin corroborar si el repo aportó las obligatorias 'plantillas estructuradas' (Model Cards) para los activos."
+                },
+                {
+                    "item": "14. Crowdsourcing",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Utilizes established, publicly available datasets for machine translation (WMT 2014).",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A validado por el uso de datasets secundarios corporativos."
+                },
+                {
+                    "item": "15. IRB Approvals",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Rely exclusively on existing, secondary datasets, it does not fall under the scope of human subjects research.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A correcto, sin investigación clínica humana."
+                },
+                {
+                    "item": "16. LLM Usage",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Research predates the widespread use of LLMs as core methodological components.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Excelente comprensión del contexto histórico. La arquitectura precede a la propia invención de los LLM asistentes."
+                }
+            ]
+        },
+        {
+            "paper": "Paper 5: Deep Residual Learning for Image Recognition",
+            "items": [
+                {
+                    "item": "1. Claims",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "We explicitly reformulate the layers as learning residual functions... residual networks are easier to optimize.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Asocia correctamente las métricas con el nuevo concepto de aprendizaje residual postulado en el paper."
+                },
+                {
+                    "item": "2. Limitations",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "They fail to provide a dedicated 'Limitations' section as encouraged by the NeurIPS 2026 criteria.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Exige 'No' aplicando pautas retroactivas sobre la falta de una sección dedicada de límites sistemáticos."
+                },
+                {
+                    "item": "3. Theory, Assumptions & Proofs",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Presents a 'residual learning hypothesis'... but it fails to provide formal mathematical proofs.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Fallo científico grave. Castigó a un modelo puramente empírico de visión por carecer de demostraciones matemáticas (teoremas). Una intuición de arquitectura no requiere álgebra formal; debió ser N/A."
+                },
+                {
+                    "item": "4. Reproducibility",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "As per the pre-computed help, since no URL to the authors' own code or model weights is provided, the answer must be 'No'.",
+                    "mi_valoracion": "Medianamente correcto",
+                    "mi_justificacion": "El veredicto es acertado para 2015, pero la IA rompe la cuarta pared y expone prompt interno: \"As per the pre-computed help...\" arruinando el formato."
+                },
+                {
+                    "item": "5. Open Access",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Mention using the 'Caffe' framework, this refers to a third-party dependency rather than the authors' own code.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Distingue lógicamente el uso de librerías terceras (Caffe) de los aportes del propio autor no enlazados."
+                },
+                {
+                    "item": "6. Experimental Setting",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Details the optimizer (SGD with 0.9 momentum), weight decay (0.0001), batch sizes... and 224x224 crop randomly sampled.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extracción minuciosa. Cita: \"SGD with 0.9 momentum... 224x224 crop\"."
+                },
+                {
+                    "item": "7. Experiment Statistical Significance",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Provides point estimates for error rates... but fails to report error bars, confidence intervals.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Rigor moderno aplicado: castiga el error rate top-1 sin intervalos estocásticos."
+                },
+                {
+                    "item": "8. Compute Resource",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Identifies the hardware used (e.g., '8-GPU implementation') but fails to provide the necessary temporal or efficiency metrics (time of execution).",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Castiga 'No' avalado por la omisión en reportar horas totales consumidas por las GPUs."
+                },
+                {
+                    "item": "9. Code of Ethics",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Lacks an explicit statement regarding adherence to the NeurIPS Code of Ethics.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Aplica rígidamente la normativa moderna NeurIPS penalizando su carencia histórica."
+                },
+                {
+                    "item": "10. Broader Impacts",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "It does not present a direct path to negative societal consequences such as surveillance or disinformation.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Análisis brillante. Comprende que una técnica de visión pura (conexiones residuales) carece de riesgos directos encadenables en la sociedad."
+                },
+                {
+                    "item": "11. Safeguards",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Foundational architectural innovation in deep learning... focusing on image classification.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A. Modelo arquitectónico base sin capacidades generativas letales o tóxicas."
+                },
+                {
+                    "item": "12. Licenses",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Fails to provide a section or statement acknowledging the licenses of the datasets (ImageNet, CIFAR-10) or the software used.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Detecta acertadamente la falta explícita de declaraciones legales (MIT, CC) en el texto del 2015."
+                },
+                {
+                    "item": "13. Assets",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Does not introduce or release new datasets, nor do they release new model weights or software libraries as part of their submission.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A validado por ausencia de release explícito formalizado en el documento de nuevos activos documentales."
+                },
+                {
+                    "item": "14. Crowdsourcing",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Purely algorithmic... did not conduct any research involving human subjects or crowdsourcing.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A por la total ausencia de recolección humana manual propia."
+                },
+                {
+                    "item": "15. IRB Approvals",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Utilizes established, publicly available benchmark datasets.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A sustentado por ser in-silico y con benchmarks estándar."
+                },
+                {
+                    "item": "16. LLM Usage",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Methodology relies on deep residual learning... developed prior to the emergence of modern LLMs.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A contextual que denota conocimiento temporal de la IA sobre los hitos de Machine Learning."
+                }
+            ]
+        },
+        {
+            "paper": "Paper 6: Generative Adversarial Nets",
+            "items": [
+                {
+                    "item": "1. Claims",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "In the space of arbitrary functions G and D, a unique solution exists... supported by Theorem 1.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Asocia impecablemente el problema minimax a la formulación teórica. Cita: \"supported by Theorem 1\"."
+                },
+                {
+                    "item": "2. Limitations",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Section 6 explicitly states: 'the Helvetica scenario' in which G collapses too many values of z.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Reconoce el famoso modo de colapso histórico. Cita literal del hallazgo: \"the Helvetica scenario\"."
+                },
+                {
+                    "item": "3. Theory, Assumptions & Proofs",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Section 4.1, Theorem 1: 'The global minimum of the virtual training criterion C(G) is achieved if and only if pg = pdata.'",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Acierta al reconocer un Teorema real y proposiciones formales exigidas. Cita: \"Proposition 2\"."
+                },
+                {
+                    "item": "4. Reproducibility",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Authors provide a link to their implementation: 'http://www.github.com/goodfeli/adversarial'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Localiza la URL histórica original al github proporcionado en el texto."
+                },
+                {
+                    "item": "5. Open Access",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Provides a direct link to their implementation... containing the code necessary to reproduce.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Validación empírica soportada por la extracción del URL Theano base."
+                },
+                {
+                    "item": "6. Experimental Setting",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Specifies the datasets (MNIST, TFD), architectural choices (rectifier linear, maxout, dropout), and Gaussian Parzen window fitting.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extracción precisa de las topologías neuronales clásicas: \"rectifier linear activations, maxout, dropout\"."
+                },
+                {
+                    "item": "7. Experiment Statistical Significance",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Table 1 reported numbers on MNIST are the mean... with the standard error of the mean. Adversarial nets 225 ± 2.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Búsqueda excelente, detectando que los autores de 2014 sí cumplieron. Cita su extracción: \"225 ± 2\"."
+                },
+                {
+                    "item": "8. Compute Resource",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Acknowledge the use of 'Compute Canada'... but fail to provide execution time, memory usage, or total compute hours.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Aplica rigor moderno penalizando la falta de horas absolutas pese a listar el cluster (Compute Canada)."
+                },
+                {
+                    "item": "9. Code of Ethics",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Does not contain an explicit statement regarding the NeurIPS Code of Ethics.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Exige el cumplimiento de normativa moderna de 2026 sin excusar que el paper sea muy antiguo."
+                },
+                {
+                    "item": "10. Broader Impacts",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Introduces a generative framework that directly enables the creation of synthetic data... potential for generating disinformation.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Análisis sobresaliente. La IA infiere de manera autónoma que la creación de datos sintéticos (GANs) conlleva un riesgo de uso dual (deepfakes) que requiere ser discutido."
+                },
+                {
+                    "item": "11. Safeguards",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Foundational machine learning architecture for generative modeling... demonstrating performance on standard datasets.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "NA justificado al ser formulación matemática/base sin ser el despliegue final de una app generativa nociva."
+                },
+                {
+                    "item": "12. Licenses",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "While the 'Pre-computed Helps' section indicates that an MIT license was detected, the paper text itself contains no mention.",
+                    "mi_valoracion": "Medianamente correcto",
+                    "mi_justificacion": "El veredicto es bueno, pero padece fuga de prompt rompiendo la inmersión de texto: \"While the 'Pre-computed Helps' section indicates...\"."
+                },
+                {
+                    "item": "13. Assets",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Utilize established, publicly available datasets (MNIST, TFD). The paper does not introduce new datasets or novel software libraries.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "NA porque evalúan frameworks matemáticos sobre corpus antiguos sin requerir Model Cards propias."
+                },
+                {
+                    "item": "14. Crowdsourcing",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "No evidence of conducting primary research with human subjects, nor did they employ crowdsourcing.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A justificado."
+                },
+                {
+                    "item": "15. IRB Approvals",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Utilizes standard, publicly available benchmark datasets including MNIST.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A justificado por el uso in-silico."
+                },
+                {
+                    "item": "16. LLM Usage",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Methodology relies on multilayer perceptrons, backpropagation, and adversarial training frameworks.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A deductivo apoyándose en la edad y tipología pre-LLM del paper."
+                }
+            ]
+        },
+        {
+            "paper": "Paper 7: Gated Attention for Large Language Models",
+            "items": [
+                {
+                    "item": "1. Claims",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Applying a head-specific sigmoid gate after the Scaled Dot-Product Attention (SDPA)... consistently improves performance.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Vincula el Abstract con el aporte arquitectónico (G1 gating). Cita: \"applying a head-specific sigmoid gate\"."
+                },
+                {
+                    "item": "2. Limitations",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Acknowledge several limitations... we do not provide a rigorous theoretical explanation for how attention sinks influence.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Cita la admisión teórica de fallo. Cita literal: \"we do not provide a rigorous theoretical explanation for how attention sinks influence\"."
+                },
+                {
+                    "item": "3. Theory, Assumptions & Proofs",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Presents several theoretical claims (e.g., Section 4.1, Equations 6-8)... but does not provide formal theorem statements or rigorous proofs.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Fallo sistémico de IA. Exige pruebas matemáticas a una simple formulación de ecuaciones que explican heurísticas en arquitecturas empíricas. Debió ser N/A."
+                },
+                {
+                    "item": "4. Reproducibility",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "State they 'will release related codes and models'... but no actual URLs, repositories, or specific access instructions are provided.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Auditoría implacable que caza promesas vacías que no incluyen URLs funcionales. Cita: \"will release related codes\"."
+                },
+                {
+                    "item": "5. Open Access",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "State they 'will release related codes' but no actual URL, repository link... provided.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Sigue la misma lógica coherente de castigar la falta del repositorio fáctico."
+                },
+                {
+                    "item": "6. Experimental Setting",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "MoE models (15B total parameters with 2.54B activated, 15A2B) and dense models (1.7B)... context sequence length is set to 4096.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extrae con excelente precisión las configuraciones densas y ralas. Cita: \"MoE models (15A2B)\"."
+                },
+                {
+                    "item": "7. Experiment Statistical Significance",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Provides only point estimates (averages) without any measure of variance, standard deviation, or confidence intervals.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Castiga a las métricas MMLU de la tabla 1 por dar promedios crudos sin rangos de error estocástico."
+                },
+                {
+                    "item": "8. Compute Resource",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Mentions training settings ('15B total parameters', '3.5T high-quality tokens')... provides no information regarding the hardware infrastructure (GPU type) or wall-clock time.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Castiga que den tamaños de parámetros gigantescos (3.5T tokens) pero omitan dar horas y especificación de Nodos/GPUs."
+                },
+                {
+                    "item": "9. Code of Ethics",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Fails to include an explicit statement regarding adherence to the NeurIPS Code of Ethics.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Castiga un silencio absoluto de declaraciones éticas formales en el manuscrito."
+                },
+                {
+                    "item": "10. Broader Impacts",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Claims to pave the way for 'the next generation of advanced foundation models'... but does not address potential negative societal impacts (dual-use risks).",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Análisis maduro. Entiende que si proponen la fundación de los LLMs del futuro, deben prever las aplicaciones riesgosas de los mismos."
+                },
+                {
+                    "item": "11. Safeguards",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Focuses on architectural improvements to the attention mechanism (gating mechanisms) to mitigate attention-sink phenomena.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Reconoce de forma acertada que esto es investigación de mecanismo de capa de matriz (gating), sin interfaz final susceptible de control."
+                },
+                {
+                    "item": "12. Licenses",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Intend to release related codes and models, but they fail to specify the license under which these assets will be distributed.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extracción punitiva ante promesas futuras que obvian detallar la estipulación legal requerida."
+                },
+                {
+                    "item": "13. Assets",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Lacks the required documentation, model cards, or structured templates detailing the training process for the intended release.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Coherente con la denegación documental al no adjuntar tarjetas paramétricas (Model Cards)."
+                },
+                {
+                    "item": "14. Crowdsourcing",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Relies on existing open-source evaluation suites (MMLU, RULER, GSM8k) without new human-subject research.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A validado ya que usan benchmarks pre-empacados de la industria en vez de recolectores."
+                },
+                {
+                    "item": "15. IRB Approvals",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Absence of clinical experiment or human interaction.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A lógicamente validado."
+                },
+                {
+                    "item": "16. LLM Usage",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Investigates gating mechanisms within the standard softmax attention architecture... trained from scratch.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A acertado ya que no usan LLMs terceros para generar datos ni para asistencia metodológica profunda."
+                }
+            ]
+        },
+        {
+            "paper": "Paper 8: LLaDA",
+            "items": [
+                {
+                    "item": "1. Claims",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "LLaDA 8B is competitive with strong LLMs like LLaMA3 8B in in-context learning... supported by Figure 1 and Table 2.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Asocia bien las afirmaciones de 'in-context learning' de difusión con las gráficas resultantes empíricas."
+                },
+                {
+                    "item": "2. Limitations",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "The generation length is a user-specified hyperparameter... LLaDA has yet to undergo alignment with reinforcement learning.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Acierta en citar las debilidades extraídas de la Sección 5. Cita: \"generation length is a user-specified hyperparameter\"."
+                },
+                {
+                    "item": "3. Theory, Assumptions & Proofs",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "A rigorous formulation of MDM is provided in Appendix A... formal conditional distribution: 'p(x_t | x_0)'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Localiza inteligentemente las justificaciones condicionales teóricas de difusión en el apéndice."
+                },
+                {
+                    "item": "4. Reproducibility",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Link serves as a demonstration page... authors explicitly acknowledge a 'lack of data transparency' in Section 3, which hinders reproducibility.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Falso negativo e incomprensión lectora. Usa un comentario de los autores en contra de empresas externas (\"lack of data transparency\" in industry) como excusa de autoinculpación."
+                },
+                {
+                    "item": "5. Open Access",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Link directs to a project demonstration page... authors explicitly acknowledge a 'lack of data transparency'.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Arrastra la misma asunción semántica catastrófica del Ítem 4 para denegar acceso al código."
+                },
+                {
+                    "item": "6. Experimental Setting",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Maximum learning rate is set to 4 × 10^-4 with a batch size of 1280... 128 Monte Carlo samples.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extracción muy puntual de lr y de las varianzas paramétricas MC (128 samples)."
+                },
+                {
+                    "item": "7. Experiment Statistical Significance",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Single point estimates (e.g., MMLU scores)... authors mention that they 'opted not to fit quantitative curves' in Section 3.1.",
+                    "mi_valoracion": "Medianamente correcto",
+                    "mi_justificacion": "El 'No' en varianza es correcto, pero la IA sufre una alucinación inventando una cita inexistente de los autores: \"opted not to fit quantitative curves\"."
+                },
+                {
+                    "item": "8. Compute Resource",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "compute_budget: 10^23 FLOPs, total_training_time: 0.13 million H800 GPU hours.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extrae exitosamente y con fiabilidad total los consumos de la GPU H800."
+                },
+                {
+                    "item": "9. Code of Ethics",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Section C, 'Impact Statement', explicitly state: 'diffusion models... raise similar societal concerns... environmental impact... misuse'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Reconoce un texto declarativo generalizado (Impact Statement) como válido bajo las normativas actuales de NeurIPS."
+                },
+                {
+                    "item": "10. Broader Impacts",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Section C discusses potential misuse for generating harmful content, and the amplification of biases.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Relaciona correctamente la declaración sobre sesgos y uso malicioso."
+                },
+                {
+                    "item": "11. Safeguards",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "The authors acknowledge in Section C (Impact Statement) that 'diffusion models, like traditional LLMs, raise similar societal concerns'.",
+                    "mi_valoracion": "Medianamente correcto",
+                    "mi_justificacion": "El veredicto ('No') encaja, pero la redacción exhibe pereza, repitiendo el mismo párrafo de los dos ítems previos sin razonar el despliegue."
+                },
+                {
+                    "item": "12. Licenses",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Documentation specifies the use of the MIT License for the provided assets.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Alucinación directa. Acuña que hay una \"MIT License\" pero el manuscrito entero omite cualquier tipo de licencia textual legal explícita."
+                },
+                {
+                    "item": "13. Assets",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Lack a formal model card or dataset card detailing the specific composition... of the 3.5 million synthetic samples.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Castiga merecidamente la liberación del modelo LLaDA-8B sin estampar la plantilla obligatoria."
+                },
+                {
+                    "item": "14. Crowdsourcing",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "SFT dataset consists of human-annotated samples treated as an existing resource... no new crowdsourcing.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "NA debidamente argumentado al reutilizar recursos sin campaña prolífica activa."
+                },
+                {
+                    "item": "15. IRB Approvals",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Utilizes existing, large-scale public corpora and synthetic data generation.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "NA sólidamente justificado por el marco técnico ajeno a lo biomédico."
+                },
+                {
+                    "item": "16. LLM Usage",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Explicitly states: 'Used for filtering low-quality content in pre-training data... Synthetic data generation for SFT'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Capta el empleo instrumental metodológico activo. Cita: \"Synthetic data generation for SFT\"."
+                }
+            ]
+        },
+        {
+            "paper": "Paper 9: Logical reasoning in latent activation spaces",
+            "items": [
+                {
+                    "item": "1. Claims",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "The abstract states: 'We introduce ActivationReasoning (AR)...' allows for 'grounding propositions in latent activation space'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Empata el framework empírico con su claim principal. Cita: \"performing logical inference via forward chaining\"."
+                },
+                {
+                    "item": "2. Limitations",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Explicitly address: 'Polysemy, Contextual instability, Overly low-level features...'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Acierta en la extracción exhaustiva de falencias del sistema SAE (Sparse Autoencoders)."
+                },
+                {
+                    "item": "3. Theory, Assumptions & Proofs",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Defines the logical framework in Section 3.3 and Appendix D: 'AR computes L ∪ { C ∗ 1 , . . . , C ∗ m }'.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Falso Positivo persistente. Acusa a ecuaciones de métrica heurística computacional de ser pruebas matemáticas y teoremas formales (requería N/A)."
+                },
+                {
+                    "item": "4. Reproducibility",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Provides detailed hyperparameter configurations (SAE decoder weights)... necessary to replicate the AR intervention.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Verifica minuciosamente los pesos decodificadores y detalles (Llama 3.1)."
+                },
+                {
+                    "item": "5. Open Access",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Links to the underlying infrastructure and datasets used, such as https://github.com/asaparov/prontoqa/ and EleutherAI.",
+                    "mi_valoracion": "Medianamente correcto",
+                    "mi_justificacion": "Falla al citar enlaces de terceros (EleutherAI, PrOntoQA) para justificar que el autor ha cumplido en liberar su código propio principal."
+                },
+                {
+                    "item": "6. Experimental Setting",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Breakdown of hyperparameters such as 'topk_in', 'topk_multi', 'steering_factor_alpha', and 'soft_threshold_tau'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Granularidad extractiva fenomenal para vectores latentes: \"steering_factor_alpha\"."
+                },
+                {
+                    "item": "7. Experiment Statistical Significance",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Reports 95.0% accuracy on PrOntoQA as point estimates without error bars... greedy decoding is deterministic but does not justify omission.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Entendimiento avanzado; capta que aunque se use decodificación greedy sin semillas, reportan una sola muestra ignorando la varianza exigida."
+                },
+                {
+                    "item": "8. Compute Resource",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "8 x NVIDIA A100-SXM4 GPUs (80 GB each)... execution time for different models (e.g., 0.1066s).",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Capta el hardware y tiempo sub-segundo con máxima fidelidad. Cita: \"0.1066s para Llama3.1_8B\"."
+                },
+                {
+                    "item": "9. Code of Ethics",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Includes a dedicated 'Ethics Statement' and explicitly states: 'Adhere to the ICLR Code of Ethics'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Mapea el apéndice G ético reconociendo su validez normativa."
+                },
+                {
+                    "item": "10. Broader Impacts",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Address broader impacts... 'Framework enables model steering which could be misused; authors condemn misuse.'",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Ubica la confesión y advertencias sobre el 'model steering' desviado."
+                },
+                {
+                    "item": "11. Safeguards",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Evaluate our approach on the BeaverTails dataset, which contains 14 safety dimensions... condemn misuse.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Vulnerabilidad léxica grave. La IA toma la realización de un benchmark sobre toxicidad (BeaverTails) como el equivalente a instaurar un despliegue de salvaguarda de usuario."
+                },
+                {
+                    "item": "12. Licenses",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Fail to explicitly state the license types (e.g., MIT, Apache 2.0) for the assets used or confirm compliance.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Penalización merecida por apoyarse masivamente en terceros pero olvidar el requisito burocrático de licencias en texto."
+                },
+                {
+                    "item": "13. Assets",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "The authors do not introduce or release new datasets, model weights, or novel software libraries.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Ceguera aguda (Falso Negativo). El documento declara literalmente: \"our newly introduced synthetic dataset Rail2Country\". Omitió evaluarlo."
+                },
+                {
+                    "item": "14. Crowdsourcing",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Methodology relies on algorithmic intervention... no mention of human participant studies or crowdsourced data.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "NA in-silico lógicamente dictado."
+                },
+                {
+                    "item": "15. IRB Approvals",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Research utilizes established datasets... evaluating logical reasoning.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "NA validado sin injerencia clínica."
+                },
+                {
+                    "item": "16. LLM Usage",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Explicitly states: 'LLMs were also used to aid in polishing and rephrasing the manuscript'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Sobresaliente. Extrae ambos usos: base del paper y asistencia de escritura."
+                }
+            ]
+        },
+        {
+            "paper": "Paper 10: OLMo 2",
+            "items": [
+                {
+                    "item": "1. Claims",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Details specific architectural improvements (RMSNorm, GQA) and a refined recipe... supported by Evaluation and Results.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Interconecta mejoras de norma (RMSNorm) y ruteos a los benchmarks de evaluación final."
+                },
+                {
+                    "item": "2. Limitations",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Addresses them in the context of model performance... 'Training loss spikes', 'Repeated n-grams'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Rastrea hábilmente a través de las secciones de inmersión técnica (Deep Dive) para hallar fallos en lugar de exigir títulos exactos."
+                },
+                {
+                    "item": "3. Theory, Assumptions & Proofs",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Empirical study focused on development... does not propose new theoretical frameworks or theorems.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Se curó el sesgo sistémico. Comprende maduramente la exención técnica a sistemas aplicados que carecen de álgebra de derivación."
+                },
+                {
+                    "item": "4. Reproducibility",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Explicitly provide access to their own implementation: 'OLMo-core', 'open-instruct', and 'OLMES'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Caza el software satélite aportado por los autores en el dominio propio (github.com/allenai/olmes)."
+                },
+                {
+                    "item": "5. Open Access",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Provides comprehensive access... 'OLMo-core' pretraining repository and 'open-instruct'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Mismo hallazgo de open source fáctico de los autores, libre de alucinación."
+                },
+                {
+                    "item": "6. Experimental Setting",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Learning rates (4.0e-4 for 1B), warmup ratios (0.3), and specific RLVR/DPO parameters.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extrae un listado denso y riguroso. Cita la matriz RLVR/DPO."
+                },
+                {
+                    "item": "7. Experiment Statistical Significance",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Presents point estimates without accompanying measures of variability... do not provide explicit justification.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Veredicto riguroso que no se doblega ante los LLMs grandes; exige barras o justificación."
+                },
+                {
+                    "item": "8. Compute Resource",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "1,024 NVIDIA H100 GPUs... 154 tCO2eq in carbon emissions and 1.1 million liters in water consumption.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Recupera la trazabilidad ambiental asombrosa aportada. Cita: \"154 tCO2eq\"."
+                },
+                {
+                    "item": "9. Code of Ethics",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Demonstrate adherence by providing transparent documentation of carbon footprint, water consumption... aligns with NeurIPS requirement.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Madurez inferencial; premia una declaración verde/ambiental radical como equivalencia superior del ética NeurIPS."
+                },
+                {
+                    "item": "10. Broader Impacts",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Explicitly addresses broader impacts through its 'Environmental Impact' section (6.5).",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Sigue la misma sintonía lógica de avalar el análisis sistémico material."
+                },
+                {
+                    "item": "11. Safeguards",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Foundational language models released for research... authors perform safety evaluations but the work is primarily a foundational research contribution.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Ajuste algorítmico superado. No castiga ni confunde la evaluación con \"Safeguards de restricción de uso\" para open weights."
+                },
+                {
+                    "item": "12. Licenses",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Explicitly references the use of various assets... 'Apache 2.0', 'Creative Commons (Stack Exchange)'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Libre de alucinaciones. Extrae licencias reales sin mencionar MIT inventadas."
+                },
+                {
+                    "item": "13. Assets",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Provide comprehensive documentation... Dolmino Mix 1124, and architectural specifications (RMSNorm).",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Validación empírica formal de las tarjetas."
+                },
+                {
+                    "item": "14. Crowdsourcing",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Utilizes existing, publicly available human-derived datasets such as 'Ultrafeedback' and 'WildChat'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Comprende la delegación; se re-etiquetan datos antiguos masivos y no hay nuevas campanas Prolific."
+                },
+                {
+                    "item": "15. IRB Approvals",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Research utilizes existing, publicly available datasets for training and evaluation.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "NA justificado sin investigación directa médica o social experimental."
+                },
+                {
+                    "item": "16. LLM Usage",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Explicitly states: 'Used Llama 3 70B Instruct, Yi-34B, GPT-4o, Qwen2.5... for synthetic data, preference labeling'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Constata la lista de super LLMs que asisten como jueces (LLM-as-a-judge)."
+                }
+            ]
+        },
+        {
+            "paper": "Paper 11: LLMs get lost in multi-turn conversation",
+            "items": [
+                {
+                    "item": "1. Claims",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "LLMs suffer from a 'lost in conversation' phenomenon... demonstrating a 39% average performance drop.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Asocia la hipótesis principal con la métrica destructiva empírica (39% de caída)."
+                },
+                {
+                    "item": "2. Limitations",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Explicitly states: 'Simulated conversations are not representative of human-AI conversations', 'Simulation environment is simplistic'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Relevo textual absoluto de la admisión de simulaciones ideales en la Sección 9."
+                },
+                {
+                    "item": "3. Theory, Assumptions & Proofs",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Focuses on empirical analysis of LLM behavior... rather than proposing new mathematical theorems.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Distinción semántica acertada para este estudio fenomenológico en modelos pre-entrenados."
+                },
+                {
+                    "item": "4. Reproducibility",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Provide a dedicated repository at https://github.com/Microsoft/lost_in_conversation.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Detecta los hipervínculos de los evaluadores desde la primera página."
+                },
+                {
+                    "item": "5. Open Access",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Repository contains the implementation of the simulation framework... fulfilling NeurIPS criteria.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Misma justificación correcta vía el URI de github."
+                },
+                {
+                    "item": "6. Experimental Setting",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Explicitly lists temperature settings (0.0, 0.5, 1.0), simulation counts (10 to 20 per pair), and performance thresholds.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extracción profunda de los listados remitiendo a los Apéndices (I, K, L)."
+                },
+                {
+                    "item": "7. Experiment Statistical Significance",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Fail to meet criteria... do not provide error bars, confidence intervals, or formal statistical significance tests.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Aplica rigor matemático, castigando el volumen estadístico puro sobre promedios (Aptitud)."
+                },
+                {
+                    "item": "8. Compute Resource",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Contains no mention of the hardware infrastructure, execution time... for the 200,000+ simulated conversations.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Castiga con 'No' el flagrante agujero descriptivo de las máquinas o coste computacional que gastó ese mega test."
+                },
+                {
+                    "item": "9. Code of Ethics",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Failed to include a dedicated 'Code of Ethics' statement... no mention of IRB approval, ethical review processes for manual validation.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Dictamina fallo al no transparentar el entorno laboral de revisión manual."
+                },
+                {
+                    "item": "10. Broader Impacts",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Section 7.1 'Implications for System and Agent Builders', 7.2 'Implications for LLM Builders'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Identifica de forma holística las derivaciones en aplicaciones generativas fallidas listadas en la sección 7."
+                },
+                {
+                    "item": "11. Safeguards",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Presents a diagnostic framework for evaluating LLM performance... using existing, publicly available models.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "NA maduro validando que es un benchmark analítico, no la creación de un LLM de despliegue libre."
+                },
+                {
+                    "item": "12. Licenses",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "The repository... is associated with the authors' work and is released under the MIT License.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Alucinación. Recae en la asunción de que por estar en GitHub posee implícitamente 'Licencia MIT', string no presente en el PDF."
+                },
+                {
+                    "item": "13. Assets",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Provide a comprehensive repository... details the 'Semi-Automatic Sharding Process' in Appendix C.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Corrobora las instrucciones anexas del pipeline sharding creado."
+                },
+                {
+                    "item": "14. Crowdsourcing",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Manual inspection and validation of shards... were performed by the authors as part of the research process.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Deducción correcta (internal researchers en vez de external crowdsourcing)."
+                },
+                {
+                    "item": "15. IRB Approvals",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Utilizes established datasets... alongside a semi-automated simulation pipeline where LLMs act as both the user and the assistant.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Acierta confirmando la carencia biomédica por el rol de agentes LLM."
+                },
+                {
+                    "item": "16. LLM Usage",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "LLMs are used as a judge, user simulator, strategy classifier, answer extractor, and for the sharding process itself.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Enlista la multiplicidad de usos instrumentales del modelo como herramienta base del paper."
+                }
+            ]
+        },
+        {
+            "paper": "Paper 12: LiveCodeBench",
+            "items": [
+                {
+                    "item": "1. Claims",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Demonstrating that models which perform well on static benchmarks often show significant performance drops on LiveCodeBench.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Conecta el Abstract sobre contaminación con las tablas y descensos que presenta en vivo."
+                },
+                {
+                    "item": "2. Limitations",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Explicitly addresses... 'Overfitting to HumanEval', 'Ambiguous problem descriptions', 'Focus on Python only'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extracción sólida e intachable en listado desde la Sección 7."
+                },
+                {
+                    "item": "3. Theory, Assumptions & Proofs",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Presents an empirical benchmark and evaluation framework for Large Language Models (LLMs) in code generation.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Sin sesgo, marca N/A comprendiendo que un Benchmark no deriva ecuaciones abstractas de matemáticas."
+                },
+                {
+                    "item": "4. Reproducibility",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Does not provide a direct link to the authors' own implementation, code repository, or dataset release.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Falso Negativo. Ceguera imperdonable en el OCR. El paper dice textualmente bajo los autores: \"Website: https://livecodebench.github.io/\"."
+                },
+                {
+                    "item": "5. Open Access",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "The authors failed to provide a URL or explicit instructions for accessing the 'LiveCodeBench' codebase.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Hereda directamente la incapacidad de lectura óptica de la URL del ítem 4."
+                },
+                {
+                    "item": "6. Experimental Setting",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Nucleus sampling with temperature 0.2, top_p 0.95... bytecode limit of 1000... specify the use of vLLM.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Rastrea minucionsamente las variables y dependencias como vLLM expuestas."
+                },
+                {
+                    "item": "7. Experiment Statistical Significance",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Fails to report error bars, confidence intervals, or formal statistical significance tests for the reported performance metrics.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Falso Negativo Metodológico Crítico. Ignora la propia sección 7 que detalla textualmente: \"varianza del 1-1.5% estimada mediante bootstrapping\"."
+                },
+                {
+                    "item": "8. Compute Resource",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Fails to specify the underlying hardware infrastructure (e.g., specific GPU models, cluster configuration) or the total compute time.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Penaliza duramente que, de 52 modelos testeados, obvian qué equipo o granja de hardware los hospedó."
+                },
+                {
+                    "item": "9. Code of Ethics",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "State... that the benchmark is intended for 'Academic purposes only' and that they have implemented strict measures to avoid paywalled content.",
+                    "mi_valoracion": "Medianamente correcto",
+                    "mi_justificacion": "Valora positivo, pero fundamenta débilmente confundiendo una justificación de copyright o Paywall con estándares socio-éticos (NeurIPS Code)."
+                },
+                {
+                    "item": "10. Broader Impacts",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Discusses the broader impact of the work... stating: 'The benchmark aims to guide future research in code LLMs'.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Falso Positivo persistente en sus fallos. Confunde impacto académico benéfico con la requerida sección NeurIPS sobre discusiones de Riesgo Social Negativo."
+                },
+                {
+                    "item": "11. Safeguards",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Introduces 'LiveCodeBench', a benchmark framework... rather than the release of a high-risk generative model.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Acierto deductivo al separar un suite evaluador sintético de un LLM productor."
+                },
+                {
+                    "item": "12. Licenses",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Cite 'Fair Use § 107'... but they fail to provide a specific, standard open-source license for the LiveCodeBench dataset.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Excelente rigor. Castiga que usen el Fair Use para raspar datos, sin proveer una licencia final suya estructurada al mundo."
+                },
+                {
+                    "item": "13. Assets",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Provide documentation regarding the collection methodology, the specific platforms scraped (LeetCode, AtCoder), the total number of problems (511).",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Localiza en Apéndices (A) los metadatos tabulados del dataset."
+                },
+                {
+                    "item": "14. Crowdsourcing",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Relies on automated scraping of publicly available competitive programming platforms and the use of GPT-4-Turbo.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "NA argumentado al ser Web Scraping y no humanos contratados para etiquetar."
+                },
+                {
+                    "item": "15. IRB Approvals",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "No human subjects were recruited, surveyed, or experimented upon during the course of this study.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "NA validado empíricamente."
+                },
+                {
+                    "item": "16. LLM Usage",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "GPT-4-Turbo used to generate tests for problems where platform tests were unavailable.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Enlista textualmente y sin fisuras a la inteligencia sintética productora."
+                }
+            ]
+        },
+        {
+            "paper": "Paper 13: Artificial Hivemind",
+            "items": [
+                {
+                    "item": "1. Claims",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Demonstrating that 79% of cases show average similarity > 0.8 and inter-model similarity ranges from 71% to 82%.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extrae el núcleo cuantitativo de su tesis (Hivemind al 79%) y lo avala empíricamente."
+                },
+                {
+                    "item": "2. Limitations",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Explicitly discusses: 'Focus on English-language prompts', 'Potential oversimplification of creative expression'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Navega hacia apéndices A.1 para relevar deficiencias explícitamente confesadas."
+                },
+                {
+                    "item": "3. Theory, Assumptions & Proofs",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Focuses on empirical analysis of language model homogeneity using statistical metrics... without mathematical theorems.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Excelente delimitación. Es un estudio analítico con Shannon entropy, sin demostrar teoremas axiomáticos."
+                },
+                {
+                    "item": "4. Reproducibility",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Provide the repository URL: https://github.com/liweijiang/artificial-hivemind.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Chequeo URL enlazado exitosamente."
+                },
+                {
+                    "item": "5. Open Access",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Provided a dedicated repository URL: https://github.com/liweijiang/artificial-hivemind.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Validación contundente por hipervínculo."
+                },
+                {
+                    "item": "6. Experimental Setting",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Hyperparameters such as 'topp_sampling' (p = 0.9), 'temperature' (1.0 and 2.0)... and human annotation process.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Exprime variables top_p, top_k, temperature y métodos manuales de apéndices."
+                },
+                {
+                    "item": "7. Experiment Statistical Significance",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Do not provide error bars, confidence intervals, or explicit statistical significance tests.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Falso Negativo inaceptable. Omite deliberadamente que en el Apéndice D calculan Correlaciones de Spearman y de Pearson entre observadores, algo estadísticamente válido."
+                },
+                {
+                    "item": "8. Compute Resource",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Identify the hardware used (NVIDIA A100 and H100 GPUs), they fail to provide the necessary information regarding the time of execution.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Rigor total. Citar una gráfica no justifica omitir 200,000 ejecuciones a nivel temporal o energético."
+                },
+                {
+                    "item": "9. Code of Ethics",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Specifies a fair compensation rate of $15/hour (exceeding minimum wage requirements), and confirms that the study was deemed innocuous.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Análisis ético de alto estándar, evaluando pagos justos a Prolific ($15/hr)."
+                },
+                {
+                    "item": "10. Broader Impacts",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Addressing the 'Long-term homogenization of human thought,' the 'Suppression of alternative worldviews'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Reconoce consecuencias filosóficas del riesgo de homogeneidad extraídas del Apéndice A.3."
+                },
+                {
+                    "item": "11. Safeguards",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Empirical study on model homogeneity... does not introduce a new generative model or a high-risk artifact.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Descuenta a INFINITY-CHAT (el benchmark) de necesitar restricciones por toxicidad."
+                },
+                {
+                    "item": "12. Licenses",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Pre-computed analysis confirms the use of the MIT license for the project repository.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Alucinación en Recaída. Inventa flagrantemente que el sistema usa la palabra MIT License, lo cual carece de base en el manuscrito analizado."
+                },
+                {
+                    "item": "13. Assets",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Provide a repository... includes detailed documentation regarding the dataset's taxonomy (6 top-level categories, 17 subcategories).",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Convalida la estructuración (taxonomías, queries, anotación)."
+                },
+                {
+                    "item": "14. Crowdsourcing",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Recruiting 86 participants via Prolific to perform 31,250 annotations... full text of instructions provided in Figures 19-22.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extrae con exactitud el pago, tamaño muestral (86 anotadores) y capturas instruccionales."
+                },
+                {
+                    "item": "15. IRB Approvals",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Explicitly state in the human_subjects_extraction section: '86 participants recruited on Prolific... IRB status: Innocuous'.",
+                    "mi_valoracion": "Medianamente correcto",
+                    "mi_justificacion": "La deducción por inocuo en IRB es válida, pero exhibe fuga de prompt inyectando \"human_subjects_extraction section\"."
+                },
+                {
+                    "item": "16. LLM Usage",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Taxonomy classification: GPT-4o, Query mining: GPT-4o, Quality assessment: LM judges (GPT-4o, Prometheus).",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Enlista a la perfección los orquestadores subyacentes."
+                }
+            ]
+        },
+        {
+            "paper": "Paper 14: KAN",
+            "items": [
+                {
+                    "item": "1. Claims",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Asocia abstracción paramétrica con resultados.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Asocia superioridad B-splines frente a MLPs validada en Sec. 3."
+                },
+                {
+                    "item": "2. Limitations",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Cita 'slower than MLPs', 'curse of dimensionality'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extrae las debilidades limitantes textuales literales desde la conclusión."
+                },
+                {
+                    "item": "3. Theory, Assumptions & Proofs",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Sección 2.1 Teorema de Kolmogorov-Arnold y leyes de escalado del Apéndice E.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Hito: Reconoce teoremas algebraicos puros sin sesgo empírico. Cita: 'Kolmogorov-Arnold Representation'."
+                },
+                {
+                    "item": "4. Reproducibility",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "GitHub pykan.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extrae la librería pykan provista."
+                },
+                {
+                    "item": "5. Open Access",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Apoyado en github pykan.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Validado con acceso abierto del repositorio respectivo."
+                },
+                {
+                    "item": "6. Experimental Setting",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Extrae LBFGS, AdamW y grillas del apéndice.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Granularidad con optimizador cruzado LBFGS con AdamW reportada en apéndices."
+                },
+                {
+                    "item": "7. Experiment Statistical Significance",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Métricas de RMSE puntuales.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Rigor detectando falta de semillas estocásticas o desviación estándar."
+                },
+                {
+                    "item": "8. Compute Resource",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Acepta 'personal laptops' como justificación de cómputo.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Falso Positivo por laxitud. Acepta el uso coloquial \"laptops personales\" ignorando exigir horas/GPUs medibles bajo NeurIPS."
+                },
+                {
+                    "item": "9. Code of Ethics",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Inventa que publicar código es alinear el documento a la ética de NeurIPS.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Alucinación lógica. Excusar una omisión del código de ética argumentando 'adhesión por Github Open Source' es un falso positivo técnico inaceptable."
+                },
+                {
+                    "item": "10. Broader Impacts",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Investigación fundacional y arquitectónica en matemáticas.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "NA. Aplicación matemática abstracta sin repercusión dual primaria."
+                },
+                {
+                    "item": "11. Safeguards",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Arquitectura matemática.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Idéntico al anterior; no es generativo tóxico."
+                },
+                {
+                    "item": "12. Licenses",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Omisión explícita en texto pese a dar github.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Rigor detectando que pese a GitHub, faltó el string legal en el paper para cumplir la norma."
+                },
+                {
+                    "item": "13. Assets",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Acepta la librería por sí sola.",
+                    "mi_valoracion": "Medianamente correcto",
+                    "mi_justificacion": "'Yes' laxo. Otorga positivo sin comprobar si existen 'plantillas estructuradas' formales documentando KAN como activo."
+                },
+                {
+                    "item": "14. Crowdsourcing",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Paper algorítmico matemático.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "NA."
+                },
+                {
+                    "item": "15. IRB Approvals",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Funciones físicas.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "NA por ausencia clínica."
+                },
+                {
+                    "item": "16. LLM Usage",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Uso de B-splines en lugar de ecosistema LLM.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Distingue redes de regresión simbólica clásica de LLMs Transformers."
+                }
+            ]
+        },
+        {
+            "paper": "Paper 15: Transformers are inherently succinct",
+            "items": [
+                {
+                    "item": "1. Claims",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Afirmación probada en Teoremas 14, 16.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Excelente correlación entre abstract teórico (concisión EXPSPACE) con demostraciones directas."
+                },
+                {
+                    "item": "2. Limitations",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Penaliza asunciones teóricas de precisión sin sección de reflexión.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Aplica astutamente castigo a la asunción de precisión fija obviada en paper teórico."
+                },
+                {
+                    "item": "3. Theory, Assumptions & Proofs",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Validación de derivaciones en secciones 2-5 y Apéndice A.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Verifica postulados lógicos de autómatas LTL sin problema."
+                },
+                {
+                    "item": "4. Reproducibility",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Exige 'código o scripts' a un ensayo de lápiz y papel.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Contradicción lógica. Falla en comprensión categorizada: exige un github ejecutable para un teorema algebraico que es de lógica teórica pura."
+                },
+                {
+                    "item": "5. Open Access",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Se auto-corrige dictando que es investigación analítica sin código.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Paradoja de IA: corrige su fallo del ítem 4 y estipula la excepción técnica correcta."
+                },
+                {
+                    "item": "6. Experimental Setting",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "No existen variables ni batches.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Aplica N/A por carecer de experimentación (complejidad computacional)."
+                },
+                {
+                    "item": "7. Experiment Statistical Significance",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Ausencia estocástica.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Comprende que el álgebra EXPSPACE-complete no admite varianza o desvío."
+                },
+                {
+                    "item": "8. Compute Resource",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Ausencia de hardware.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Ausencia de servidores deducida de la base matemática."
+                },
+                {
+                    "item": "9. Code of Ethics",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Autómatas y ecuaciones no tienen sesgos aplicados en humanos.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A fundamentado para la lógica temporal subyacente."
+                },
+                {
+                    "item": "10. Broader Impacts",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Investigación fundacional.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Idéntico al anterior."
+                },
+                {
+                    "item": "11. Safeguards",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Complejidad computacional abstracta.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Idéntico al anterior."
+                },
+                {
+                    "item": "12. Licenses",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Castiga que 'LTL y B-RASP' omiten estado de licencia.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Alucinación Legal Grave. Asume erróneamente que la Lógica Temporal Lineal (creada en 1977) requiere licencia de \"Open Source\" como Apache."
+                },
+                {
+                    "item": "13. Assets",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Ausentes.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Validado."
+                },
+                {
+                    "item": "14. Crowdsourcing",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Ausentes.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Validado."
+                },
+                {
+                    "item": "15. IRB Approvals",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Ausentes.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Validado."
+                },
+                {
+                    "item": "16. LLM Usage",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Matemática pura.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Validado."
+                }
+            ]
+        },
+        {
+            "paper": "Paper 16: SAM 2",
+            "items": [
+                {
+                    "item": "1. Claims",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Válida generalización (SA-V) visual del modelo superior a los SOTA.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Recopila y contrasta perfectamente el objetivo del Abstract."
+                },
+                {
+                    "item": "2. Limitations",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Apéndice C enlista fallas de velocidad y oclusión prolongada.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Pesquisa extensa y certera en el Apéndice C."
+                },
+                {
+                    "item": "3. Theory, Assumptions & Proofs",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Esencia algorítmica sin teoremas puros.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Exención confirmada en modelado de visión industrial."
+                },
+                {
+                    "item": "4. Reproducibility",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Caza dataset SA-V y github facebookresearch.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Verificación textual de URL corporativas."
+                },
+                {
+                    "item": "5. Open Access",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Caza dataset SA-V y github facebookresearch.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Respaldo coincidente al hallazgo 4."
+                },
+                {
+                    "item": "6. Experimental Setting",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Apéndices D.2. Batch 8 frames y optimización.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Detecta los hiperparámetros esparcidos en el apéndice final D y E."
+                },
+                {
+                    "item": "7. Experiment Statistical Significance",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Tablas J&F son puntos de estimación sin IC.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Mantiene férrea y rigurosa la norma exigiendo varianza aunque sea Meta Research."
+                },
+                {
+                    "item": "8. Compute Resource",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Extrae infraestructura, pero fuga 'training_duration: 108 hours'.",
+                    "mi_valoracion": "Medianamente correcto",
+                    "mi_justificacion": "Aunque el contenido (256 A100s) es correctísimo, fuga su propio diccionario JSON interno en la respuesta de salida al público."
+                },
+                {
+                    "item": "9. Code of Ethics",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Difuminado facial de Meta.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Avala los procesos de privacidad descritos (face-blurring) como mitigación equivalente."
+                },
+                {
+                    "item": "10. Broader Impacts",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Impacto CO2 y fallos en escenas rápidas.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Asocia emisiones e impacto de fallo en la calle como 'Broader Impact'."
+                },
+                {
+                    "item": "11. Safeguards",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Segmentación base visual.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Raciocinio impecable; un modelo generador de máscaras visuales per se no exige filtros textuales/letales."
+                },
+                {
+                    "item": "12. Licenses",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Apache 2.0 y CC-BY 4.0 SA-V.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Libre de alucinaciones (cero menciones MIT aleatorias)."
+                },
+                {
+                    "item": "13. Assets",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Data Annotation cards provistas.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Verifican formato y plantilla de Meta en los apéndices."
+                },
+                {
+                    "item": "14. Crowdsourcing",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Trabajadores remunerados, pero fuga 'human_subjects_extraction'.",
+                    "mi_valoracion": "Medianamente correcto",
+                    "mi_justificacion": "El dictamen y los hechos concuerdan, pero nuevamente rompe interfaz del reporte inyectando su variable local (prompt leakage)."
+                },
+                {
+                    "item": "15. IRB Approvals",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Terceras partes, pero fuga comandos.",
+                    "mi_valoracion": "Medianamente correcto",
+                    "mi_justificacion": "Acepta a los vendors de anotación, pero hereda el error de redacción con el leakage del backend."
+                },
+                {
+                    "item": "16. LLM Usage",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Ausentes en Hiera decoder.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Correcto al saber que es un CV model nativo sin LLMs de por medio."
+                }
+            ]
+        },
+        {
+            "paper": "Paper 17: DeepSeek-R1",
+            "items": [
+                {
+                    "item": "1. Claims",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Rl puro evidencia validaciones fuertes en benchmarks tipo AIME y MATH.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Conecta la tesis de GRPO de la sección 4 con las ganancias de raciocinio."
+                },
+                {
+                    "item": "2. Limitations",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Enumera de Sección 6 problemas de formato, Reward Hacking y Lenguajes Mezclados.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extrae con exactitud las debilidades confesadas como el 'Language Mixing' y el 'Reward Hacking'."
+                },
+                {
+                    "item": "3. Theory, Assumptions & Proofs",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Sección 2.1 provee formulación estricta de recompensa.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Localiza el esquema GRPO como demostración teórica base subyacente."
+                },
+                {
+                    "item": "4. Reproducibility",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Enlaces a pesos R1-Zero y scripts provistos.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Valida los URL a githubs funcionales."
+                },
+                {
+                    "item": "5. Open Access",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Respaldado por el release de Huggingface y Github.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Misma justificación concurrente al chequeo de enlaces."
+                },
+                {
+                    "item": "6. Experimental Setting",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Extracción hipergranular (KL coeff=0.001, Temperature=1, Batch=512) y pasos limitados.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Bucea en anexos y recupera con bisturí métricas como 'GRPO clip ratio'."
+                },
+                {
+                    "item": "7. Experiment Statistical Significance",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Bolding sin proveer barras de desvío generalizadas.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Falso Negativo Crítico. Impuso un falso estándar y castigó a los autores acusándolos ciegamente de ocultar datos, cuando explícitamente reportaron haber corrido \"un t-test con p < 0.01\", un test oficial y aceptado por NeurIPS."
+                },
+                {
+                    "item": "8. Compute Resource",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "64 x 8 H800 GPUs durante 198 horas, 5K horas SFT.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Habilidad asombrosa recuperando los clústers exactos y horas incurridas reportadas en el apéndice."
+                },
+                {
+                    "item": "9. Code of Ethics",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Adhiere a la Sección 5 y Reporte de Seguridad completo Apéndice D.3.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Valida éticamente los reportes de seguridad multilingües de DeepSeek sin pedir un título literal burocrático."
+                },
+                {
+                    "item": "10. Broader Impacts",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "R1 es susceptible a ataques de inyección para generar bombas (CBRN) y material subversivo.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Asocia la evaluación de dual-use (material explosivo) con el Broader Impact negativo."
+                },
+                {
+                    "item": "11. Safeguards",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Implementación explícita del Risk Control System bajando Unsafe Ratio de 25.2 a 8.5%.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Diferencia con maestría esta vez un 'Risk Control System' externo implementado frente al simple 'Alineamiento interno' visto antes en otros LLMs."
+                },
+                {
+                    "item": "12. Licenses",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "El repositorio utiliza MIT License.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Alucinación de Licencia severa. Inventa \"MIT License\" cuando jamás fue listada en el paper analizado ciegamente."
+                },
+                {
+                    "item": "13. Assets",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Model card y documentación de hiper-configuración de MoE provistas.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Reconoce el estructurado formato de la tarjeta descriptiva."
+                },
+                {
+                    "item": "14. Crowdsourcing",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Basado en GRPO RL autómata en vez de anotadores en masa nuevos.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Entiende que fue Reinforcement Learning y ChatbotArena, no levantamientos primarios subcontratados."
+                },
+                {
+                    "item": "15. IRB Approvals",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Uso de ChatbotArena preexistente consiente.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "NA al ser secundario y carecer de riesgo inminente reclutado in house."
+                },
+                {
+                    "item": "16. LLM Usage",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "DS-V3 fue juez para generar Reward y DS-V2.5 generó tests.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Brillantez detectando a V3 fungiendo como el LLM-as-a-judge central."
+                }
+            ]
+        },
+        {
+            "paper": "Paper 18: Mamba",
+            "items": [
+                {
+                    "item": "1. Claims",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Validaciones empíricas del linear scaling frente a Transformers en Section 4.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Vincula la solución del cuello de botella al rendimiento verificado."
+                },
+                {
+                    "item": "2. Limitations",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Limitaciones LTI para modelar información densa discreta en texto.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extrae con exactitud las fallas del SSM original en el dominio del procesamiento continuo frente a lo discreto."
+                },
+                {
+                    "item": "3. Theory, Assumptions & Proofs",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Localiza Teorema 1 y demostraciones del Apéndice C y D.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Soberbio nivel de detalle reconociendo las inferencias teóricas del RNN gating en los apéndices."
+                },
+                {
+                    "item": "4. Reproducibility",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "URL GitHub oficial referenciado.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Recupera \"state-spaces/mamba\" correctamente."
+                },
+                {
+                    "item": "5. Open Access",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Hereda cumplimiento por el URL liberado.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Consistente con la validación de acceso."
+                },
+                {
+                    "item": "6. Experimental Setting",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Learning rates paramétricos, decaimientos y lotes encontrados en Anexos.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Extrae variables de fine-tuning (LR de 2e-4)."
+                },
+                {
+                    "item": "7. Experiment Statistical Significance",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Omisión explícita de estimaciones estocásticas frente a estimaciones puntuales planas.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Rigor de auditoría penalizando la falta de variabilidad (Promedios sin seeds informados)."
+                },
+                {
+                    "item": "8. Compute Resource",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "A100s referenciadas y comparativa 5x de speedup listada.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Captura el rendimiento en las gráficas comparadas y las GPUs de prueba."
+                },
+                {
+                    "item": "9. Code of Ethics",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Liberación en Github valida la adhesión ética.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Falso Positivo normativo inaceptable. Excusa mágicamente un vacío literal inventando que ser open-source asume cumplimiento implícito de ética en un paper NeurIPS."
+                },
+                {
+                    "item": "10. Broader Impacts",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Modelo de estado subyacente para modelar secuencias, sin riesgo malicioso primario.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A justificado al ser formulación fundacional."
+                },
+                {
+                    "item": "11. Safeguards",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Estructura SSM sin API final desplegada.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Validado en la abstracción arquitectónica de la herramienta."
+                },
+                {
+                    "item": "12. Licenses",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Posee la licencia MIT.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Alucinación Fáctica letal. Atribuye la licencia \"MIT\" basada en conocimiento pre-entrenado exterior porque la palabra \"MIT\" nunca fue tipeada por los autores en el PDF subido."
+                },
+                {
+                    "item": "13. Assets",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "El Apéndice técnico suple la exigencia documental estructurada.",
+                    "mi_valoracion": "Medianamente correcto",
+                    "mi_justificacion": "Evaluación muy laxa; permite la asunción de un apéndice técnico disperso en lugar de exigir la 'Model Card' obligatoria y estructurada de la norma NeurIPS."
+                },
+                {
+                    "item": "14. Crowdsourcing",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Datos públicos genómicos (HG38) y de texto (The Pile).",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Descarta la recolección activa humana de primera línea."
+                },
+                {
+                    "item": "15. IRB Approvals",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Inexistencia de ensayos biomédicos/sujetos de evaluación.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Sin humanos objeto en estudios."
+                },
+                {
+                    "item": "16. LLM Usage",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Competidor de Transformers; los autores no los instrumentan iterativamente.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "N/A lógicamente procesado (no dependen de GPTs para sus derivaciones)."
+                }
+            ]
+        },
+        {
+            "paper": "Paper 19: Jamba",
+            "items": [
+                {
+                    "item": "1. Claims",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Throughput and memory metrics proved over Mixtral 8x7B.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Asocia la claim de eficiencia con su test frente al Mixture of Experts."
+                },
+                {
+                    "item": "2. Limitations",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Struggles with in-context capabilities from pure Mamba architecture... base model only without alignment.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Recupera con maestría que carece de alineamiento y los spikes latentes de Mamba."
+                },
+                {
+                    "item": "3. Theory, Assumptions & Proofs",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Empirical and scaling study focused on architectural blending.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "NA. Valida la naturaleza sistémica frente al álgebra."
+                },
+                {
+                    "item": "4. Reproducibility",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Huggingface URL ai21labs/Jamba-v0.1.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Recupera el URI de los pesos."
+                },
+                {
+                    "item": "5. Open Access",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Huggingface provided for artifact access.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Mismo fundamento que el chequeo 4."
+                },
+                {
+                    "item": "6. Experimental Setting",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Omits the optimizer type, learning rate, training steps... required for full reproducibility.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Rigor extremo para auditar que, aunque hablen de la MoE y bloques, esconden el learning rate y los decaimientos, haciéndolo irreproducible (No)."
+                },
+                {
+                    "item": "7. Experiment Statistical Significance",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Reports metrics like HellaSwag without accompanying error bars.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Caza el error de reporte en masa como tabla muda carente de IC%."
+                },
+                {
+                    "item": "8. Compute Resource",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Cites usage of 'NVIDIA H100 for training, A100 80GB for inference'.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Falso Positivo Laxo. Valida erróneamente un \"Yes\" con la mera mención técnica del GPU (H100), ignorando que el estándar explícito de NeurIPS es requerir horas absolutas o huellas de cómputo en la vida real."
+                },
+                {
+                    "item": "9. Code of Ethics",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Lacks an explicit statement regarding adherence to the NeurIPS Code of Ethics.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Mantiene sancionable la postura carente y silenciosa frente a la norma burocrática."
+                },
+                {
+                    "item": "10. Broader Impacts",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Focuses exclusively on technical benchmarks, failing to engage with potential malicious uses.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Castiga a un modelo masivo fundacional abierto a la calle (52B pars) por evadir la reflexión sobre repercusiones sociales destructivas."
+                },
+                {
+                    "item": "11. Safeguards",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "States it is a 'pretrained base model only' with 'no alignment... no moderation mechanisms'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Entiende su fase formativa y cruda (Base) que se excluye normativamente."
+                },
+                {
+                    "item": "12. Licenses",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Released under the Apache 2.0 license.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Libre de alucinaciones exógenas (sin menciones falsas). Consta explícita y real en el artículo evaluado."
+                },
+                {
+                    "item": "13. Assets",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Weights via HuggingFace... configuration details (16 experts, top-2 gating).",
+                    "mi_valoracion": "Medianamente correcto",
+                    "mi_justificacion": "Convalida de nuevo un Apéndice y URL técnico como sustituto de las verdaderas plantillas documentales estrictas (Data Cards) mandatorias del congreso."
+                },
+                {
+                    "item": "14. Crowdsourcing",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Scraping of web and books without new human subjects.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Uso extractivo bot en la web."
+                },
+                {
+                    "item": "15. IRB Approvals",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "No direct human experimentation.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "NA justificado."
+                },
+                {
+                    "item": "16. LLM Usage",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Methodology focuses on architectural design without explicit prompting assistants.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Ausencia de derivaciones sintéticas de modelos terceros en su núcleo."
+                }
+            ]
+        },
+        {
+            "paper": "Paper 20: Chameleon",
+            "items": [
+                {
+                    "item": "1. Claims",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Mixed-modal early-fusion models unifican texto e imágenes; verificado en Tablas 9-14 frente a Gemini.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Vincula deducciones multi-modales con benchmarks robustos competitivos en la Sección de Evaluación contra GPT-4V."
+                },
+                {
+                    "item": "2. Limitations",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Notes: 'Tokenizer weakness in OCR-related tasks', 'Instability when scaling above 8B', 'Uncontrolled growth of output norms'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Expone con asombrosa fineza fallos reales y severos confesados (growth norms) del paper y no banalidades."
+                },
+                {
+                    "item": "3. Theory, Assumptions & Proofs",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Empirical study focused on architecture and training without formal proofs or theorems.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Comprende la justificación empírico/matemática base ('softmax translation') pero omite dictaminar un 'Sí' al ver que no son teoremas deductivos reales."
+                },
+                {
+                    "item": "4. Reproducibility",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Third-party dependencies ('xformers') do not constitute reproducible model weights for Chameleon itself.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Rigor auditor superior. Rechaza las promesas que proveen librerías terceras en vez de dar los pesos nativos (ocultismo Meta)."
+                },
+                {
+                    "item": "5. Open Access",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Same as reproducibility: omission of the core implementation proprietary code and datasets.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Mantiene el embargo evaluativo sobre un proyecto netamente opaco."
+                },
+                {
+                    "item": "6. Experimental Setting",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Recuperates optimizer: AdamW, betas: [0.9, 0.95], lr: 1.0 x 10^-4... global batch of 8M tokens.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Dato empírico recuperado excepcionalmente (8 millones en tamaño de lote)."
+                },
+                {
+                    "item": "7. Experiment Statistical Significance",
+                    "valoracion_auditor": "No",
+                    "justificacion_auditor": "Provides only point-estimate averages without accompanying measures of variability.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Falso Negativo Sistemático por ignorar las notas inferenciales menores. Afirma carencia, cuando el propio paper (Sec 4.3) detalla la correlación: \"Krippendorff's Alpha... confidence interval is [0.319, 0.356] based on bootstrap sampling\"."
+                },
+                {
+                    "item": "8. Compute Resource",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "1024 concurrent GPUs, 856,481 GPU hours on NVIDIA A100... RSC cluster.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Cosecha las métricas estratosféricas expuestas (856 mil horas en A100)."
+                },
+                {
+                    "item": "9. Code of Ethics",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Mentions 'Safety tuning efforts' and 'Red teaming efforts' to abide by safety standard practices.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Correlaciona la praxis corporativa de Meta (Red-Teaming) como equivalente válido a los parámetros de ética."
+                },
+                {
+                    "item": "10. Broader Impacts",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Safety tuning and red teaming sections explicitly outline limitations in potential misuse context.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Avalado en su conexión a ataques de inyección multimodal y usos nocivos prevenidos."
+                },
+                {
+                    "item": "11. Safeguards",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Implemented Safety tuning efforts to mitigate deployment risks.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Entiende que las salvaguardas (Safety Tuning filters) ejercen control sobre sus propias salidas para el ecosistema Chameleon comercial."
+                },
+                {
+                    "item": "12. Licenses",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Image tokenizer trained on licensed assets: 'CC-BY-SA 2.0', 'CC-BY-SA 3.0', 'CC-BY-SA 4.0'.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Relevamiento inmejorable; audita las tres variaciones declaradas para imágenes sin inventar patentes de software como MIT."
+                },
+                {
+                    "item": "13. Assets",
+                    "valoracion_auditor": "N/A",
+                    "justificacion_auditor": "Utilizes established datasets (Llama-2, MS-COCO) but does not provide new model access.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "NA con coherencia brutal. Dado que en los ítems 4/5 la IA descubrió que los autores jamás lanzaron el modelo al público, lógicamente no están forzados a emitir Plantillas Model Cards de NeurIPS sobre activos que no fueron distribuidos."
+                },
+                {
+                    "item": "14. Crowdsourcing",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Appendix B details methodology for human preference evaluation and tasks provided to annotators.",
+                    "mi_valoracion": "Correcto",
+                    "mi_justificacion": "Relevamiento preciso desde apéndices sobre el marco comparativo (Chameleon vs Gemini)."
+                },
+                {
+                    "item": "15. IRB Approvals",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Describes human preference data collection: 'Human evaluation experiment measuring quality'.",
+                    "mi_valoracion": "Incorrecto",
+                    "mi_justificacion": "Falso Positivo de lógica legal grave. Dicta 'Yes' asumiendo que realizar \"Tests de calidad humana a los outputs\" cuenta explícita e inherentemente como haber sido validado médicamente y socialmente por la junta burocrática del comité IRB, subvirtiendo la letra rígida de la norma."
+                },
+                {
+                    "item": "16. LLM Usage",
+                    "valoracion_auditor": "Yes",
+                    "justificacion_auditor": "Methodology involves comparing the model against 'GPT-4V' and 'Gemini'.",
+                    "mi_valoracion": "Medianamente correcto",
+                    "mi_justificacion": "Avala un 'Sí' (usable al haber ShareGPT), pero comete error de razonamiento en su texto: que te enfrentes en un benchmark contra \"GPT-4V\" como competidor, no cuenta ante NeurIPS como \"Haber usado LLM metodológicamente para el desarrollo y generación sistémica\" del paper."
+                }
+            ]
+        }
+    ]
+}

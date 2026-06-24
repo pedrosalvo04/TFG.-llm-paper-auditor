@@ -114,10 +114,12 @@ if can_run:
             with col_md:
                 reporte_md = generate_report(resultado, uploaded_file, puntuacion)
                 from backend.common.config import VERIFICATION_MODEL_NAME
+                import os
+                base_filename = os.path.splitext(uploaded_file.name)[0]
                 st.download_button(
                     label="📥 Descargar Informe Markdown (.md)",
                     data=reporte_md,
-                    file_name=f"auditoria_{VERIFICATION_MODEL_NAME}_{uploaded_file.name.replace('.pdf', '')}.md",
+                    file_name=f"auditoria_{VERIFICATION_MODEL_NAME}_{base_filename}.md",
                     mime="text/markdown",
                     use_container_width=True
                 )
@@ -127,10 +129,12 @@ if can_run:
                     try:
                         reporte_pdf = generate_pdf_report(resultado, uploaded_file, puntuacion)
                         from backend.common.config import VERIFICATION_MODEL_NAME
+                        import os
+                        base_filename = os.path.splitext(uploaded_file.name)[0]
                         st.download_button(
                             label="📥 Descargar Informe PDF (.pdf)",
                             data=reporte_pdf,
-                            file_name=f"auditoria_{VERIFICATION_MODEL_NAME}_{uploaded_file.name.replace('.pdf', '')}.pdf",
+                            file_name=f"auditoria_{VERIFICATION_MODEL_NAME}_{base_filename}.pdf",
                             mime="application/pdf",
                             use_container_width=True
                         )

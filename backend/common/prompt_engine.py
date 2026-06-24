@@ -115,15 +115,15 @@ def get_extraction_assistance_helps(info: dict) -> dict:
     
     helps['reproducibility'] = (
         f"CODE/MODEL URLS: {url_str}. WEIGHTS: {weights}. "
-        "NeurIPS Rule: If ANY code/model URL is present, answer 'Yes'. "
-        "If NO code/URL is found, answer 'No' and set is_no_justified: false."
+        "Any code/model URL satisfies the reproducibility requirement. "
+        "If no code or URL is found, it is non-compliant."
     )
     
     # 2. OPEN ACCESS (ITEM 5)
     helps['open_access'] = (
         f"DATA/RESOURCE URLS: {url_str}. "
-        "If ANY public URL (project, demo, HF, github) exists -> 'Yes'. "
-        "If only private/proprietary mentioned -> 'No' and set is_no_justified: true ONLY if they explain why."
+        "A public URL (project, demo, HF, github) is sufficient for compliance. "
+        "If only private/proprietary resources are mentioned, it is non-compliant unless explicitly justified by the authors."
     )
     
     # 3. ESTADÍSTICA (ITEM 7)
@@ -144,8 +144,8 @@ def get_extraction_assistance_helps(info: dict) -> dict:
     
     helps['statistics'] = (
         f"CI/Variance: {ci}, Significance Tests: {st}, Runs: {runs}.{greedy_note} "
-        "Rule: If NO intervals/variance/runs found -> answer 'No' and set is_no_justified: false. "
-        "EXCEPTIONAL RULE: For deterministic LLM benchmarks, 'Yes' is acceptable if greedy decoding is used."
+        "If no intervals, variance, or runs are found, it is generally non-compliant. "
+        "Exception: For deterministic LLM benchmarks, it is acceptable if greedy decoding is used."
     )
     
     # 4. RECURSOS (ITEM 8)
@@ -161,8 +161,8 @@ def get_extraction_assistance_helps(info: dict) -> dict:
 
     helps['compute_resource'] = (
         f"DETECTED hardware/cluster: {hw_str}.{co2_note}{efficiency_note} "
-        "CRITICAL RULE FOR ITEM 8: If ANY hardware, cluster, or CO2 emissions are mentioned -> answer 'Yes'. "
-        "If hardware is mentioned but BOTH time and efficiency/CO2 are missing -> 'No'."
+        "If any hardware, cluster, or CO2 emissions are mentioned, it is compliant. "
+        "If hardware is mentioned but both time and efficiency/CO2 are missing, it is non-compliant."
     )
     
     # 5. LICENSES (ITEM 12)
@@ -179,7 +179,7 @@ def get_extraction_assistance_helps(info: dict) -> dict:
 
     helps['licenses'] = (
         f"LICENSES FOUND: {lic_found}. "
-        "Rule: If NO specific license (MIT, Apache, CC) is named -> answer 'No' and set is_no_justified: false."
+        "If no specific license (like MIT, Apache, CC) is named, it is non-compliant."
     )
     
     # 6. CROWDSOURCING (ITEM 14)
@@ -197,8 +197,8 @@ def get_extraction_assistance_helps(info: dict) -> dict:
     
     helps['crowdsourcing'] = (
         f"USES HUMAN/PREFERENCE DATA: {uses_human_flag}, COMP: {comp}. "
-        "Rule: If human-derived data (RLHF, Ultrafeedback) is used, Items 14/15 MUST be addressed (Yes/No). "
-        "N/A is ONLY for purely algorithmic papers with NO human data interaction."
+        "If human-derived data (like RLHF or Ultrafeedback) is used, Items 14 and 15 must be addressed. "
+        "N/A is only applicable for purely algorithmic papers with no human data interaction."
     )
     
     return helps
