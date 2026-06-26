@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Determinismo de Modelos - Auditoría de Papers</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --accent-gemini: #3b82f6; /* Azul */
+            --accent-gemini-light: rgba(59, 130, 246, 0.2);
+            --accent-qwen: #f59e0b; /* Ambar */
+            --accent-qwen-light: rgba(245, 158, 11, 0.2);
+            
+            --color-stable: #10b981; /* Verde */
+            --color-semantic: #f59e0b; /* Ambar */
+            --color-unstable: #ef4444; /* Rojo */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 50px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0 0 12px 0;
+            color: #0f172a;
+            letter-spacing: -0.02em;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 650px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        .dashboard {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            animation: fadeInUp 0.6s ease-out backwards;
+            animation-delay: 0.1s;
+        }
+
+        .row {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .card.full-width {
+            flex: 1 1 100%;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .title-group h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            color: #0f172a;
+        }
+        
+        .title-group p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .legend-custom {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #334155;
+        }
+        
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+            width: 100%;
+        }
+        
+        .doughnut-container {
+            height: 250px;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .model-title {
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #0f172a;
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+            .card { padding: 20px; }
+            .chart-container { height: 300px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Análisis de Determinismo (10 Iteraciones)</h1>
+        <p>Evaluación de la consistencia lógica y estabilidad semántica de los modelos al analizar el mismo artículo repetidas veces.</p>
+    </div>
+
+    <div class="dashboard">
+        <!-- Gráfica 1: Consistencia de Veredictos (Line/Area Chart) -->
+        <div class="card full-width">
+            <div class="card-header">
+
+                <div class="legend-custom">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--accent-gemini);"></div>
+                        <span>Gemini</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--accent-qwen);"></div>
+                        <span>Qwen2.5</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="consistencyChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Gráfica 2 y 3: Distribución de Estabilidad (Doughnuts) -->
+        <div class="row">
+            <div class="card">
+                <div class="card-header" style="justify-content: center; text-align: center;">
+                    <div class="title-group">
+                        <h2>Perfil de Estabilidad: Gemini</h2>
+                        <p>Distribución de los 16 ítems según su nivel de determinismo.</p>
+                    </div>
+                </div>
+                <div class="chart-container doughnut-container">
+                    <canvas id="geminiDoughnut"></canvas>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header" style="justify-content: center; text-align: center;">
+                    <div class="title-group">
+                        <h2>Perfil de Estabilidad: Qwen 2.5</h2>
+                        <p>Distribución de los 16 ítems según su nivel de determinismo.</p>
+                    </div>
+                </div>
+                <div class="chart-container doughnut-container">
+                    <canvas id="qwenDoughnut"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        Chart.defaults.color = '#64748b';
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.font.size = 13;
+        
+        const items = ['Claims', 'Limits', 'Theory', 'Repro', 'OpenA', 'ExpSet', 'StatSig', 'Compute', 'Ethics', 'Impact', 'Guard', 'Licen', 'Assets', 'Crowds', 'IRB', 'LLM Use'];
+        
+        // Data for Consistency Line Chart
+        const geminiConsistency = [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100];
+        const qwenConsistency = [100, 100, 100, 100, 100, 100, 100, 90, 100, 100, 80, 100, 100, 100, 60, 100];
+
+        // 1. Line Chart: Consistency
+        const ctxConsistency = document.getElementById('consistencyChart').getContext('2d');
+        new Chart(ctxConsistency, {
+            type: 'line',
+            data: {
+                labels: items,
+                datasets: [
+                    {
+                        label: 'Gemini',
+                        data: geminiConsistency,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#3b82f6',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Qwen2.5',
+                        data: qwenConsistency,
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#f59e0b',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true,
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        titleColor: '#f8fafc',
+                        bodyColor: '#e2e8f0',
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return ` ${context.dataset.label}: ${context.parsed.y}% Consistencia`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 40,
+                        max: 100,
+                        ticks: {
+                            stepSize: 20,
+                            callback: function(value) { return value + '%' },
+                            font: { weight: '500' }
+                        },
+                        grid: {
+                            color: '#f1f5f9',
+                            drawBorder: false,
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            font: { weight: '500' },
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+
+        // Data for Doughnuts
+        // Categories: Estable/Determinista (Verde), Degradación Semántica (Ambar), Inestabilidad Crítica (Rojo)
+        const geminiPieData = [16, 0, 0]; // 16 Estable, 0 Semantica, 0 Critica
+        const qwenPieData = [10, 3, 3];   // 10 Estable (incluye bugs consistentes), 3 Semantica, 3 Critica
+        const pieLabels = ['Determinismo Estable', 'Degradación Semántica', 'Inestabilidad Crítica'];
+        const pieColors = ['#10b981', '#f59e0b', '#ef4444'];
+
+        const doughnutOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 15,
+                        font: { size: 12, family: "'Inter', sans-serif" }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    titleColor: '#f8fafc',
+                    bodyColor: '#e2e8f0',
+                    padding: 10,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            const val = context.parsed;
+                            const total = 16;
+                            const percent = ((val/total)*100).toFixed(1);
+                            return ` ${val} ítems (${percent}%)`;
+                        }
+                    }
+                }
+            }
+        };
+
+        // 2. Gemini Doughnut
+        new Chart(document.getElementById('geminiDoughnut').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: pieLabels,
+                datasets: [{
+                    data: geminiPieData,
+                    backgroundColor: pieColors,
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 4
+                }]
+            },
+            options: doughnutOptions
+        });
+
+        // 3. Qwen Doughnut
+        new Chart(document.getElementById('qwenDoughnut').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: pieLabels,
+                datasets: [{
+                    data: qwenPieData,
+                    backgroundColor: pieColors,
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 4
+                }]
+            },
+            options: doughnutOptions
+        });
+
+    </script>
+</body>
+</html>

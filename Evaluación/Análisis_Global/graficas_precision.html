@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Precisión de Modelos - Auditoría de Papers</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --accent-gemini: #3b82f6; /* Azul moderno */
+            --accent-qwen: #f59e0b; /* Ambar vibrante */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 50px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0 0 12px 0;
+            color: #0f172a;
+            letter-spacing: -0.02em;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        .dashboard {
+            width: 100%;
+            max-width: 1200px;
+            animation: fadeInUp 0.6s ease-out backwards;
+            animation-delay: 0.1s;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 35px 40px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .title-group h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            color: #0f172a;
+        }
+        
+        .title-group p {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .legend-custom {
+            display: flex;
+            gap: 24px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #334155;
+        }
+        
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 500px;
+            width: 100%;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .card { padding: 25px 20px; }
+            .chart-container { height: 400px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Análisis de Precisión por Ítem</h1>
+        <p>Comparativa del porcentaje de accuracy para Gemini y Qwen2.5 sobre los 16 criterios evaluados.</p>
+    </div>
+
+    <div class="dashboard">
+        <div class="card">
+            <div class="card-header">
+                <div class="global-stats" style="display: flex; gap: 20px; font-size: 1.05rem; font-weight: 600; color: #334155;">
+                    <div>Exactitud Global:</div>
+                    <div>Gemini <span style="color: var(--accent-gemini);">84.1%</span></div>
+                    <div>Qwen2.5 <span style="color: var(--accent-qwen);">59.4%</span></div>
+                </div>
+                <div class="legend-custom">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--accent-gemini);"></div>
+                        <span>Gemini</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--accent-qwen);"></div>
+                        <span>Qwen2.5</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="accuracyChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de Chart.js por defecto para tema claro
+        Chart.defaults.color = '#64748b';
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.font.size = 13;
+        
+        // Datos de precisión extraídos por el parser
+        const items = ['Claims', 'Limits', 'Theory', 'Repro', 'OpenA', 'ExpSet', 'StatSig', 'Compute', 'Ethics', 'Impact', 'Guard', 'Licen', 'Assets', 'Crowds', 'IRB', 'LLM Use'];
+        const geminiData = [100.0, 100.0, 85.0, 75.0, 80.0, 100.0, 75.0, 85.0, 85.0, 90.0, 80.0, 55.0, 75.0, 90.0, 80.0, 90.0];
+        const qwenData = [55.0, 70.0, 80.0, 55.0, 75.0, 55.0, 45.0, 25.0, 70.0, 70.0, 65.0, 50.0, 25.0, 80.0, 75.0, 55.0];
+
+        const ctx = document.getElementById('accuracyChart').getContext('2d');
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: items,
+                datasets: [
+                    {
+                        label: 'Gemini',
+                        data: geminiData,
+                        backgroundColor: '#3b82f6',
+                        hoverBackgroundColor: '#2563eb',
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        barPercentage: 0.85,
+                        categoryPercentage: 0.8
+                    },
+                    {
+                        label: 'Qwen2.5',
+                        data: qwenData,
+                        backgroundColor: '#f59e0b',
+                        hoverBackgroundColor: '#d97706',
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        barPercentage: 0.85,
+                        categoryPercentage: 0.8
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { 
+                        display: false 
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        titleColor: '#f8fafc',
+                        bodyColor: '#e2e8f0',
+                        titleFont: { size: 14, weight: '600' },
+                        bodyFont: { size: 13 },
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: true,
+                        boxPadding: 6,
+                        callbacks: {
+                            label: function(context) {
+                                return ` ${context.dataset.label}: ${context.parsed.y}% accuracy`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            stepSize: 25,
+                            callback: function(value) { return value + '%' },
+                            font: { weight: '500' }
+                        },
+                        grid: {
+                            color: '#f1f5f9', // Líneas sutiles
+                            drawBorder: false,
+                        },
+                        border: { display: false }
+                    },
+                    x: {
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            font: { weight: '500' },
+                            maxRotation: 45,
+                            minRotation: 45
+                        },
+                        border: { display: false }
+                    }
+                },
+                animation: {
+                    duration: 1200,
+                    easing: 'easeOutQuart'
+                }
+            }
+        });
+    </script>
+</body>
+</html>
