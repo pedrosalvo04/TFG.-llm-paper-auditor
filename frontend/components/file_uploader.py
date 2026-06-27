@@ -162,14 +162,16 @@ def run_audit(md_text, criteria_mode="neurips", criteria_text=None):
                 if not os.path.exists(save_dir):
                     os.makedirs(save_dir)
                 
+                base_name = os.path.splitext(st.session_state.archivo_actual)[0]
+                
                 # Guardar reporte Markdown
-                filename_md = f"auditoria_{st.session_state.archivo_actual.replace('.pdf', '')}.md"
+                filename_md = f"auditoria_{base_name}.md"
                 save_path_md = os.path.join(save_dir, filename_md)
                 with open(save_path_md, "w", encoding="utf-8") as f:
                     f.write(reporte_contenido)
                 
                 # Guardar reporte PDF
-                filename_pdf = f"auditoria_{st.session_state.archivo_actual.replace('.pdf', '')}.pdf"
+                filename_pdf = f"auditoria_{base_name}.pdf"
                 save_path_pdf = os.path.join(save_dir, filename_pdf)
                 reporte_pdf = generate_pdf_report(st.session_state.resultado, st.session_state.uploaded_file_obj, health)
                 with open(save_path_pdf, "wb") as f:
