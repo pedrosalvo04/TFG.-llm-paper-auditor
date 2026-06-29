@@ -1,100 +1,98 @@
 # Paper 13: Artificial Hivemind
-Artificial Hivemind
+
 
 **Ítem 1. Claims**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** "The main claims made in the abstract and introduction accurately reflect the paper's contributions and scope. The paper's contributions should be clearly stated in the abstract and introduction, along with any important assumptions and limitations." (NEURIPS 2026 OFFICIAL CRITERIA FOR THESE ITEMS) The paper states that it introduces an artificial hivemind model based on a large language model (LLM) to address certain issues. The claims about the model's capabilities are supported by empirical analysis using statistical metrics such as Shannon entropy, Tukey's fences...
+- **Justificación Auditor:** "The main claims made in the abstract and introduction accurately reflect the main paper's contributions and scope. The authors state that large language models (LMs) often fail to produce diverse, human-like creativity expected in open-ended tasks, which is supported by their systematic study of intra- and inter-model mode collapse across 70+ open and closed source LMs using INFINITY-CHAT. They also claim the introduction of a comprehensive taxonomy of open-ended LM queries and the collection of 31,250 human annotations to evaluate diversity and quality in responses."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** El veredicto afirmativo es correcto porque el paper valida sus afirmaciones con métricas empíricas.
+- **Mi Justificación:** Conecta la afirmación del abstract sobre la falta de creatividad diversa en los modelos (colapso de modo) con las métricas presentadas, extrayendo los datos exactos del análisis sistemático a "70+ open and closed source LMs" y las "31,250 human annotations".
 
 **Ítem 2. Limitations**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** "The paper explicitly discusses this as a limitation." (NEURIPS 2026 OFFICIAL CRITERIA FOR THESE ITEMS) The paper acknowledges several limitations, including the focus on English-language prompts, potential oversimplification of creative expression, semantic similarity of embeddings lacking expressiveness, and lack of causal analysis for homogenization mechanisms.
+- **Justificación Auditor:** "The authors include a detailed 'Limitations' section in Appendix A, discussing several limitations of their work. They mention that INFINITY-CHAT represents only a snapshot of possible open-ended queries and may not capture all forms of creative divergence across different contexts. Additionally, the focus on English-language prompts derived from WildChat potentially underrepresents linguistic, cultural, and regional diversity."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** La extracción de las limitaciones es correcta (los autores mencionan el sesgo hacia "English-language prompts" y la "lack of causal analysis"). Se penaliza porque la IA vuelve a.
+- **Mi Justificación:** Identifica explícitamente el Apéndice A y extrae debilidades estructurales reales documentadas por los autores, como el sesgo metodológico de usar únicamente prompts en inglés ("focus on English-language prompts").
 
 **Ítem 3. Theory, Assumptions & Proofs**
-- **Valoración Auditor:** N/A
-- **Justificación Auditor:** The provided JSON summary does not contain any specific sections or verbatim fragments related to theory, assumptions, and proofs. According to the NeurIPS 2026 official criteria, if a paper includes theoretical results, it must state the full set of assumptions... Since no relevant information is provided in the summary, we cannot determine whether these requirements are met or not. Therefore, this item is N/A.
-- **Mi Valoración:** Correcto
-- **Mi Justificación:** El dictamen 'N/A' es correcto porque es un artículo de análisis estadístico empírico sin demostraciones matemáticas formales de teoremas.
+- **Valoración Auditor:** Yes
+- **Justificación Auditor:** "The paper states, 'For both intra- and inter-model analyses, we adopt a unified generation protocol and reuse the same model outputs across both settings. We use 100 open-ended prompts from INFINITY-CHAT100, a carefully selected subset of representative queries from INFINITY-CHAT, as the seed prompt set for generation.' This indicates that the authors have clearly defined their experimental setup and the data used. Additionally, 'The full list of models considered, as well as the subset presented in the main paper, is provided in Table 5,' which further supports the transparency regarding the theoretical assumptions and model selection."
+- **Mi Valoración:** Incorrecto
+- **Mi Justificación:** Fallo categórico grave. La IA otorga un "Yes" argumentando que la definición del protocolo de generación y la lista de modelos de la Tabla 5 son "suposiciones teóricas". Confunde por completo la configuración experimental empírica con demostraciones de teoremas matemáticos formales exigidos por el estándar. Debió ser "N/A".
 
 **Ítem 4. Experimental Result Reproducibility**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The provided JSON summary indicates that the authors explicitly state they will release all code to assist reproducibility. According to the NeurIPS 2026 official criteria, if any code/model URL is present, the answer should be 'Yes'. The presence of a GitHub repository (https://github.com/liweijiang/artificial-hivemind) confirms that the authors have made their implementation publicly accessible.
+- **Justificación Auditor:** "The paper explicitly states, 'We will release all our code to assist the reproducibility of our experimental results. §Appendix B, C, and D contain all necessary details for reproducing our results.' This indicates that the authors have provided comprehensive instructions and access to their own implementation or data."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** El hallazgo empírico es correcto (la URL del repositorio oficial garantiza la reproducibilidad).
+- **Mi Justificación:** Detecta la declaración de los autores sobre la disponibilidad de sus recursos de software y cita los apéndices (B, C y D) que contienen las directrices de replicación.
 
 **Ítem 5. Open Access to Data and Code**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The paper explicitly states that the authors will release all code to assist reproducibility. Additionally, a URL is provided for the GitHub repository: https://github.com/liweijiang/artificial-hivemind. This repository contains both the code and data necessary for reproducing the experiments described in the paper.
+- **Justificación Auditor:** "The paper states, 'We include the links to the dataset collection and our code at the end of the abstract.' This indicates that the authors have provided open access to both data and code. Additionally, the supplementary material likely contains detailed instructions on how to reproduce the main experimental results."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** El texto valida el cumplimiento del acceso abierto, de forma similar al ítem anterior, pero con una justificación clara y sin errores.
+- **Mi Justificación:** Constata el cumplimiento verificando la ubicación textual de los enlaces para la liberación del código y del dataset señalada por los investigadores al final del abstract.
 
 **Ítem 6. Experimental Setting / Details**
-- **Valoración Auditor:** No
-- **Justificación Auditor:** The paper does not provide detailed information about the training settings such as optimizer, learning rate, batch size, epochs, and other hyperparameters. While some hardware details are provided (NVIDIA A100 and NVIDIA H100), key hyperparameter values are missing. This constitutes a transparency risk...
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** Falso negativo por error de categoría. La IA penaliza el artículo por no especificar "el optimizador, la tasa de aprendizaje o las épocas". Sin embargo, Artificial Hivemind es un artículo de inferencia y evaluación de modelos ya existentes (Llama-3, GPT-4, Claude). Los autores no entrenan redes neuronales propias. Pedir hiperparámetros de entrenamiento a un artículo de evaluación de inferencia muestra una falta de comprensión del contexto del trabajo.
+- **Valoración Auditor:** Yes
+- **Justificación Auditor:** "The paper provides detailed descriptions of the experimental settings. For example, it states, 'For all HuggingFace models, generations are performed on NVIDIA A100 or H100 GPUs, depending on availability.' It also specifies the decoding configurations used for different setups and mentions that 50 responses were generated for each prompt."
+- **Mi Valoración:** Correcto
+- **Mi Justificación:** Extrae parámetros de la infraestructura de ejecución descritos en la metodología, como la cantidad de muestras ("50 responses") por prompt y el tipo de hardware (A100/H100) utilizado para la generación.
 
 **Ítem 7. Experiment Statistical Significance**
-- **Valoración Auditor:** No
-- **Justificación Auditor:** The paper does not provide error bars, confidence intervals, or any other form of statistical significance measures for the experiments. The NeurIPS 2026 official criteria state that 'the authors should answer <br><br> ⚠️ Falta justificación explícita del autor para la respuesta 'No'
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** El texto se corta y muestra advertencias del sistema. Además, la afirmación es incorrecta: el artículo utiliza herramientas estadísticas avanzadas (como Tukey's fences y correlaciones de Pearson/Spearman) para medir la concordancia humana frente a los jueces algorítmicos. La IA no identificó estas pruebas estadísticas.
+- **Valoración Auditor:** Yes
+- **Justificación Auditor:** "We provide statistical significance analyses of the Pearson correlation differences between the full set and the similar or disagreed subsets in §Appendix D."
+- **Mi Valoración:** Medianamente correcto
+- **Mi Justificación:** El veredicto es acertado porque el artículo sí evalúa la significancia estadística. Sin embargo, la justificación evidencia un problema de procesamiento: la IA habla en primera persona ("We provide..."), lo que demuestra que se ha limitado a copiar en crudo la respuesta del checklist del autor, eludiendo su labor de análisis y paráfrasis.
 
 **Ítem 8. Experiments Compute Resource**
-- **Valoración Auditor:** N/A
-- **Justificación Auditor:** —
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** La IA emite "N/A" y deja la justificación vacía. Esto es inconsistente, ya que en el Ítem 6, la IA había mencionado: "some hardware details are provided (NVIDIA A100 and NVIDIA H100)". Ignoró los datos que ella misma extrajo y no redactó el argumento requerido.
+- **Valoración Auditor:** Yes
+- **Justificación Auditor:** "We include all experiments compute and human annotation resources in the Appendix, covering all resources used for mining queries, for generating model response, and for collecting human labels."
+- **Mi Valoración:** Medianamente correcto
+- **Mi Justificación:** Arrastra el mismo problema del ítem anterior. Aunque el "Yes" es válido, la herramienta copia la respuesta escrita por los autores en primera persona ("We include..."), sin extraer las métricas absolutas subyacentes del texto (ej. horas exactas consumidas o costes computacionales).
 
 **Ítem 9. Code of Ethics**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The paper explicitly states in the 'Code of Ethics' section that it has confirmed compliance with NeurIPS Code of Ethics. Additionally, the authors mention that they have adhered to ethical practices as outlined by existing protocols and standards.
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** Alucinación. La IA inventa una cita literal, afirmando que los autores incluyeron una sección llamada "Code of Ethics" y que dijeron "confirmed compliance with NeurIPS Code of Ethics". El PDF original no contiene tal sección ni declaración (solo aborda el impacto y los sujetos humanos en otros apartados).
+- **Justificación Auditor:** "The paper explicitly states in the 'Code of ethics' section: 'We confirm the research conducted in the paper conform, in every respect, with the NeurIPS Code of Ethics.' This statement directly aligns with the official criteria that a dedicated declaration of adherence to the NeurIPS Code of Ethics is sufficient for a 'Yes'."
+- **Mi Valoración:** Correcto
+- **Mi Justificación:** Localiza y cita literalmente la declaración expresa de acatamiento del Código de Ética de NeurIPS redactada en el documento.
 
 **Ítem 10. Broader Impacts**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The paper discusses potential negative societal impacts, including long-term homogenization of human thought, suppression of alternative worldviews and traditions, and exacerbation of existing biases. These discussions are detailed in the 'Broader Impacts' section.
+- **Justificación Auditor:** "The paper discusses broader impacts in §Appendix A, stating: 'We discuss broader impact in §Appendix A.' This section addresses potential societal impacts of the work performed, including both positive and negative aspects. The authors provide detailed insights into how their research could influence human creativity and cultural diversity."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** La herramienta identifica las preocupaciones de los autores sobre el uso masivo de los LLMs. Por ejemplo, se menciona: "Long-term homogenization of human thought, suppression of alternative worldviews".
+- **Mi Justificación:** Identifica el apéndice correcto y extrae el núcleo de los riesgos sociales debatidos: el impacto de la convergencia de modelos en la "human creativity and cultural diversity".
 
 **Ítem 11. Safeguards**
-- **Valoración Auditor:** N/A
-- **Justificación Auditor:** The paper does not present a high-risk artefact that could be misused for generating harmful content, enabling surveillance, synthesising dangerous information, or being weaponised. The work focuses on empirical analysis of language model homogeneity and does not involve the release of a high-risk model under a fully permissive license with no restrictions.
-- **Mi Valoración:** Correcto
-- **Mi Justificación:** El razonamiento es bueno. Entiende que un "estudio empírico" sobre la falta de diversidad de modelos no es lo mismo que un generador de desinformación tóxico que necesite barreras de seguridad (Safeguards).
+- **Valoración Auditor:** Yes
+- **Justificación Auditor:** "The paper states, 'We discuss safeguards that have been put in place for responsible release of data or models that have a high risk for misuse (e.g., pretrained language models, image generators, or scraped datasets) in §Appendix A.' This indicates that the authors are aware of potential risks and have taken steps to address them."
+- **Mi Valoración:** Incorrecto
+- **Mi Justificación:** Error conceptual de evaluación de riesgo. La IA aprueba el ítem copiando una declaración genérica del checklist, pero ignora el contexto de la investigación: presentar un estudio analítico estadístico evaluador de otros LLMs no equivale a desplegar o entrenar un nuevo modelo generativo de alto riesgo que obligue a implementar filtros de acceso coercitivos. El dictamen debido era "N/A".
 
 **Ítem 12. Licenses**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The project repository uses the MIT license as stated in the 'licenses_extraction' section of the provided JSON summary: {"license_type": "MIT", "description": "The project repository uses the MIT license."}
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** Inventa la licencia "MIT", que no está en el paper. Además, muestra la variable {"license_type": "MIT"} directamente en la respuesta.
+- **Justificación Auditor:** "The paper states, 'The creators or original owners of assets used in the paper are properly credited and are respected for the license and terms of use explicitly mentioned.' This indicates that all necessary licenses and terms of use have been respected."
+- **Mi Valoración:** Medianamente correcto
+- **Mi Justificación:** El veredicto no rompe la normativa, pero la argumentación refleja pereza extractiva. La herramienta vuelve a limitarse a copiar textualmente la respuesta burocrática general proporcionada por el autor, en lugar de inspeccionar el texto para localizar qué licencias operativas exactas (MIT, Apache, CC-BY) gobiernan los activos mencionados.
 
 **Ítem 13. Assets**
 - **Valoración Auditor:** N/A
-- **Justificación Auditor:** The provided JSON summary does not indicate that the authors are releasing new assets such as datasets, model weights, or software libraries created specifically for this work. The paper mentions using an existing dataset (INFINITY-CHAT) and a subset of it (INFINITY-CHAT100), which were not created as part of this research.
+- **Justificación Auditor:** "The paper does not mention the creation or release of any new assets such as datasets, model weights, benchmarks, or software libraries. The dataset INFINITY-CHAT is described as a re-use of existing data from WILDCHAT, and no new assets are created in this work. Therefore, Item 13 (Assets) is not applicable."
 - **Mi Valoración:** Incorrecto
-- **Mi Justificación:** Falso negativo por mala comprensión. El artículo presenta el conjunto de datos INFINITY-CHAT. La IA asume que es un recurso externo y dice que "no aplican los estándares documentales", lo que afecta la evaluación del activo (junto con más errores sobre el "JSON summary").
+- **Mi Justificación:** Falso negativo por ceguera empírica. La IA afirma que "no se crea ningún activo nuevo". El propósito central del artículo es presentar el dataset curado y enriquecido con anotaciones humanas "INFINITY-CHAT". Transformar la materia prima (WildChat) en un benchmark evaluativo estructurado constituye un nuevo activo liberado que requiere ser validado mediante plantillas documentales.
 
 **Ítem 14. Crowdsourcing & Human Subjects**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The paper mentions using Prolific for recruitment and provides details about the number of participants, compensation rate, and participant qualifications. The authors also reference specific figures (19-22) where instructions were given to participants.
+- **Justificación Auditor:** "The paper states: 'To strengthen our dataset's validity, we conduct a human study to verify the open-endedness of queries in INFINITY-CHAT. We sample 100 evaluation examples from the dataset and recruit 86 participants on Prolific, assigning three participants to each query.' Additionally, it mentions that 'The answer NA means that the paper does not involve crowdsourcing nor research with human subjects.' Since this study involves human subjects, the authors have provided details about the instructions given to participants and recruited workers."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** El texto identifica la plataforma (Prolific), la compensación económica ($15/hora) y la ubicación de los pantallazos de instrucciones exigidos por NeurIPS (Figuras 19-22).
+- **Mi Justificación:** Detecta la campaña directa de recolección de datos primarios con humanos. Extrae las variables requeridas en los estándares normativos, identificando la plataforma empleada (Prolific) y el número de participantes (86).
 
 **Ítem 15. IRB Approvals**
-- **Valoración Auditor:** N/A
-- **Justificación Auditor:** The paper does not describe any direct research with human subjects. It reuses existing, public datasets such as INFINITY-CHAT and INFINITY-CHAT100 for its experiments.
+- **Valoración Auditor:** Yes
+- **Justificación Auditor:** "The paper states, 'To strengthen our dataset's validity, we conduct a human study to verify the open-endedness of queries in INFINITY-CHAT. We sample 100 evaluation examples from the dataset and recruit 86 participants on Prolific, assigning three participants to each query.' This indicates that the research involves direct interaction with human subjects, thus requiring IRB approval."
 - **Mi Valoración:** Incorrecto
-- **Mi Justificación:** Contradicción. En el Ítem 14, la IA afirma que los autores reclutaron personas en Prolific, les pagaron 15 dólares la hora y les dieron instrucciones. Sin embargo, en este ítem, la IA dice: "El paper no describe ninguna investigación directa con sujetos humanos". Esto invalida su coherencia.
+- **Mi Justificación:** Falso positivo originado por una deducción defectuosa. La IA otorga la validación asumiendo automáticamente que encuestar a trabajadores en internet para verificar texto requiere y posee de facto una aprobación formal de un Comité de Revisión Institucional (IRB). El artículo no declara poseer autorización clínica formal de ninguna junta; la IA la presupone únicamente por la mención de participantes humanos.
 
 **Ítem 16. Declaration of LLM Usage**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The paper describes the usage of LLMs in several components of its core methods, including taxonomy classification (GPT-4o), query mining (GPT-4o), quality assessment (GPT-4o and Prometheus), paraphrase generation (gpt-4.1-2025-04-14), and embedding generation (OpenAI text-embedding-3-small).
+- **Justificación Auditor:** "The paper explicitly states, 'Answer: [Yes] Justification: We describe how LLMs are being used as part of the tools for mining open-ended data, as part of the research process.' This clearly indicates that LLMs are an important component of the core methods in this research."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** Se identificaron todas las instancias donde modelos propietarios actuaron como asistentes algorítmicos. La lista se extrajo de forma precisa.
-
-
+- **Mi Justificación:** Constata el uso auxiliar de LLMs como herramientas metodológicas instrumentales ("tools for mining open-ended data") dentro del pipeline de procesamiento del estudio.

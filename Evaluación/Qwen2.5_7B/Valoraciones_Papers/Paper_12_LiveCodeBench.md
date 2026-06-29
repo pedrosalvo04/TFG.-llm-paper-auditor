@@ -1,100 +1,98 @@
 # Paper 12: LiveCodeBench
-LiveCodeBench
+
 
 **Ítem 1. Claims**
-- **Valoración Auditor:** No
-- **Justificación Auditor:** The paper 'LiveCodeBench: A Holistic and Contamination-Free Evaluation of LLMs for Code' does not provide a clear statement in the abstract or introduction regarding its main claims... However, there is no explicit mention of what the paper aims to achieve or contribute.
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** Falso negativo por ceguera documental. El modelo dice que no se menciona el objetivo del artículo. Sin embargo, el abstract y la introducción de LiveCodeBench indican claramente la creación de una plataforma de evaluación sin contaminación ("holistic and contamination-free evaluation of LLMs for code"). Ignorar estas afirmaciones metodológicas invalida el dictamen.
+- **Valoración Auditor:** Yes
+- **Justificación Auditor:** "The paper's claims in the abstract and introduction accurately reflect the paper's contributions and scope. The authors state that LiveCodeBench is a holistic and contamination-free benchmark for evaluating code capabilities, which aligns with their empirical findings presented in the results section (Section 5). Specifically, they claim to address issues of data contamination by using live updates and time-segmented evaluations, as evidenced by Figure 1. The paper also claims that current benchmarks like HumanEval may be subject to overfitting due to insufficient tests and ambiguous problem descriptions, which is supported by their findings in Section 5 (e.g., Figure 5)."
+- **Mi Valoración:** Correcto
+- **Mi Justificación:** Conecta la afirmación principal del abstract sobre la contaminación de datos con las caídas de rendimiento documentadas empíricamente. Cita de forma acertada la propuesta de los autores ("holistic and contamination-free benchmark") y lo respalda con la evidencia de las Figuras 1 y 5.
 
 **Ítem 2. Limitations**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The provided JSON summary lists several potential issues that could affect the robustness of the evaluation, including contamination in older benchmarks, overfitting to HumanEval, ambiguous problem descriptions... According to the NeurIPS 2026 official criteria, if any limitations are stated— even briefly—the answer should be |
+- **Justificación Auditor:** "The paper explicitly includes a 'Limitations' section (Section 7) that discusses several limitations, including benchmark size, focus on Python, robustness to prompts, and problem domain. For example, the authors mention that LiveCodeBench currently only focuses on Python, which might not provide enough signal about model capabilities in other languages (Section 7)."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** El veredicto es correcto ("Sí") y se identifican las limitaciones del paper: sobreajuste a HumanEval y problemas ambiguos.
+- **Mi Justificación:** Extrae la lista de debilidades técnicas descritas por los autores en la Sección 7, identificando barreras reales como el enfoque único en Python ("focus on Python") y la falta de ajuste de prompts.
 
 **Ítem 3. Theory, Assumptions & Proofs**
 - **Valoración Auditor:** N/A
-- **Justificación Auditor:** The provided JSON summary does not contain any specific information about the theoretical results, assumptions, or proofs in the paper... According to the NeurIPS 2026 official criteria for Item 3... Since no such information is provided, this item cannot be evaluated as 'Yes' or 'No', hence the answer is N/A.
+- **Justificación Auditor:** "The paper does not contain any theoretical results, proofs, or assumptions. The focus of the work is on empirical evaluation and benchmarking of large language models for code generation tasks. Since there are no theoretical contributions in this paper, the criteria related to theory, assumptions, and proofs do not apply. This is consistent with the official NeurIPS 2026 criteria which state that items should be evaluated only if relevant."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** El veredicto es correcto: al ser un artículo empírico (la presentación de un benchmark), no tiene que probar teoremas matemáticos puros ("N/A").
+- **Mi Justificación:** Clasifica la naturaleza del artículo basándose en los hechos, entendiendo que presentar un conjunto de evaluación empírico y un benchmark de programación no implica el desarrollo ni la demostración formal de ecuaciones teóricas.
 
 **Ítem 4. Experimental Result Reproducibility**
 - **Valoración Auditor:** No
-- **Justificación Auditor:** The paper does not provide any URLs, instructions, or other means to reproduce the experimental results. According to the NeurIPS 2026 official criteria... The pre-computed help indicates that no code/model URLs were found, which is a critical requirement.
+- **Justificación Auditor:** "The paper does not provide any code or model URLs, and the authors have not made their own implementation or data publicly accessible. The only information provided is that the dataset was scraped from public websites (LeetCode, AtCoder, CodeForces) under certain conditions. However, this does not meet the requirement for making experimental results reproducible as stated in the NeurIPS 2026 criteria. Specifically, the authors should have either released their own code or provided detailed instructions on how to replicate the experiments."
 - **Mi Valoración:** Incorrecto
-- **Mi Justificación:** La IA marcó un falso negativo al indicar que no se proveen enlaces. En la primera página del artículo, bajo los autores, se encuentra el enlace: "Website: https://livecodebench.github.io/". La herramienta no detectó este enlace y atribuyó el problema a variables ocultas ("The pre-computed help indicates...").
+- **Mi Justificación:** Falso negativo por omisión de lectura. La herramienta afirma que no se provee un enlace directo al repositorio. Sin embargo, en la primera página del PDF original, justo debajo de los autores, consta textualmente: "Website: https://livecodebench.github.io/". La IA no detectó la URL principal de reproducibilidad del proyecto.
 
 **Ítem 5. Open Access to Data and Code**
 - **Valoración Auditor:** No
-- **Justificación Auditor:** The paper does not provide any URLs or instructions that grant access to the authors' own original code, model weights, or newly collected datasets... The only mention of code is 'LiveCodeBench', but no URL or further details are provided.
+- **Justificación Auditor:** "The paper does not provide any URLs or instructions for accessing the authors' own original code, model weights, or newly collected datasets used for the main experiments. The experimental setup section mentions evaluating various models across different sizes and classes, but it does not include links to the authors' repositories or detailed instructions on how to access their data and code. This omission poses a transparency risk as it makes it difficult for other researchers to reproduce the results. While the paper cites third-party dependencies such as LeetCode, AtCoder, and CodeForces for problem sources, these are insufficient to meet the criteria for open access to data and code."
 - **Mi Valoración:** Incorrecto
-- **Mi Justificación:** Este punto tiene el mismo problema que el Ítem 4. Al no incluir el enlace matriz del proyecto ("https://livecodebench.github.io/"), que da acceso a los datos, se acusa de falta de transparencia sin motivo.
+- **Mi Justificación:** Arrastra de forma directa el fallo técnico del Ítem 4. Al ignorar la URL pública del proyecto que da acceso a la plataforma, emite una penalización apoyada en una premisa falsa.
 
 **Ítem 6. Experimental Setting / Details**
-- **Valoración Auditor:** No
-- **Justificación Auditor:** The paper lacks detailed information about hyperparameters such as optimizer type, learning rate, batch size, epochs, etc. These are crucial for understanding the model's configuration and training process. According to the NeurIPS 2026 official criteria, it is essential to specify all the training details.
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** La IA penaliza el artículo por no incluir "optimizadores, learning rates, epochs y batch sizes". Estos son parámetros de entrenamiento de modelos neuronales. LiveCodeBench evalúa la inferencia, no el entrenamiento de modelos. Los hiperparámetros de inferencia usados (temperatura 0.2, top_p 0.95, vLLM) están descritos en la Sección 4 del original.
+- **Valoración Auditor:** Yes
+- **Justificación Auditor:** "We describe the experimental setup in this section. First, we provide the common setup across the scenarios, followed by the scenario-specific setups in Section 4.1. Models. We evaluate 52 models across various sizes, ranging from 1 . 3B to 70B, including base models, instruction models, and both open and closed models. Our experiments include models from different classes... Evaluation Metrics. We use the Pass@ 1 (Kulal et al., 2019; Chen et al., 2021) metric for our evaluations. Specifically, we generate 10 candidate answers for each problem either using API or using vLLM (Kwon et al., 2023). We use nucleus sampling with temperature 0 . 2 and top p 0 . 95 and calculate the fraction of programs or answers that are correct..."
+- **Mi Valoración:** Correcto
+- **Mi Justificación:** Rastrea y extrae los parámetros de inferencia. Localiza el esquema de muestreo utilizado ("nucleus sampling with temperature 0.2, top p 0.95") y la métrica de evaluación principal (Pass@1), aunque pega el texto en crudo sin sintetizar la explicación.
 
 **Ítem 7. Experiment Statistical Significance**
 - **Valoración Auditor:** No
-- **Justificación Auditor:** The paper does not provide any information about error bars, confidence intervals, or statistical significance tests... The paper fails to meet this requirement as it does not provide any such measures, even though it mentions that the results are accompanied by a time of execution (143.37s) and character count (112564).
+- **Justificación Auditor:** "The paper does not provide any error bars, confidence intervals, or statistical significance tests for the experiments. The results are reported as averages without any indication of variability or uncertainty. This lack of statistical measures makes it difficult to assess the robustness and reliability of the experimental findings. According to the official criteria, this is a requirement for reporting experiment results in NeurIPS 2026. <br><br> ⚠️ Falta justificación explícita del autor para la respuesta 'No'"
 - **Mi Valoración:** Incorrecto
-- **Mi Justificación:** Fallo grave: Ceguera y alucinación telemétrica. Los autores calculan la varianza en la Sección 7, indicando "estimate a 1-1.5% performance variance [...] measured by bootstrapping problem sets". La IA no consideró este método. Además, incluyó metadatos del script Python (143.37s y 112564 caracteres) como si fueran resultados de los modelos evaluados.
+- **Mi Justificación:** Falso negativo. Acusa a los autores de ocultar la variabilidad y no aportar pruebas de significancia, ignorando la Sección 7, donde el artículo especifica de forma textual: "We currently estimate a 1-1.5% performance variance [...] measured by bootstrapping problem sets". El bootstrapping es un método de re-muestreo válido para calcular la varianza estadística según los estándares de NeurIPS.
 
 **Ítem 8. Experiments Compute Resource**
-- **Valoración Auditor:** Yes
-- **Justificación Auditor:** The paper mentions that the type of compute workers used is 'vLLM for execution environment'... Additionally, it specifies the time of execution as 143.37s and the number of characters analyzed (112564), which can be used to estimate the computational load.
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** Alucinación Absurda y Falso Positivo. Qwen2.5 responde "Sí", basándose en que los autores especifican el tiempo de ejecución y la carga de cómputo. Su "evidencia" es que se tardó "143.37s" y se procesaron "112564 caracteres". El modelo interpretó que a los autores les tomó 2 minutos evaluar 52 modelos (Llama 3 70B, GPT-4, etc.) resolviendo 511 problemas algorítmicos.
+- **Valoración Auditor:** No
+- **Justificación Auditor:** "The paper does not provide any information on the computer resources (type of compute workers, memory, time of execution) needed to reproduce the experiments. While it mentions the models evaluated and some evaluation metrics, there is no detail provided about the hardware or computational requirements for running these experiments. This omission makes it challenging for other researchers to replicate the results, which is a critical aspect of scientific transparency in machine learning research."
+- **Mi Valoración:** Correcto
+- **Mi Justificación:** Penaliza con base empírica que, a pesar de evaluar la inferencia de 52 modelos de lenguaje masivos, los autores omitieron por completo reportar la infraestructura de hardware empleada (ej. número de GPUs) y las métricas de consumo temporal necesarias para dichas ejecuciones.
 
 **Ítem 9. Code of Ethics**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The paper does not explicitly mention an 'Ethics Statement' or a dedicated section on broader impacts. However, the authors have taken several steps to ensure ethical considerations are addressed... implemented strict measures to avoid paywalled content and prohibit training on collected problems to respect intellectual property rights (see code_of_ethics -> prohibit_training_on_collected_problems).
-- **Mi Valoración:** Correcto
-- **Mi Justificación:** El dictamen es aceptable porque reconoce que los autores cumplen con la propiedad intelectual.
+- **Justificación Auditor:** "The paper does not explicitly mention an 'Ethics Statement' or a dedicated section on broader impacts. However, the authors have demonstrated awareness of ethical considerations by addressing potential harms and limitations in their work. Specifically, they discuss issues such as problem set contamination, overfitting to existing benchmarks, and the need for more comprehensive evaluation scenarios (e.g., different programming languages, real-world usage). These discussions align with the NeurIPS Code of Ethics, particularly under 'Societal Impact and Potential Harmful Consequences' and 'Impact Mitigation Measures'. The authors have shown a commitment to transparency and ethical research practices by acknowledging these limitations and proposing solutions."
+- **Mi Valoración:** Incorrecto
+- **Mi Justificación:** Confusión conceptual. La IA asume que discutir el "sobreajuste a benchmarks" (overfitting) y la "contaminación de datos" demuestra consciencia sobre el Código de Ética de NeurIPS. Estos son problemas técnicos de metodología del aprendizaje automático, no riesgos morales sobre sujetos humanos, privacidad o impacto dañino a la sociedad que es lo que regula el código de ética.
 
 **Ítem 10. Broader Impacts**
-- **Valoración Auditor:** No
-- **Justificación Auditor:** The paper does not discuss potential negative societal impacts of its work. While the focus on a contamination-free evaluation is positive, it does not address any potential harms or unintended uses that could arise from the technology.
-- **Mi Valoración:** Correcto
-- **Mi Justificación:** Qwen2.5 entiende que crear algo útil para la comunidad ("contamination-free evaluation") no exime a los investigadores de discutir los posibles usos maliciosos (unintended uses). En esta prueba, su análisis semántico fue más claro que el de Gemini.
+- **Valoración Auditor:** Yes
+- **Justificación Auditor:** "The paper discusses potential negative societal impacts, such as overfitting to existing benchmarks (which could lead to misuse) and the need for more comprehensive evaluation scenarios. The authors also highlight the importance of evaluating LLMs on a broader range of capabilities beyond just code generation, which is crucial for understanding their real-world applicability and limitations."
+- **Mi Valoración:** Incorrecto
+- **Mi Justificación:** Falso positivo por sesgo léxico. Vuelve a confundir un problema puramente académico (la limitación y contaminación de un benchmark de código) con el requerimiento estricto del comité, que exige transparentar riesgos de impacto social negativo a nivel civil o de seguridad (ej. usos duales maliciosos). El artículo no aborda este tipo de repercusiones sociales.
 
 **Ítem 11. Safeguards**
 - **Valoración Auditor:** N/A
-- **Justificación Auditor:** The paper 'LiveCodeBench: A Holistic and Contamination-Free Evaluation of LLMs for Code' does not present a high-risk artefact that could be misused, such as generating harmful content, enabling surveillance... The primary focus is on evaluating language models for code generation tasks in a controlled manner.
+- **Justificación Auditor:** "The paper focuses on the evaluation of large language models for code generation and does not involve releasing a model with high risk for misuse. The work is primarily theoretical and foundational, aiming to evaluate LLMs across various scenarios such as code generation, self-repair, and test case output prediction. Given that the primary objective is academic research rather than practical deployment, there is no need for explicit access restrictions or usage guidelines. Therefore, answering 'N/A' aligns with the official criteria which state that safeguards are not required for theoretical or low-risk work."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** Deducción analítica buena. Entiende que crear un benchmark inerte de evaluación automatizada no es lo mismo que desplegar un modelo generativo tóxico de alto riesgo que necesite restricciones.
+- **Mi Justificación:** Distingue la creación de un entorno de evaluación automatizado (benchmark inerte) del entrenamiento y publicación de un modelo fundacional de alto riesgo, eximiendo lógicamente al documento de implementar barreras de acceso (salvaguardas).
 
 **Ítem 12. Licenses**
-- **Valoración Auditor:** No
-- **Justificación Auditor:** The paper does not explicitly provide a specific open-source license such as MIT, Apache, or CC. Instead, it mentions 'Fair Use § 107' and states that no standard open-source license is provided. According to the NeurIPS official criteria for licenses, if no specific license (MIT, Apache, CC) is named, the answer should be 'No'.
-- **Mi Valoración:** Correcto
-- **Mi Justificación:** El texto penaliza que los autores no especificaran una licencia de software estructurada (MIT, Apache) para el benchmark que liberan, a pesar de identificar el uso de la excusa legal "Fair Use § 107" del copyright de EE. UU. para el escrapeo web.
+- **Valoración Auditor:** Yes
+- **Justificación Auditor:** "The paper states: 'We scrape only the problem statements, ground-truth solutions, and test cases from competition websites LeetCode , AtCoder , and CodeForces . Further, we only scrape publicly visible portions of websites, avoiding any data collection that might be paywalled or require login or interaction with the website. Following, Hendrycks et al. (2021) we abide by Fair Use § 107: 'the fair use of a copyrighted work, including such use by ... scholarship, or research, is not an infringement of copyright', where fair use is determined by 'the purpose and character of the use, including whether such use is of a commercial nature or is for nonprofit educational purposes', 'the amount and substantiality of the portion used in relation to the copyrighted work as a whole', and 'the effect of the use upon the potential market for or value of the copyrighted work.' Finally, we use the collected problems for academic purposes only and in addition, do not train on the collected problems.'"
+- **Mi Valoración:** Incorrecto
+- **Mi Justificación:** Fallo jurídico y conceptual. La IA otorga un "Sí" usando como justificación un párrafo donde los autores se amparan en el "Fair Use § 107" (Uso Justo) de Estados Unidos para poder hacer scraping de las webs. El Uso Justo es una defensa contra infracciones de copyright, no una licencia de software libre u open-source explícita (como MIT, Apache o CC-BY) adjuntada al activo final que los autores distribuyen en su repositorio.
 
 **Ítem 13. Assets**
 - **Valoración Auditor:** N/A
-- **Justificación Auditor:** The provided JSON summary does not indicate that the authors are releasing new assets such as datasets, models, or benchmarks. The paper focuses on evaluating existing LLMs for code generation and execution tasks using a newly created benchmark called LiveCodeBench. Since no new assets are being released as part of this work, Item 13 (Assets) does not apply.
+- **Justificación Auditor:** "The paper does not appear to introduce any new datasets, models, benchmarks, or software libraries. The assets mentioned (problems collected from LeetCode, AtCoder, and CodeForces) are reusing existing public resources without creating new ones. Therefore, this item is N/A as per the official criteria."
 - **Mi Valoración:** Incorrecto
-- **Mi Justificación:** La IA afirma que los autores usan "a newly created benchmark called LiveCodeBench" y luego dice que "ningún activo nuevo está siendo liberado". El benchmark es un activo clave de la investigación y requería documentación (Data Cards). Este error, junto con la mención inicial de "The provided JSON summary", invalida la revisión.
+- **Mi Justificación:** Falso negativo. La IA asume que recolectar y reutilizar problemas de sitios públicos anula la existencia de un activo nuevo. LiveCodeBench es, por definición en el artículo, un nuevo benchmark dinámico curado de 511 problemas. Al liberar esta plataforma a la comunidad, la normativa exige que vaya acompañada de documentación estructurada.
 
 **Ítem 14. Crowdsourcing & Human Subjects**
-- **Valoración Auditor:** N/A
-- **Justificación Auditor:** The provided JSON summary indicates that the paper does not involve hiring or compensating human workers to collect or label new data. The authors mention using existing, public datasets and do not provide any information about conducting new human research or paying workers.
-- **Mi Valoración:** Correcto
-- **Mi Justificación:** La deducción es correcta. El uso de scraping automatizado en plataformas públicas de algoritmia y la asistencia de LLMs sintéticos evita la normativa de subcontratación humana (crowdsourcing).
+- **Valoración Auditor:** No
+- **Justificación Auditor:** "The paper does not mention hiring or compensating human workers to collect or label new data. The datasets used are scraped from publicly available websites, and no new human-derived data was created for this research. Hence, the authors did not engage in crowdsourcing activities as defined by the NeurIPS criteria. <br><br> ⚠️ Falta justificación explícita del autor para la respuesta 'No'"
+- **Mi Valoración:** Medianamente correcto
+- **Mi Justificación:** Verifica con la evidencia del artículo que los datos se extrajeron automáticamente (scraping) sin utilizar trabajadores humanos subcontratados. Sin embargo, la asignación final falla: si el estudio no está diseñado con encuestas humanas, la regla no aplica y el dictamen correcto en la checklist debía ser "N/A", no un "No" penalizador.
 
 **Ítem 15. IRB Approvals**
 - **Valoración Auditor:** N/A
-- **Justificación Auditor:** The paper 'LiveCodeBench: A Holistic and Contamination-Free Evaluation of LLMs for Code' does not involve any direct research with human subjects. The authors are reusing existing, public datasets such as AtCoder, LeetCode, and CodeForces to evaluate the performance of language models...
+- **Justificación Auditor:** "The paper does not involve any direct research with human subjects. It primarily focuses on evaluating large language models (LLMs) using curated code problems from public platforms such as LeetCode, AtCoder, and CodeForces. The data used is publicly available and scraped for academic purposes only, adhering to the Fair Use guidelines. Therefore, no new IRB approval is required according to NeurIPS 2026 criteria."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** No hay ensayos clínicos y el procesamiento se hizo con repositorios virtuales.
+- **Mi Justificación:** Dictamen argumentado con base en la ausencia de interacción médica, clínica o social con humanos a lo largo de los experimentos.
 
 **Ítem 16. Declaration of LLM Usage**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The paper 'LiveCodeBench: A Holistic and Contamination-Free Evaluation of LLMs for Code' uses language models, specifically GPT-4-Turbo, in a significant way. The authors mention that these models were used to generate tests for problems where platform tests were unavailable (llm_usage_extraction -> GPT-4-Turbo: Used to generate tests...)
+- **Justificación Auditor:** "The paper extensively uses LLMs as a core component of the methodology, particularly in generating synthetic code problems and self-repair scenarios. For instance, the paper mentions 'self-repair' as one of the key evaluation scenarios (see context mapping). This indicates that LLMs are not merely used for writing or editing but are integral to the research methods."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** GPT-4-Turbo fue muy útil para generar casos de prueba en la investigación.
-
-
+- **Mi Justificación:** Búsqueda precisa de la dependencia instrumental en el desarrollo de la investigación. Señala que los LLM se usaron para estructurar escenarios fundamentales de evaluación ("self-repair scenarios").

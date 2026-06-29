@@ -1,100 +1,98 @@
-# Paper 14: KAN: Kolmogorov-Arnold Networks
-KAN: Kolmogorov-Arnold Networks
+# Paper 14: KAN
+
 
 **Ítem 1. Claims**
-- **Valoración Auditor:** N/A
-- **Justificación Auditor:** —
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** La IA devuelve "N/A" y deja la justificación en blanco. Los papers científicos, incluido este que se presenta como alternativa a los MLPs, siempre exponen sus aportes. No incluir este punto es un fallo grave en la auditoría.
+- **Valoración Auditor:** Yes
+- **Justificación Auditor:** "The abstract states: 'We propose Kolmogorov-Arnold Networks (KANs) as promising alternatives to MLPs... KANs have learnable activation functions on the edges... KANs are much more efficient than MLPs in terms of parameter count and accuracy.' Section 3 and 4 provide empirical validation through toy datasets, special functions, Feynman datasets, and PDE solving, demonstrating that KANs achieve higher accuracy with fewer parameters compared to MLPs."
+- **Mi Valoración:** Correcto
+- **Mi Justificación:** Asocia la afirmación principal del abstract sobre la superioridad de las redes KAN frente a los MLPs con sus validaciones empíricas, citando la eficiencia en parámetros y precisión.
 
 **Ítem 2. Limitations**
-- **Valoración Auditor:** N/A
-- **Justificación Auditor:** —
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** El ítem está vacío con un "N/A". El documento original de KAN incluye una Sección 6 que detalla sus debilidades ("KANs are currently slower than MLPs..."). No incluir esta información invalida la evaluación.
+- **Valoración Auditor:** Yes
+- **Justificación Auditor:** "The paper includes a dedicated 'Discussion' section (Section 6) which explicitly addresses limitations: 'KANs are currently slower than MLPs... Splines suffer from the curse of dimensionality if not used in compositional structures... The original Kolmogorov-Arnold representation (depth-2) can be non-smooth/fractal... Unclear if continual learning method generalizes to high-dimensional cases.'"
+- **Mi Valoración:** Correcto
+- **Mi Justificación:** Extrae de forma literal las debilidades metodológicas y computacionales documentadas en la sección de discusión, como la lentitud actual de las redes y la maldición de la dimensionalidad.
 
 **Ítem 3. Theory, Assumptions & Proofs**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** "The research is designed to improve interpretability and accuracy in scientific domains such as partial differential equations, knot theory, and physics." (Broader Impacts Extraction) and the paper provides a detailed explanation of the Kolmogorov-Arnold Representation Theorem. Additionally, the scaling laws are described: "Relationship between grid points, spline order, and approximation error" (Theory and Proofs). These theoretical foundations support the assumptions made in the research.
+- **Justificación Auditor:** "The paper explicitly states the Kolmogorov-Arnold Representation Theorem in Section 2.1, which serves as the theoretical foundation for the KAN architecture. Furthermore, Section 2.3 and Appendix E provide the theoretical derivation for scaling laws, specifically stating the relationship between grid points, spline order, and approximation error. The authors define the assumptions regarding the function space (e.g., smoothness requirements for B-splines) and provide the mathematical derivation for the parameter count formula O(N^2 * L * G)."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** La extracción técnica es correcta. Identifica la base teórica (el Teorema de Representación de Kolmogorov-Arnold) y las leyes de escalado derivadas.
+- **Mi Justificación:** Identifica que este documento posee una base teórica matemática estructurada, reconociendo el teorema principal de representación y las derivaciones de las leyes de escalado indicadas en el apéndice.
 
 **Ítem 4. Experimental Result Reproducibility**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** "The authors have made their implementation publicly available. The repository URL is https://github.com/KindXiaoming/pykan, which contains the full implementation of Kolmogorov-Arnold Networks (KANs), including source code for model architecture, training loops, and specific scripts used to reproduce experiments." (Code)
+- **Justificación Auditor:** "The authors provide a dedicated GitHub repository at https://github.com/KindXiaoming/pykan, which contains the full implementation of the Kolmogorov-Arnold Networks (KANs). The repository includes the source code for the model architecture, training loops, and the specific scripts used to reproduce the experiments mentioned in the paper, such as the toy datasets, Feynman datasets, and PDE solving tasks. The paper also details the hyperparameters (e.g., learning rates, grid point schedules, and regularization constants) in Appendix C and throughout the experimental sections."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** Usa el repositorio exacto que los autores proporcionaron, lo que asegura la reproducibilidad.
+- **Mi Justificación:** Extrae la URL del repositorio oficial de GitHub proporcionado para la reproducibilidad de la arquitectura propuesta.
 
 **Ítem 5. Open Access to Data and Code**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The paper provides a GitHub repository URL: https://github.com/KindXiaoming/pykan, which contains the full implementation of Kolmogorov-Arnold Networks (KANs), including source code for model architecture, training loops, and specific scripts used to reproduce experiments. This aligns with the NeurIPS 2026 criteria that require authors to include the code needed to reproduce the main experimental results in the supplemental material or as a URL.
+- **Justificación Auditor:** "The authors provide a dedicated repository at https://github.com/KindXiaoming/pykan, which includes the implementation of the Kolmogorov-Arnold Network (KAN) architecture, training scripts, and reproduction code for the experiments described in the paper (e.g., model.train(dataset), model.prune(), and model.auto_symbolic())."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** El veredicto y la justificación son buenos. Valida el acceso abierto usando el mismo repositorio de GitHub, sin recurrir a fugas de sistema en la redacción.
+- **Mi Justificación:** Valida el acceso abierto a los recursos apoyándose en el enlace al repositorio mencionado en el ítem anterior.
 
 **Ítem 6. Experimental Setting / Details**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The paper provides detailed information about hyperparameters such as optimizer (LBFGS, Adam), learning rate (0.001, 0.0001), batch size (4096), and training steps ('200 per grid extension', '5000+5000 for images'). These details are crucial for understanding the experimental setup and can be found in the supplementary materials or within the paper itself.
+- **Justificación Auditor:** "The paper provides extensive documentation of experimental settings in the main text and Appendix C (Dependence on hyperparameters). Specifically, the authors detail the optimizer (LBFGS, Adam), learning rates (10^-3, 10^-4), batch sizes (4096), grid point schedules (3 to 1000), and specific architecture shapes (e.g., , ) used across different tasks."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** El texto extrae los hiperparámetros matemáticos dispersos del paper. Menciona la configuración dual del optimizador (LBFGS, Adam) y la programación de pasos por extensión de grilla ("200 per grid extension").
+- **Mi Justificación:** Rescata datos granulares sobre la configuración técnica situados en los apéndices, incluyendo optimizadores específicos y tamaños de lote.
 
 **Ítem 7. Experiment Statistical Significance**
 - **Valoración Auditor:** No
-- **Justificación Auditor:** The paper does not provide error bars, confidence intervals, or any other form of statistical significance measures for the experiments. The pre-computed help indicates that 'Significance Tests: yes' but 'Runs: NOT FOUND'. According to the NeurIPS 2026 official criteria, if NO intervals/variance/runs found -> answer 'No' and set is_no_justified: false. Since no statistical measures are present in the paper, this constitutes a transparency risk as it does not allow readers to assess the reliability of the reported results.
+- **Justificación Auditor:** "The paper fails to meet the NeurIPS 2026 criteria for statistical significance. While the authors report performance metrics across various tasks (e.g., knot signature accuracy, MSE for PDEs), they do not provide error bars, confidence intervals, or statistical significance tests to account for variability across different random seeds or data splits. The NeurIPS criteria explicitly require that results be accompanied by these measures to support the main claims. As the authors have not provided an explicit scientific or computational justification for the omission of these statistical measures, the transparency requirement remains unfulfilled."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** El método es correcto (los resultados de ecuaciones y RMSE se dan como estimaciones puntuales sin medidas estadísticas).
+- **Mi Justificación:** Penaliza al detectar que las métricas de rendimiento reportadas carecen de barras de error o medidas de varianza estadística y evalúa que no se ofrece justificación textual para la omisión.
 
 **Ítem 8. Experiments Compute Resource**
-- **Valoración Auditor:** No
-- **Justificación Auditor:** The paper mentions hardware but does not provide any metrics for total training time, per-sample efficiency, or environmental impact/CO2 emissions. The pre-computed help states that 'DETECTED hardware/cluster: NOT FOUND'. According to the NeurIPS 2026 official criteria, a 'Yes' is warranted if hardware is mentioned AND (total training time OR per-sample efficiency OR environmental impact/CO2 emissions) is provided. Since no such metrics are provided, this also constitutes a transparency risk.
-- **Mi Valoración:** Correcto
-- **Mi Justificación:** No acepta la falta de tiempos de ejecución y eficiencia, señalando una omisión en los recursos de cómputo.
+- **Valoración Auditor:** Yes
+- **Justificación Auditor:** "The paper states: 'KANs are usually 10x slower than MLPs to train' and provides specific training step counts such as '200 per grid extension' and '5000+5000 for images'. Additionally, the hardware context is identified as 'personal laptops'."
+- **Mi Valoración:** Incorrecto
+- **Mi Justificación:** Da por válido el uso del término coloquial e inespecífico "personal laptops". Las normativas exigen documentar el hardware de manera cuantificable (modelo de CPU/GPU, especificaciones de memoria) y proveer el tiempo total de ejecución del experimento, lo cual el sistema ha ignorado.
 
 **Ítem 9. Code of Ethics**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The authors provide a GitHub repository with implementation details and scripts for reproducing experiments, aligning with NeurIPS Code of Ethics requirements. The paper does not contain any clear ethical red flags or harmful applications that would require an ethics statement or IRB discussion.
+- **Justificación Auditor:** "The authors provide a comprehensive 'Discussion' section (Section 6) and an 'Acknowledgement' section, and the research methodology is grounded in transparent scientific inquiry. The paper focuses on foundational machine learning architecture (Kolmogorov-Arnold Networks) applied to mathematical and physical sciences. The authors have made their code publicly available via a GitHub repository (https://github.com/KindXiaoming/pykan), which aligns with the NeurIPS Code of Ethics requirement to 'Ensure legal compliance' and 'Allowing access to research artifacts' to enable external scrutiny and auditing."
 - **Mi Valoración:** Incorrecto
-- **Mi Justificación:** La IA confunde la publicación de código en GitHub con el cumplimiento del Código de Ética de NeurIPS. Subir código ayuda a la reproducibilidad, pero la ética de NeurIPS exige evaluar impactos sociales y privacidad.
+- **Mi Justificación:** Alucinación lógica de equivalencias. Asume que la publicación de código en un repositorio público sirve como prueba de cumplimiento formal del Código de Ética de NeurIPS, mezclando la normativa de acceso a datos (Ítem 5) con la declaración de impacto ético de la investigación (Ítem 9).
 
 **Ítem 10. Broader Impacts**
 - **Valoración Auditor:** N/A
-- **Justificación Auditor:** The paper focuses on improving interpretability and accuracy in scientific domains such as partial differential equations, knot theory, and physics. There is no direct path to negative societal impacts or potential malicious uses of the research. The broader impact discussion is not applicable given the nature of the work.
+- **Justificación Auditor:** "The paper presents a foundational architectural innovation in neural networks (KANs) designed to improve interpretability and accuracy in scientific domains such as partial differential equations, knot theory, and physics. The authors explicitly frame the technology as a tool for scientific collaboration ('AI-Scientist-Collaboration') and mathematical discovery."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** La deducción es correcta. Una arquitectura matemática de splines para física y teoría de nudos no tiene aplicaciones de riesgo social que requieran evaluar daños.
+- **Mi Justificación:** Determina que la naturaleza del estudio se centra en una innovación matemática enfocada en la física teórica y las ecuaciones, careciendo de aplicaciones directas generativas que presenten un riesgo dual para la sociedad.
 
 **Ítem 11. Safeguards**
 - **Valoración Auditor:** N/A
-- **Justificación Auditor:** —
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** El veredicto "N/A" es adecuado porque es un algoritmo matemático, no una API generativa tóxica. Sin embargo, la IA dejó la celda de justificación en blanco.
+- **Justificación Auditor:** "The paper introduces Kolmogorov-Arnold Networks (KANs), a novel neural network architecture based on the Kolmogorov-Arnold representation theorem, which replaces fixed activation functions on nodes with learnable activation functions on edges. The research is foundational in nature, focusing on mathematical approximation, interpretability, and scientific discovery (e.g., solving PDEs, knot theory, and physics simulations)."
+- **Mi Valoración:** Correcto
+- **Mi Justificación:** Establece que el trabajo describe una arquitectura algorítmica de cálculo y no un sistema de IA generativa desplegado hacia usuarios, por lo que no es aplicable requerir filtros de seguridad restrictivos.
 
 **Ítem 12. Licenses**
-- **Valoración Auditor:** N/A
-- **Justificación Auditor:** —
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** Fallo doble. La justificación está vacía y el dictamen debería haber sido "Yes" o "No", indicando si el repositorio de PyKAN incluye la licencia comercial/abierta. No puede ser "no aplicable" cuando hay software involucrado.
+- **Valoración Auditor:** No
+- **Justificación Auditor:** "The authors failed to explicitly state the license under which their code (pykan) or the utilized datasets are released. The NeurIPS 2026 criteria for Item 12 mandate that authors must cite the creators of existing assets and respect the license and terms of use. While the authors provide a GitHub repository URL (https://github.com/KindXiaoming/pykan), the paper text itself does not contain a declaration of the license (e.g., MIT, Apache 2.0, or CC-BY). Without an explicit license statement, it is impossible for the community to verify if the authors are respecting the terms of use for the assets they have integrated or if they are providing their own contributions under a clear legal framework, which constitutes a transparency risk."
+- **Mi Valoración:** Correcto
+- **Mi Justificación:** Detecta que, aunque existe un enlace hacia el software, el manuscrito omite documentar por escrito bajo qué tipo de licencia legal se libera el código o los datos empleados.
 
 **Ítem 13. Assets**
-- **Valoración Auditor:** N/A
-- **Justificación Auditor:** The provided JSON summary does not indicate that the authors are releasing new assets such as datasets, model weights, benchmarks, or software libraries created as part of this work. The paper mentions a GitHub repository with implementation details and scripts for reproducing experiments but does not explicitly state that these are new creations.
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** La IA afirma que no se liberan nuevas librerías, pero el documento presenta y libera públicamente el paquete PyKAN. Se basa en el "JSON summary" para su justificación.
+- **Valoración Auditor:** Yes
+- **Justificación Auditor:** "The authors released the 'pykan' library (https://github.com/KindXiaoming/pykan) as a core contribution of the paper. The repository provides the implementation of the Kolmogorov-Arnold Network architecture, including methods such as model.train(dataset), model.plot(), model.prune(), and model.symbolic_formula()."
+- **Mi Valoración:** Medianamente correcto
+- **Mi Justificación:** Aprueba el ítem basándose exclusivamente en la existencia de la librería. Pasa por alto que el requerimiento normativo establece que los nuevos activos deben ir acompañados de plantillas estructuradas de documentación formal (como las Model Cards) detallando su arquitectura, proceso y restricciones.
 
 **Ítem 14. Crowdsourcing & Human Subjects**
 - **Valoración Auditor:** N/A
-- **Justificación Auditor:** The provided JSON summary does not indicate that the authors have hired or compensated human workers to collect or label new data. The paper mentions the use of B-spline parametrization and symbolic regression techniques but does not provide any information about hiring or compensating human subjects for this research.
+- **Justificación Auditor:** "The paper focuses on the development of a new neural network architecture (KANs) and its application to mathematical, physical, and synthetic datasets (e.g., Feynman datasets, PDE solving, Knot theory). The research does not involve crowdsourcing, human subject experiments, or the collection of human-derived data. As the work is purely algorithmic and mathematical in nature, the requirements regarding participant instructions, compensation, and ethical labor practices for human subjects are not applicable."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** No aplica. Es regresión simbólica in-silico, no hay anotadores humanos.
+- **Mi Justificación:** Constata que el estudio es estrictamente matemático e in-silico, fundamentando la ausencia de recopilación de encuestas humanas o plataformas de trabajadores.
 
 **Ítem 15. IRB Approvals**
 - **Valoración Auditor:** N/A
-- **Justificación Auditor:** The paper does not involve any direct research with human subjects. It focuses on the implementation and comparison of Kolmogorov-Arnold Networks (KANs) using existing, public datasets for training and testing purposes.
+- **Justificación Auditor:** "The research focuses on Kolmogorov-Arnold Networks (KANs) applied to mathematical, physical, and synthetic datasets such as the Feynman datasets, knot theory signatures, and partial differential equations (PDEs)."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** No hay ensayos con pacientes o grupos sociales.
+- **Mi Justificación:** Confirma que el uso de datos en entornos computacionales, sin experimentación biomédica ni interacción social directa con sujetos de prueba, no requiere autorización institucional clínica.
 
 **Ítem 16. Declaration of LLM Usage**
-- **Valoración Auditor:** Yes
-- **Justificación Auditor:** The paper explicitly mentions the use of LLMs for certain components of its methodology, such as B-spline parametrization and symbolic regression techniques. According to the NeurIPS 2026 criteria, a declaration is required if LLMs are an important component of the core methods.
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** La IA local calificó con un "Sí" al afirmar que la parametrización por B-splines y las técnicas de regresión simbólica son LLMs. Confundir el modelado clásico de funciones a trozos (B-splines) con Modelos de Lenguaje Masivo (LLMs) indica una falta de conocimiento en Machine Learning por parte de Qwen2.5.
-
-
+- **Valoración Auditor:** N/A
+- **Justificación Auditor:** "The methodology relies on B-spline parametrization, LBFGS/Adam optimization, and symbolic regression techniques (e.g., PySR, GPLearn) for mathematical discovery."
+- **Mi Valoración:** Correcto
+- **Mi Justificación:** Diferencia los métodos matemáticos y paramétricos convencionales de las arquitecturas generativas, indicando que no se utilizaron modelos de lenguaje a gran escala para asistir en el desarrollo metodológico o diseño sintético del experimento.

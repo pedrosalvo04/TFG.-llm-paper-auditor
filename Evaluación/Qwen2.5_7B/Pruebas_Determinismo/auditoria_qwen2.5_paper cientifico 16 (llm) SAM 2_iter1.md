@@ -2,20 +2,20 @@
 
 | Parámetro | Detalle |
 | :--- | :--- |
-| 📄 **Artículo** | `auditoria_paper cientifico 16 (llm) SAM 2.md` |
-| 📅 **Fecha de Análisis** | 2026-06-24 19:53:56 |
+| 📄 **Artículo** | `paper cientifico 16 (llm) SAM 2.pdf` |
+| 📅 **Fecha de Análisis** | 2026-06-28 17:14:04 |
 | 🤖 **Modelo Local** | `qwen2.5` |
-| ⏳ **Tiempo de Ejecución** | 527.67s |
-| 📊 **Caracteres Analizados** | 8,828 |
+| ⏳ **Tiempo de Ejecución** | 429.13s |
+| 📊 **Caracteres Analizados** | 172,737 |
 
 ### 🎯 Veredicto del Checklist
 > **⚠️ ATENCIÓN REQUERIDA**
 > Se han detectado **1 de 16** ítem(s) que requieren atención o justificación adicional.
 
 ### 📊 Métricas de Cumplimiento
-- **Cumple (Yes):** 11
-- **No Cumple (No):** 1
-- **No Aplica (N/A):** 4
+- **Cumple (Yes):** 7
+- **No Cumple (No):** 4
+- **No Aplica (N/A):** 5
 - **Ítems con Alerta:** 1
 
 ---
@@ -24,22 +24,22 @@
 
 | # | Item del Checklist | Respuesta | Evidencia / Justificación |
 |---|--------------------|-----------|---------------------------|
-| 1 | Claims | 🟢 Yes | "SAM2: Segment Anything in Images and Videos" claims to outperform prior state-of-the-art methods in semi-supervised video object segmentation (VOS) and interactive benchmarks. The paper states, 'Our method significantly improves the state of the art on both VOS tasks and interactive segmentation tasks.' This claim is supported by the experimental results section where it is mentioned that SAM2 outperforms previous methods. |
-| 2 | Limitations | 🟢 Yes | "The limitations and quality issues are well-documented with specific failure modes listed." This statement is found in the 'thought_process' section of the provided JSON summary, indicating that the paper does include a discussion on its limitations. |
-| 3 | Theory, Assumptions & Proofs | 🔵 N/A | The paper 'SAM2: Segment Anything in Images and Videos' does not present any theoretical results, proofs, or assumptions. The official criteria for Theory, Assumptions and Proofs state that if the paper includes theoretical results, it must clearly state all assumptions and provide complete proofs either in the main paper or supplemental material. Since SAM2 focuses entirely on empirical contributions without any theoretical basis, this requirement does not apply to the paper. Therefore, marking this as N/A is appropriate. |
-| 4 | Experimental Result Reproducibility | 🟢 Yes | The paper provides a public URL for its code and model weights at https://github.com/facebookresearch/sam2. This satisfies the requirement for making experimental results reproducible, as it allows others to access the authors' own implementation or data used in the main experiments. The supplementary material also includes instructions on how to use the provided code and datasets, which further enhances reproducibility. |
-| 5 | Open Access to Data and Code | 🟢 Yes | The paper provides a URL to the code repository at https://github.com/facebookresearch/sam2, which contains the implementation of SAM2. Additionally, it mentions the use of the SA-V dataset from https://ai.meta.com/datasets/segment-anything-video/, with a CC by 4.0 license. These URLs grant access to the authors' own original code and datasets used for the main experiments, satisfying the criteria. |
-| 6 | Experimental Setting / Details | 🟢 Yes | The paper specifies important details such as data splits (SA-V dataset), hyperparameters like optimizer AdamW, and batch sizes for pre-training and video tasks. While some specific values are not provided (learning rate, epochs, etc.), the primary hyperparameters are present in the main text or supplementary materials. |
-| 7 | Experiment Statistical Significance | 🔴 No | The paper fails to report error bars, confidence intervals, or statistical significance tests for experiments supporting the main claims. The 'statistics' section explicitly states that no statistical measures were reported due to a lack of such information in the provided summary. This omission is critical because it does not provide readers with the necessary context to assess the reliability and robustness of the experimental results. In machine learning, reporting these statistics is essential for validating the reproducibility and generalizability of findings. <br><br> ⚠️ *Falta justificación explícita del autor para la respuesta 'No'* |
-| 8 | Experiments Compute Resource | 🟢 Yes | The paper provides sufficient information on the computer resources needed to reproduce the experiments. Specifically, it mentions that the training infrastructure consisted of 256 A100 GPUs for a duration of 108 hours. Additionally, details about the inference device (a single A100 GPU with 80GB memory) and energy consumption (12165.12 kWH) are provided. These details meet the criteria for transparency in reporting compute resources. |
-| 9 | Code of Ethics | 🟢 Yes | The paper addresses the Code of Ethics by mentioning several measures taken to ensure ethical conduct. Specifically, it states: 'Internal review process', 'Third-party vendors for crowdsourcing with verified consent', 'Safety measures such as face-blurring and content moderation', and 'Reporting mechanism (segment-anything@meta.com) for misuse'. These measures demonstrate that the authors have considered potential harms and taken steps to mitigate them. |
-| 10 | Broader Impacts | 🟢 Yes | The paper discusses broader impacts, including ethical considerations and environmental impact analysis. Specifically, it mentions: 'Broader impacts are discussed, including ethical considerations and environmental impact analysis.' This indicates that the authors have considered potential negative societal impacts of their work. |
-| 11 | Safeguards | 🟢 Yes | The paper mentions several safeguards, including an internal review process, third-party vendors for crowdsourcing with verified consent, safety measures such as face-blurring and content moderation, and a reporting mechanism (segment-anything@meta.com) for misuse. These safeguards are explicitly stated in the 'Code of Ethics' section of the paper. |
-| 12 | Licenses | 🟢 Yes | The paper specifies that both the code (Apache 2.0) and dataset (CC by 4.0) are released under open licenses, which allows for broad reuse and modification while respecting the original creators' rights. |
-| 13 | Assets | 🔵 N/A | The paper does not create or release any new assets such as datasets, model weights, benchmarks, or software libraries. It primarily builds upon the existing SA-V dataset and uses the SAM2 codebase from Facebook Research, which are publicly available. Therefore, this item is not applicable as per the official criteria. |
-| 14 | Crowdsourcing & Human Subjects | 🟢 Yes | The paper mentions that crowdworkers were used for data annotation and that they received hourly wage compensation. Additionally, a separate set of annotators was used for quality verification, and the training duration for workers was 1-2 weeks. |
-| 15 | IRB Approvals | 🔵 N/A | The paper focuses on the development of a visual segmentation model (SAM2) for images and videos. There is no mention of any direct research involving human subjects, such as collecting new data or conducting experiments with participants. The dataset used (SA-V dataset) appears to be publicly available and does not involve any new human-derived information. Therefore, based on the official criteria, IRB approvals are not strictly required for this paper. |
-| 16 | Declaration of LLM Usage | 🔵 N/A | The research described in the paper does not involve the use of LLMs as an important component of the core methods. The paper focuses on developing a visual segmentation model and does not mention any synthetic data generation, distillation processes, or other methodologies that would require the use of LLMs. Therefore, according to the official criteria, there is no requirement for a declaration regarding LLM usage. |
+| 1 | Claims | 🟢 Yes | The paper states in the introduction that SAM 2 demonstrates strong performance in both static image and video domains, yet it encounters difficulties in certain scenarios. The model may fail to segment objects across shot changes and can lose track of or confuse objects in crowded scenes, after long occlusions or in extended videos (Section C Limitations). Additionally, the paper claims that SAM 2 can produce better segmentation accuracy while using 3 × fewer interactions than prior approaches and outperforms prior work in established video object segmentation benchmarks. These claims are supported by the experimental results presented in Section 6, which show that SAM 2 delivers a step-change in the video segmentation experience with improved performance metrics. |
+| 2 | Limitations | 🟢 Yes | The authors explicitly state a 'Limitations' section (Section C) detailing various challenges faced by SAM 2. These include difficulties with segmenting objects across shot changes, losing track or confusing objects in crowded scenes after long occlusions, and struggling with thin or fast-moving objects as well as objects with similar appearances. The paper also mentions the lack of inter-object communication in its processing approach (Section C). |
+| 3 | Theory, Assumptions & Proofs | 🔵 N/A | The paper does not contain any theoretical results, proofs, or assumptions related to the segment anything everywhere (SAM2) model. The official criteria for item 3 require that if theoretical results are included, all assumptions should be clearly stated and complete proofs provided. Since no such content is present in this paper, it is N/A. |
+| 4 | Experimental Result Reproducibility | 🟢 Yes | The paper provides a GitHub repository URL (https://github.com/facebookresearch/sam2) where the authors' own implementation of SAM2 is available. This satisfies the requirement for experimental result reproducibility as per the official criteria, which states that making it possible for others to replicate the model with the same dataset or providing access to the model are acceptable ways to ensure reproducibility. |
+| 5 | Open Access to Data and Code | 🟢 Yes | The paper provides a URL to the GitHub repository for SAM2: `https://github.com/facebookresearch/sam2` (Section D.1 Pre-training, D.2 Training details). This repository contains the code and model weights necessary to reproduce the main experimental results. Additionally, the SA-V dataset is available at `https://ai.meta.com/datasets/segment-anything-video/`, which is used in the experiments (Section H.2 Dataset card for SA-V dataset). These URLs provide open access to both the data and the code required for reproducibility. |
+| 6 | Experimental Setting / Details | 🟢 Yes | The paper provides detailed experimental settings, including hyperparameters such as optimizer (AdamW), learning rate schedule, batch size for image and video tasks, and the hardware used (A100 GPUs) (Section D.2 Training details). The training setup is described in sufficient detail to allow other researchers to replicate the experiments. |
+| 7 | Experiment Statistical Significance | 🔴 No | The paper does not provide error bars, confidence intervals, or any other form of statistical significance measures for the reported results. While the authors report metrics such as J & F and mIoU, they do not accompany these with appropriate statistical information to indicate the variability or reliability of the measurements. This omission is particularly concerning given that machine learning experiments often involve stochastic elements that can introduce variance in the results. Without this information, it is difficult for readers to assess the robustness and reproducibility of the reported findings. <br><br> ⚠️ *Falta justificación explícita del autor para la respuesta 'No'* |
+| 8 | Experiments Compute Resource | 🔴 No | The paper mentions the type of compute resources used, such as A100 GPUs and batch sizes. However, it does not provide sufficient information on the total training time or per-sample efficiency metrics required to reproduce the experiments. Additionally, there is no mention of environmental impact or CO2 emissions associated with the computational requirements. This lack of detail poses a transparency risk because potential reproducers cannot accurately estimate the resources needed for their own implementations. |
+| 9 | Code of Ethics | 🟢 Yes | The paper includes a discussion of potential harms and societal impacts in the 'Limitations' section, specifically mentioning demographic group performance analysis. Additionally, the authors provide a dataset card for the SA-V dataset, which is an important step towards transparency and ethical consideration. |
+| 10 | Broader Impacts | 🟢 Yes | The paper discusses potential negative societal impacts in the 'Limitations' section. Specifically, it mentions that SAM 2 can be used to generate Deepfakes for disinformation purposes, which is a clear example of a potential malicious or unintended use. |
+| 11 | Safeguards | 🔵 N/A | The paper focuses on the development and application of SAM 2 for video segmentation, which is a foundational research area with no direct path to misuse. The work does not involve generating harmful content, enabling surveillance, synthesizing dangerous information, or being easily weaponized. Therefore, it does not present a high risk for misuse as defined by the NeurIPS 2026 criteria. Additionally, the paper does not mention any explicit access restrictions, usage guidelines, or technical guardrails that would be necessary if the work were deemed to have a high-risk profile. |
+| 12 | Licenses | 🔴 No | The paper uses existing assets such as the SA-V dataset, which is licensed under the Creative Commons Attribution 4.0 International Public License (https://ai.meta.com/datasets/segment-anything-video/). However, the authors do not explicitly cite the creators of these datasets or respect their license terms in a manner that would be considered transparent and ethical. The paper mentions that the dataset is available at https://ai.meta.com/datasets/segment-anything-video/, but it does not provide clear attribution to the original creators as required by the Creative Commons Attribution 4.0 International Public License. This omission constitutes a transparency risk, as it fails to properly acknowledge the contributions of the original creators and may lead to potential legal issues or ethical concerns. |
+| 13 | Assets | 🔵 N/A | The paper does not appear to introduce any new datasets, model weights, benchmarks, or software libraries as part of this work. The authors mention the use of existing datasets such as SA-V and EgoExo4D for training their model, but there is no indication that these were created or modified specifically for this research. Therefore, Item 13 does not apply since no new assets are being released. |
+| 14 | Crowdsourcing & Human Subjects | 🔴 No | The paper mentions the use of self-reported demographic information from the EgoExo4D dataset, but this is not considered crowdsourcing as it does not involve hiring or compensating human workers to collect or label new data. The authors do not provide any details about instructions given to participants, compensation, or other relevant information that would be required if they had conducted their own research with human subjects. Therefore, Item 14 is applicable and the answer is 'No' due to the lack of necessary documentation. |
+| 15 | IRB Approvals | 🔵 N/A | The paper does not involve any direct research with human subjects. It primarily focuses on the development and evaluation of a video segmentation model, SAM 2, using existing datasets such as SA-V Manual, SA-V Manual+Auto, Internal, and EgoExo4D. The data used are publicly available or internally licensed, and no new experiments involving human participants were conducted. Therefore, IRB approvals are not required for this research. |
+| 16 | Declaration of LLM Usage | 🔵 N/A | The paper does not mention the use of LLMs as an important component in the core methods. The authors did not generate synthetic data, distill knowledge, or employ any other method that would require a declaration of LLM usage. The LLMs were likely used only for writing and editing purposes, which do not impact the core methodology, scientific rigorousness, or originality of the research. |
 
 ---
 
@@ -49,90 +49,81 @@ Esta sección consolida la base de datos técnica extraída y validada del artí
 
 ### Hiperparámetros
 - **Optimizer:** ['AdamW']
-- **Learning Rate:** ['NOT FOUND']
-- **Batch Size:** {'pre_training': 128, 'video_tasks': 1}
+- **Learning Rate:** ['reciprocal square-root schedule (Zhai et al., 2022)']
+- **Batch Size:** {'image task': [16, 32], 'video task': 1}
 - **Epochs:** ['NOT FOUND']
 - **Training Steps:** ['NOT FOUND']
-- **Iterations:** ['NOT FOUND']
+- **Iterations:** ['7 correction clicks in SAM 2 training (instead of 8 in SAM)']
 - **Total Tokens:** ['NOT FOUND']
 - **Warmup Steps:** ['NOT FOUND']
 - **Weight Decay:** ['NOT FOUND']
 - **Betas:** ['NOT FOUND']
 - **Epsilon:** ['NOT FOUND']
 - **Random Seed:** ['NOT FOUND']
-
-### Hardware & Compute
-- **Training Infrastructure:** 256 A100 GPUs
-- **Training Duration:** 108 hours
-- **Inference Device:** Single A100 GPU (80GB)
-- **Energy Consumption:** 12165.12 kWH
-- **Carbon Emissions:** 3.89 metric tons of CO2e
+- **Hardware:** {'GPU': ['A100']}
+- **Latency Metrics:** {'FPS': {'image task': 10, 'video task': 1}}
 
 ### Arquitectura del Modelo
-- **Layers:** ['NOT FOUND']
+- **Layers:** ['T, S, B+, L']
 - **Gating:** ['NOT FOUND']
 - **Moe:** ['NOT FOUND']
-- **Dims:** ['NOT FOUND']
 
 ### Dataset & Datos
-- {'url': 'https://ai.meta.com/datasets/segment-anything-video/', 'name': 'SA-V dataset', 'license': 'CC by 4.0'}
+- **Sa-V Manual:** {'num_videos': 50.9, 'duration': '196.0 hr', 'num_masklets': 190.9, 'num_masks': 10000000.0, 'num_frames': 4200000.0}
+- **Sa-V Manual+Auto:** {'num_videos': 50.9, 'duration': '196.0 hr', 'num_masklets': 642.6, 'num_masks': 35500000.0, 'num_frames': 4200000.0}
+- **Internal:** {'num_videos': 62.9, 'duration': '281.8 hr', 'num_masklets': 69.6, 'num_masks': 5400000.0, 'num_frames': 6000000.0}
+- **Sa-V Dataset:** {'videos': {'resolutions': ['range from 240p to 4K with average of 1,401 × 1,037'], 'duration': {'range': [4, 2.3], 'average': 13.8}, 'total_frames': 4200000.0, 'total_hours': 196}, 'masklets': {'size_distribution': {'normalized_by_resolution': '>88% have a normalized mask area less than 0.1'}, 'geographic_diversity': ['recorded across 47 countries'], 'demographics': ['self-reported demographics of the crowdworkers who recorded the videos']}, 'automatic_masklets_generation': {'method': 'prompting model with regular grids', 'grids_used': [{'32 × 32 grid on first frame': ''}, {'16 × 16 grid on 4 zoomed image crops of the first frame': ''}, {'4 × 4 grid on 16 zoomed image crops of the first frame': ''}]}, 'EgoExo4D dataset': {'annotations': {'people_category': ['contains self-reported demographic information supplied by the subject of the video']}}}
+- **Source:** ['SA-V dataset alongside internally available licensed video data.']
+- **License:** ['Creative Commons Attribution 4.0 International Public License at https://ai.meta.com/datasets/segment-anything-video/']
+- **Size:** ['50.9K videos and 642.6K masklets']
+- **Type:** ['Video segmentation dataset']
 
 ### Código & Repositorio
-- {'url': 'https://github.com/facebookresearch/sam2'}
-
-### Estadística & Rigor Científico
-- **Statistical Significance:** [{'reported': False, 'reason': 'The paper fails to report error bars, confidence intervals, or statistical significance tests for experiments supporting the main claims.'}]
+- {'repository_url': 'https://github.com/facebookresearch/sam2', 'release_mention': 'NOT FOUND'}
 
 ### Comparativa con Baselines
-- {'benchmark': 'semi-supervised video object segmentation (VOS) and interactive benchmarks', 'result': 'outperforms prior state-of-the-art methods'}
-
-### Teoría & Demostraciones
-- **Reason:** The paper's contributions are entirely algorithmic and empirical, rendering the requirement for formal proofs and stated theoretical assumptions not applicable.
+- {'method_name': 'SAM+XMem++', 'accuracy': 56.9}
+- {'method_name': 'SAM+Cutie', 'accuracy': 56.7}
+- {'method_name': 'SAM2', 'accuracy': 64.7}
 
 ### Software & Versiones
-- {'url': 'https://github.com/facebookresearch/sam2', 'name': 'SAM 2 code', 'license': 'Apache 2.0'}
+- {'PyTorch': '2.3.1', 'CUDA': '12.1'}
 
 ### Análisis de Limitaciones
-- {'item': 'No parity across all geographic and demographic groups'}
-- {'limitation': 'Requiere Atencion (Faltan justificaciones)'}
+- The SA-V dataset has a high disappearance rate of 36.4%.
+- SAM 2 can generate better segmentation accuracy, with > 3 × fewer interactions.
 
 ### Licencias detectadas
-- **Dataset License:** CC by 4.0
-- **Code License:** Apache 2.0
+- {'Apache 2.0': 'See Ethical considerations and license for restrictions.'}
+- {'Creative Commons Attribution 4.0 International Public License at https://ai.meta.com/datasets/segment-anything-video/': 'See Ethical considerations and license for restrictions.'}
 
 ### Impacto Social (Broader Impacts)
-- {'discussion': 'Yes', 'limitations_and_broader_impacts': 'Yes', 'fairness_evaluations': 'Yes', 'environmental_impact': 'Yes'}
-
-### Declaración de uso de LLMs
-- **Reason:** The research focuses on visual segmentation rather than language modeling or LLM-based reasoning.
+- In Section E.1.1 of the main text we analyze SAM 2 performance on people across demographic groups.
+- When using SAM 2 in new settings, we suggest that researchers perform their own fairness evaluation for SAM 2 specific to their use case.
 
 ### Sujetos Humanos & Crowdsourcing
-- {'crowdsourcing': 'Yes', 'human_workers_used': True, 'compensation': 'Hourly wage', 'consent_process': 'Third-party vendor', 'quality_verification': 'Separate set of annotators used for quality verification', 'training_duration': '1-2 weeks'}
+- EgoExo4D dataset contains self-reported demographic information supplied by the subject of the video.
 
 ---
 
 ## 🧠 Razonamiento de Consolidación (CoT)
 
-> {'architecture': "The fragment does not provide specific architectural details like 'Gated Attention', 'MoE configuration', or 'Normalization layers'. The closest information is the mention of a 'hierarchical image encoder (Hiera)', but no further detail is provided.", 'hyperparameters': 'Hyperparameters are not explicitly mentioned, except for the optimizer AdamW. Other parameters such as learning rate, batch size, epochs, etc., are not detailed in this fragment.', 'limitations_quality': 'The limitations and quality issues are well-documented with specific failure modes listed.', 'theory_and_proofs': 'The paper does not present any theoretical or mathematical proofs, focusing instead on empirical contributions.', 'broader_impacts_extraction': 'Broader impacts are discussed, including ethical considerations and environmental impact analysis.', 'llm_usage_extraction': 'There is no mention of LLM usage in the research methodology.', 'human_subjects_extraction': 'The paper details the use of crowdworkers for data annotation, with proper compensation and consent processes.'}
+> Video panoptic segmentation is a challenging task that requires the ability to segment both objects and backgrounds in videos. The work by Oh et al. (2018) introduced a method for fast video object segmentation using reference-guided mask propagation, which can be seen as an improvement over previous methods like those proposed by Ma et al. (2013) and Li et al. (2022a). Ryali et al. (2023) further extended this idea to a hierarchical vision transformer approach that does not include additional complex components, aiming for simplicity and efficiency.
 
 ### 📍 Secciones Identificadas del Paper
-- `# NeurIPS 2026 Checklist Audit Report`
-- `Claims`
-- `Limitations`
-- `Theory, Assumptions & Proofs`
-- `Experimental Result Reproducibility`
-- `Open Access to Data and Code`
-- `Experimental Setting / Details`
-- `Experiment Statistical Significance`
-- `Experiments Compute Resource`
-- `Code of Ethics`
-- `Broader Impacts`
-- `Safeguards`
-- `Licenses`
-- `Assets`
-- `Crowdsourcing & Human Subjects`
-- `IRB Approvals`
-- `Declaration of LLM Usage`
+- `Introduction`
+- `5.1 Data collection and annotation`
+- `6 Zero-shot experiments`
+- `6.1 Promptable video segmentation`
+- `6.2 Semi-supervised video object segmentation`
+- `D.1 Pre-training`
+- `D.2 Training details`
+- `D.3 Speed benchmarking`
+- `E Data details`
+- `F Details on zero-shot transfer experiments`
+- `## H Model, data and annotation cards`
+- `## H.1 Model card`
+- `## H.2 Dataset card for SA-V dataset`
 
 ---
 _Informe generado automáticamente empleando el modelo local: qwen2.5_

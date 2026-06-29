@@ -3,9 +3,9 @@
 | Parámetro | Detalle |
 | :--- | :--- |
 | 📄 **Artículo** | `paper cientifico 16 (llm) SAM 2.pdf` |
-| 📅 **Fecha de Análisis** | 2026-06-28 17:38:11 |
+| 📅 **Fecha de Análisis** | 2026-06-28 18:00:55 |
 | 🤖 **Modelo Local** | `qwen2.5` |
-| ⏳ **Tiempo de Ejecución** | 333.29s |
+| ⏳ **Tiempo de Ejecución** | 329.93s |
 | 📊 **Caracteres Analizados** | 172,737 |
 
 ### 🎯 Veredicto del Checklist

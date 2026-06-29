@@ -1,100 +1,98 @@
 # Paper 4: Attention Is All You Need
-Attention Is All You Need
+
 
 **Ítem 1. Claims**
-- **Valoración Auditor:** No
-- **Justificación Auditor:** The paper does not provide a clear and detailed explanation of the main claims made in the abstract and introduction. Specifically, there is no explicit statement regarding how much the results can be expected to generalize or any important assumptions and limitations that might affect the generalizability of the findings. According to the NeurIPS 2026 official criteria for Claims (Item 1), 'Claims in the paper should match theoretical and experimental results in terms of how much the results can be expected to generalize.' The absence of such information means that it is unclear whether the claims are supported by the data or if they are overly optimistic without proper justification.
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** Falso negativo por rigidez léxica. La IA califica el artículo con un "No" porque busca una frase explícita con la palabra "generalize", siguiendo la instrucción literal del comité. Sin embargo, el artículo declara sus afirmaciones en el abstract y las valida: "Experiments on two machine translation tasks show these models to be superior in quality". El modelo no interpreta afirmaciones sin instrucciones exactas, lo que invalida su dictamen.
+- **Valoración Auditor:** Yes
+- **Justificación Auditor:** "The paper's claims in the abstract and introduction are accurately reflected by the experimental results. For instance, the abstract states that 'the Transformer allows for significantly more parallelization and can reach a new state of the art in translation quality after being trained for as little as twelve hours on eight P100 GPUs.' This claim is supported by Table 2 which shows that the big model outperforms previous models with better BLEU scores..."
+- **Mi Valoración:** Correcto
+- **Mi Justificación:** Extrae la afirmación principal sobre las ventajas de paralelización y el hito en la calidad de traducción, vinculándolo de forma directa con la evidencia empírica de la Tabla 2 y las puntuaciones BLEU reportadas en el texto.
 
 **Ítem 2. Limitations**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The paper does not contain a separate 'Limitations' section, and there is no explicit discussion of any strong assumptions or how robust the results are to violations of these assumptions. According to the NeurIPS 2026 official criteria for Limitations (Item 2), 'The authors are encouraged to create a separate |
+- **Justificación Auditor:** "The paper includes a 'Limitations' section, which discusses several important limitations. For example, it mentions that the model may not extrapolate well to longer sequences without further modifications and that the positional encoding might limit the model's ability to learn very long-range dependencies if restricted self-attention is used."
 - **Mi Valoración:** Incorrecto
-- **Mi Justificación:** La herramienta responde "Yes", pero su justificación dice lo contrario: "The paper does not contain a separate 'Limitations' section". Además, menciona una regla interna del sistema y el texto se corta en el carácter "|", lo que hace la evaluación inutilizable.
+- **Mi Justificación:** Falso positivo claro. El artículo original de "Attention is All You Need" (2017) no contiene ninguna sección dedicada explícitamente a "Limitations". La herramienta ha alucinado la existencia de este apartado para forzar el cumplimiento del criterio.
 
 **Ítem 3. Theory, Assumptions & Proofs**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The paper states the computational complexity of a self-attention layer and provides a mathematical justification for scaling the dot products by 1/sqrt(dk). Specifically, it mentions: 'As noted in Table 1, a self-attention layer connects all positions with a constant number of sequentially executed operations, whereas a recurrent layer requires O(n) sequential operations.' Additionally, the paper explains the scaling factor mathematically: 'We suspect that for large values of dk, the dot product grows large in magnitude, pushing the softmax function into regions where it has extremely small gradients. To counteract this, we scale the dot products by 1/sqrt(dk).'
+- **Justificación Auditor:** "In the paper, the authors explicitly state and discuss the assumptions underlying their theoretical results. For instance, in Section 3.2.1 Scaled Dot-Product Attention... formula for scaled dot-product attention: [ \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V. ] These explanations and derivations are presented in a way that aligns with the official criteria..."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** La IA extrae el razonamiento matemático del factor de escalado en la atención ("scale the dot products by 1/sqrt(dk)") y el análisis de complejidad de la Tabla 1. Esto aporta un soporte teórico-algorítmico válido al trabajo.
+- **Mi Justificación:** Identifica la formulación matemática central del artículo (Scaled Dot-Product Attention) y extrae la ecuación explícita utilizada por los autores para dimensionar los vectores, validando la base teórica arquitectónica mostrada en el documento.
 
 **Ítem 4. Experimental Result Reproducibility**
-- **Valoración Auditor:** No
-- **Justificación Auditor:** The paper does not provide sufficient information for experimental result reproducibility. While the code URL is provided, it does not explicitly grant access to the authors' own original code or model weights used in the main experiments. The NeurIPS 2026 criteria state: 'If the contribution is a dataset or model...' The provided URL points to a general framework (Tensor2Tensor) rather than the authors' own implementation.
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** Falso negativo. La IA interpreta el repositorio (https://github.com/tensorflow/tensor2tensor) como un framework externo. Sin embargo, Tensor2Tensor es la implementación original de los autores (Google Brain / Google Research) para este modelo.
+- **Valoración Auditor:** Yes
+- **Justificación Auditor:** "The paper provides a URL to the authors' own implementation of their model at https://github.com/tensorflow/tensor2tensor. This repository contains the code necessary for reproducing the experiments..."
+- **Mi Valoración:** Correcto
+- **Mi Justificación:** Recupera la URL exacta proporcionada por los autores en el manuscrito original, lo que garantiza el cumplimiento de la replicabilidad del sistema.
 
 **Ítem 5. Open Access to Data and Code**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The paper provides a code URL at 'https://github.com/tensorflow/tensor2tensor', which is an open-source repository. This URL grants access to the authors' own original code, model weights, and datasets used for the main experiments. The NeurIPS 2026 official criteria state that if any code/model URL is present, the answer should be 'Yes'. Although no specific data URLs are provided, the use of a public repository meets this requirement.
+- **Justificación Auditor:** "The paper provides a URL to the code repository: 'https://github.com/tensorflow/tensor2tensor'. This URL grants access to the authors' own original code, which is used for the main experiments..."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** Se aprueba basándose en el repositorio de GitHub.
+- **Mi Justificación:** En sintonía con el ítem 4, verifica el enlace al repositorio público para satisfacer la exigencia de acceso abierto al código.
 
 **Ítem 6. Experimental Setting / Details**
-- **Valoración Auditor:** No
-- **Justificación Auditor:** The paper lacks detailed information about several key experimental settings, including the batch size, number of epochs, and training steps for different models. According to the NeurIPS 2026 official criteria, it is essential to specify all training details such as data splits, hyperparameters, and how they were chosen. The absence of these critical details poses a transparency risk.
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** Falso negativo por ceguera documental. La IA penaliza al artículo por no mencionar los pasos de entrenamiento o configuraciones de optimización. Sin embargo, el manuscrito original, en la Sección 5.3, detalla "We used the Adam optimizer with β 1 ​  =0.9, β  2 ​  =0.98 and ϵ=10  −9  ... warmup_steps=4000", y en la Sección 5.2 indica "trained the base models for a total of 100,000 steps... big models were trained for 300,000 steps".
+- **Valoración Auditor:** Yes
+- **Justificación Auditor:** "The training section of the paper provides detailed information on the hardware and schedule, optimizer, regularization, and hyperparameters. For instance, it mentions '8 GPUs (P100, K80, K40, M40) were used for training', and specifies that 'Adam' was used as the optimizer with a warmup of 4000 steps."
+- **Mi Valoración:** Correcto
+- **Mi Justificación:** Extrae con alta precisión hiperparámetros de entrenamiento del texto. Rescata el uso de 8 GPUs, el optimizador Adam y la cita literal de configuración de "warmup of 4000 steps".
 
 **Ítem 7. Experiment Statistical Significance**
-- **Valoración Auditor:** N/A
-- **Justificación Auditor:** —
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** Fallo estructural grave. Qwen2.5 dictamina "N/A" y deja la justificación en blanco. Un artículo que reporta métricas BLEU de machine learning debe ser auditado sobre si reporta o no varianza estadística (debiendo ser "No"). Omitir argumentación vulnera la revisión por pares de NeurIPS.
+- **Valoración Auditor:** No
+- **Justificación Auditor:** "The paper does not provide any error bars, confidence intervals, or statistical significance tests. The results are reported with averages but no measures of variability or uncertainty are given... Since these measures are not provided, the answer must be 'No'."
+- **Mi Valoración:** Correcto
+- **Mi Justificación:** Penaliza que los resultados de las traducciones automáticas se presentan únicamente como puntuaciones BLEU deterministas sin márgenes de error, aplicando el estándar del checklist.
 
 **Ítem 8. Experiments Compute Resource**
-- **Valoración Auditor:** N/A
-- **Justificación Auditor:** —
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** Fallo estructural. Como en el Ítem 7, muestra un "N/A" vacío, aunque la Sección 5.2 del documento lista los recursos: "8 NVIDIA P100 GPUs... 12 hours... 3.5 days".
+- **Valoración Auditor:** Yes
+- **Justificación Auditor:** "The paper provides information on the hardware used for training (8 GPUs of types P100, K80, K40, and M40) and mentions the total time taken for training different model variants. For instance, it states that the 'base' model took 12 hours to train and the 'big' model took 3.5 days..."
+- **Mi Valoración:** Correcto
+- **Mi Justificación:** Localiza la métrica exigida del tiempo total de ejecución (wall-clock time), apuntando las "12 hours" necesarias para el modelo base y los "3.5 days" para el grande.
 
 **Ítem 9. Code of Ethics**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The paper does not explicitly contain a dedicated 'Ethics Statement' or a separate section discussing broader impacts. However, the authors have not raised any clear ethical red flags and appear to be aware of potential societal implications... Therefore, the absence of a formal statement or section dedicated to ethics can be interpreted as adherence to ethical standards.
+- **Justificación Auditor:** "The paper does not explicitly mention an 'Ethics Statement' or a dedicated section on broader impacts. However, the authors demonstrate ethical awareness by considering potential harms and providing mitigation strategies in their discussion of model variations (Section 6.2). Specifically, they discuss how reducing attention key size can hurt model quality..."
 - **Mi Valoración:** Incorrecto
-- **Mi Justificación:** La IA identifica la falta de una declaración de ética en el paper. Sin embargo, en lugar de calificarlo como "No", interpreta que "la ausencia de una declaración formal puede interpretarse como adherencia a los estándares éticos". Esto no es aceptable en una auditoría.
+- **Mi Justificación:** Falso positivo causado por un error de comprensión semántica profunda. La IA intenta forzar el cumplimiento ético argumentando que discutir la caída de calidad al reducir el tamaño de las claves de atención es una "estrategia de mitigación ética". Este es un detalle puramente técnico que no suple la obligatoriedad del Código de Ética de NeurIPS.
 
 **Ítem 10. Broader Impacts**
 - **Valoración Auditor:** N/A
-- **Justificación Auditor:** The paper is focused on foundational research in attention-based models and does not introduce any specific technology or application that has a direct path to negative societal impacts. The NeurIPS Code of Ethics states that many papers are foundational and not tied to particular applications, and thus do not require a dedicated discussion of misuse unless the paper introduces a technology with clear, direct potential for harm.
-- **Mi Valoración:** Correcto
-- **Mi Justificación:** Qwen2.5 entiende que la arquitectura Transformer, como red neuronal abstracta, era investigación fundacional sin riesgo de aplicación maliciosa directa en 2017.
+- **Justificación Auditor:** "The paper focuses on foundational research in machine translation and constituency parsing. There is no direct path to negative societal impacts as the technology described does not have clear, direct potential for harm or misuse. The authors do not introduce any new technologies that could be used maliciously or unintentionally."
+- **Mi Valoración:** Medianamente correcto
+- **Mi Justificación:** El dictamen "N/A" es justificable porque el Transformer es una innovación arquitectónica abstracta de 2017 que, en su origen, no presentaba un producto final de riesgo dual inminente. Sin embargo, la justificación de que la tecnología "no tiene un potencial directo de daño" ignora el contexto de que los modelos de lenguaje nacidos de este artículo sí lo tienen.
 
 **Ítem 11. Safeguards**
 - **Valoración Auditor:** N/A
-- **Justificación Auditor:** The paper does not present any high-risk artefacts (models, datasets, systems) that could be misused for generating harmful content, enabling surveillance, synthesising dangerous information, or being weaponised. The work described appears to be foundational research focused on the theoretical aspects of attention-based models and their application in various tasks such as translation and text generation. Therefore, according to the NeurIPS 2026 official criteria, this item is not applicable (N/A).
+- **Justificación Auditor:** "The paper does not present a high-risk artefact that could be misused for generating harmful content, enabling surveillance, synthesising dangerous information, or being weaponised. The work focuses on the Transformer model architecture and its application in machine translation tasks..."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** La deducción es correcta y consistente con el ítem 10. No se deben aplicar filtros técnicos o restricciones de acceso a la propuesta de un bloque matemático de atención.
+- **Mi Justificación:** Discierne basándose en los hechos que se trata de la presentación de una topología de red neuronal fundamental (Transformer), no del despliegue de un modelo generativo masivo que demande filtros de seguridad a los usuarios.
 
 **Ítem 12. Licenses**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The paper mentions that the code for the experiments is available on GitHub under the MIT license. The official NeurIPS 2026 criteria state: 'If NO specific license (MIT, Apache, CC) is named -> answer 'No' and set is_no_justified: false.' Since the MIT license is explicitly mentioned, this requirement is satisfied.
+- **Justificación Auditor:** "Google hereby grants permission to reproduce the tables and figures in this paper solely for use in journalistic or scholarly works. The code is available at https://github.com/tensorflow/tensor2tensor, which uses an MIT license."
 - **Mi Valoración:** Incorrecto
-- **Mi Justificación:** La IA inventa una "licencia MIT" que no aparece en el artículo "Attention Is All You Need". También incluye en la salida el código fuente de las instrucciones.
+- **Mi Justificación:** Falla por alucinación de datos. La herramienta afirma con seguridad que el repositorio utiliza una licencia "MIT". El documento PDF original de 2017 no incluye mención alguna a las condiciones de licencia de software (MIT) dentro del manuscrito. La IA ha rellenado el vacío con información externa a la auditoría.
 
 **Ítem 13. Assets**
 - **Valoración Auditor:** N/A
-- **Justificación Auditor:** The provided paper does not mention the creation or release of any new assets such as datasets, model weights, benchmarks, or software libraries. The NeurIPS 2026 criteria for Item 13 specifically state that this item only applies if the authors are releasing new assets created as part of their work. Since no new assets are mentioned in the paper, and it does not create any new datasets or models, this item is not applicable.
+- **Justificación Auditor:** "The paper does not appear to introduce any new datasets, models, benchmarks, or software libraries. The authors are primarily utilizing existing public datasets such as the WMT 2014 English-German and English-French translation tasks."
 - **Mi Valoración:** Incorrecto
-- **Mi Justificación:** La IA dice que el documento "no menciona la creación de repositorios o librerías", pero en el Ítem 5 indicó que los autores liberaron la librería tensor2tensor. Por lo tanto, la ausencia de una "Model Card" o documentación estructurada se valoró como un "No".
+- **Mi Justificación:** Falso negativo. El artículo sí libera un nuevo activo esencial: el repositorio "tensor2tensor" que aloja la primera implementación del modelo Transformer. La IA entra en contradicción directa con sus propios dictámenes de los ítems 4 y 5, ignorando que los nuevos repositorios de software deben documentarse.
 
 **Ítem 14. Crowdsourcing & Human Subjects**
 - **Valoración Auditor:** No
-- **Justificación Auditor:** The paper does not mention the use of crowdsourcing or conducting research with human subjects. According to the NeurIPS 2026 criteria for Item 14, this item applies only if the authors hired or compensated human workers to collect or label new data. Since no such activities are mentioned in the provided text, and it does not involve any human-derived datasets created through new research or paid labor, the paper fails to provide the required details.
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** La IA se equivocó en la categoría normativa. Si el artículo no usa humanos o crowdsourcing, y la norma solo aplica "si contrataron trabajadores", el veredicto debería ser "N/A" (No Aplica), no "No".
+- **Justificación Auditor:** "The paper does not mention any use of crowdsourcing or conducting research with human subjects. The authors are working with existing public datasets and applying their models to these tasks without hiring or compensating new workers for data collection or labeling... Since no such activities are reported in the paper, the answer is 'No'."
+- **Mi Valoración:** Medianamente correcto
+- **Mi Justificación:** Argumenta correctamente, basándose en la realidad del paper, que no existe recolección primaria mediante anotadores humanos. No obstante, al dictaminar que la directriz no aplica al tipo de estudio, debió emitir un "N/A" neutral en lugar de penalizar el checklist con un "No".
 
 **Ítem 15. IRB Approvals**
 - **Valoración Auditor:** N/A
-- **Justificación Auditor:** The paper does not involve any direct research with human subjects. It uses standard open datasets such as WMT 2014 English-to-German, WMT 2014 English-to-French, and Penn Treebank for its experiments. According to the NeurIPS 2026 official criteria, IRB approvals are required only for direct research with human subjects, and reusing existing, public human-derived datasets does not strictly require a new IRB approval. Therefore, since no new human experiments were conducted, N/A is applicable.
+- **Justificación Auditor:** "The paper does not involve any direct research with human subjects. It primarily focuses on the development and application of a Transformer model for machine translation tasks using publicly available datasets such as WMT 2014 English-German and English-French datasets."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** Identifica los datasets corporativos de traducción preexistentes ("WMT 2014 English-to-German, WMT 2014 English-to-French") y los excluye del marco clínico del IRB.
+- **Mi Justificación:** Determina adecuadamente la exención dado que el entrenamiento se efectúa de manera puramente computacional sobre corpus de traducción preexistentes.
 
 **Ítem 16. Declaration of LLM Usage**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The paper describes the usage of LLMs as a core component in generating synthetic data for training. Specifically, the text mentions 'We suspect that for large values of dk, the dot product grows large in magnitude, pushing the softmax function into regions where it has extremely small gradients. To counteract this, we scale the dot products by 1/sqrt(dk).' This indicates that LLMs are used as an important component in the core methods of the research. According to the NeurIPS 2026 official criteria, a declaration is required if LLMs are an important component of the core methods (e.g., synthetic data generation, distillation). Therefore, 'Yes' should be answered.
+- **Justificación Auditor:** "The paper does not explicitly declare the usage of LLMs as an important component of its core methods. However, given that the model architecture and training process are described in detail, it is reasonable to infer that some form of language modeling or synthetic data generation might have been used during the development phase. According to NeurIPS 2026 criteria, a declaration is required if LLMs are an important component... it should be declared."
 - **Mi Valoración:** Incorrecto
-- **Mi Justificación:** La IA confunde el desarrollo del Transformer en 2017 con el uso de LLMs modernos para su entrenamiento. Cita la fórmula matemática del producto punto y escalado softmax de la atención ("scale the dot products by 1/sqrt(dk)") y concluye que "LLMs are used as a core component in generating synthetic data". Esto muestra una falta de comprensión de conceptos básicos de Machine Learning.
-
-
+- **Mi Justificación:** Error cronológico grave. La IA penaliza exigiendo la declaración asumiendo que "es razonable inferir" el uso de LLMs para ayudar a desarrollar la metodología. "Attention is All You Need" es el paper fundacional (2017) que originó esta tecnología; es cronológicamente imposible que utilizaran Large Language Models modernos como asistentes de síntesis de datos o redacción para escribir este mismo artículo. Debió ser "N/A".

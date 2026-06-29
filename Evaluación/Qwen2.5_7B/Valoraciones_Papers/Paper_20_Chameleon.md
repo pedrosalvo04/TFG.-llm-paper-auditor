@@ -1,98 +1,97 @@
-# Paper 20: Chameleon (Modelo Local: Qwen2.5)
-Chameleon (Modelo Local: Qwen2.5)
+# Paper 20: Chameleon
 
 **Ítem 1. Claims**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The paper states that it introduces a Chambaleon Mixed modal early fusion foundation model, which is supported by the experimental results comparing it to GPT-4V and Gemini-Pro.
+- **Justificación Auditor:** "We present Chameleon, a family of token-based mixed-modal foundation models capable of understanding and generating images and text in an interleaved fashion.' This is supported by the results in Tables 9-14, which demonstrate competitive performance against state-of-the-art baselines like GPT-4V and Gemini-Pro..."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** El texto conecta la nueva arquitectura fundacional multimodal con su validación cruzada. Para ello, compara el hallazgo con modelos comerciales como GPT-4V y Gemini-Pro.
+- **Mi Justificación:** Asocia la afirmación principal con los resultados en las tablas de evaluación. Cita literal del texto que valida el hallazgo fundacional del modelo de fusión temprana.
 
 **Ítem 2. Limitations**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The limitations section discusses several issues such as tokenizer weaknesses, instability at scale, uncontrolled growth of output norms, and challenges with early-fusion approach.
+- **Justificación Auditor:** "The paper explicitly discusses limitations in the 'Conclusion' and throughout the technical sections, noting: 'Tokenizer weakness in reconstructing images with large amounts of text (OCR-related tasks)', 'Instability when scaling above 8B parameters and 1T tokens'..."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** La herramienta identifica fallos técnicos específicos del artículo, como la "inestabilidad a escala" y la "debilidad del tokenizador en tareas OCR", en lugar de descripciones generales.
+- **Mi Justificación:** Extrae fallos técnicos reales confesados en el documento y no obviedades genéricas. Destaca debilidades puntuales como la debilidad del tokenizador en tareas OCR.
 
 **Ítem 3. Theory, Assumptions & Proofs**
 - **Valoración Auditor:** N/A
-- **Justificación Auditor:** The provided JSON summary does not contain any explicit statements of assumptions or proofs related to the theoretical results. The only mention of theory is 'softmax translation invariant property'...
+- **Justificación Auditor:** "The paper is an empirical study focused on the architecture and training of a large-scale multimodal foundation model. While the authors discuss the 'softmax translation invariant property' as a conceptual motivation for modality competition, the paper does not present formal theoretical results, theorems, or proofs..."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** El veredicto 'N/A' es correcto. Chameleon es un desarrollo de ingeniería empírica, no un documento teórico de matemáticas.
+- **Mi Justificación:** Distingue magistralmente una motivación conceptual de un teorema puro. Entiende que mencionar una propiedad matemática de la función softmax no exige una demostración algebraica formal en un estudio arquitectónico empírico.
 
 **Ítem 4. Experimental Result Reproducibility**
 - **Valoración Auditor:** No
-- **Justificación Auditor:** According to NeurIPS 2026 criteria, 'If ANY code/model URL is present, answer 'Yes'. If NO code/URL is found, answer 'No' and set is_no_justified: false.' The pre-computed help indicates that no such URLs are found...
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** El modelo expone código fuente en Python del sistema evaluador ("If ANY code/model URL is present... Set is_no_justified: false"). Esto invalida la auditoría al revelar el funcionamiento interno.
+- **Justificación Auditor:** "The authors failed to provide access to their own original implementation code, model weights, or the specific datasets used for the main experiments. While the paper references third-party libraries such as 'xformers' and 'pycocoevalcap', these are external dependencies and do not constitute the authors' own research artifacts."
+- **Mi Valoración:** Correcto
+- **Mi Justificación:** Detecta la ausencia del código y de los pesos originales. Acierta al razonar que referenciar librerías de terceros (xformers) no suple la ocultación de los artefactos primarios desarrollados por Meta.
 
 **Ítem 5. Open Access to Data and Code**
 - **Valoración Auditor:** No
-- **Justificación Auditor:** The provided data includes pre-training data sources like Llama-2, MS-COCO, Flickr30k... but these are third-party datasets. There is no mention of the authors releasing their own code or model weights.
+- **Justificación Auditor:** "While the paper provides links to third-party dependencies such as 'pycocoevalcap' and 'xformers', it fails to provide the authors' own implementation code, the specific training data processing pipelines, or the model weights for the Chameleon foundation models."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** La IA identifica que usar corpus de entrenamiento de terceros (como Flickr30k o ShareGPT) no exime a los autores de la responsabilidad de liberar sus propios activos originales.
+- **Mi Justificación:** Mantiene la penalización con lógica concurrente al ítem 4, castigando la falta de un repositorio funcional que permita el acceso abierto al modelo.
 
 **Ítem 6. Experimental Setting / Details**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The paper provides detailed information about hyperparameters such as optimizer (AdamW), learning rate (0.0001), batch size (8388608), global batch size (8388608), warmup steps (4000), weight decay (0.1), betas ([0.9, 0.95]), and total tokens (2^23 (~8M tokens) for 7B).
+- **Justificación Auditor:** "The paper provides comprehensive training details in the 'Pre-Training' and 'Hyperparameters' sections, including: 'optimizer: AdamW', 'betas: [0.9, 0.95]', 'learning_rate: 1.0 x 10^-4', 'warmup_steps: 4000', 'weight_decay: 0.1', 'gradient_clipping: 1.0', and 'global_batch_size: 2^23 (~8M tokens) for 7B'."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** Recuperación granular buena. Sigue los valores absolutos de los hiperparámetros de entrenamiento de los apéndices.
+- **Mi Justificación:** Extrae la configuración técnica hiper-detallada y rescata parámetros como el recorte de gradiente o el tamaño de los lotes globales.
 
 **Ítem 7. Experiment Statistical Significance**
 - **Valoración Auditor:** No
-- **Justificación Auditor:** El paper no proporciona información sobre error barras, intervalos de confianza o pruebas de significancia estadística para los experimentos... El paper solo proporciona promedios sin ninguna indicación de la variabilidad o el rango de confianza. ⚠️ Falta justificación explícita...
+- **Justificación Auditor:** "While the paper presents extensive benchmark results (e.g., Tables 9-14), it provides only point-estimate averages for performance metrics without any accompanying measures of variability, such as standard deviations or confidence intervals."
 - **Mi Valoración:** Incorrecto
-- **Mi Justificación:** Falso negativo por ceguera óptica e inestabilidad de formato. Primero, la IA cambia a español. Segundo, incrusta una etiqueta de error del sistema ("⚠️ Falta justificación..."). Tercero, el artículo sí reporta medidas de significancia estadística para las evaluaciones humanas en la Sección 4.3, indicando "Krippendorff’s Alpha... Confidence interval is [0.319, 0.356] based on bootstrap sampling". La IA no detectó este dato.
+- **Mi Justificación:** Falso negativo por ceguera documental. La IA penaliza asumiendo la omisión total de variabilidad, pero los autores sí incluyen el cálculo estadístico riguroso en la Sección 4.3 para la evaluación humana, citando textualmente: "Krippendorff's Alpha... Confidence interval is [0.319, 0.356] based on bootstrap sampling". La IA ignoró esta sección.
 
 **Ítem 8. Experiments Compute Resource**
-- **Valoración Auditor:** Yes
-- **Justificación Auditor:** El paper menciona hardware utilizado para los experimentos, específicamente '1024 concurrent GPUs' y '3072 concurrent GPUs'... Sin embargo, no se proporcionan métricas adicionales sobre el tiempo total de ejecución...
-- **Mi Valoración:** Medianamente correcto
-- **Mi Justificación:** Identifica el hardware usado para entrenar las dos variantes de Chameleon (7B y 34B). Sin embargo, se penaliza por el cambio abrupto y sin justificación al español, y por contradecirse al asumir que falta el tiempo total de ejecución, cuando los autores sí incluyeron las "GPU hours" en la tabla.
+- **Valoración Auditor:** No
+- **Justificación Auditor:** "The paper does not provide complete execution times or absolute carbon emissions for the entire end-to-end training of the mixed-modal architecture..."
+- **Mi Valoración:** Correcto
+- **Mi Justificación:** Penaliza correctamente que, aunque el trabajo detalla el consumo de tokens y parámetros, omite documentar las horas totales de cómputo absolutas requeridas por infraestructura.
 
 **Ítem 9. Code of Ethics**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The paper mentions 'Safety tuning efforts' and 'Safety and red teaming efforts' as part of the code of ethics considerations.
+- **Justificación Auditor:** "The authors explicitly mention 'Safety tuning efforts' and 'Safety and red teaming efforts' in the context of their foundation model development. The methodology involves rigorous data curation..."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** Meta cumple con el estándar ético de NeurIPS al demostrar esfuerzos en "Red Teaming" y mitigación de toxicidad.
+- **Mi Justificación:** Acepta que los procesos intensivos de "Safety tuning" y "red teaming" suplen materialmente la exigencia burocrática del comité respecto al resguardo de la integridad ética de la investigación.
 
 **Ítem 10. Broader Impacts**
-- **Valoración Auditor:** No
-- **Justificación Auditor:** The paper does not discuss potential negative societal impacts of the work. While it mentions safety-related efforts, there is no explicit discussion on how these efforts address broader societal or environmental concerns...
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** Contradicción Lógica. En el Ítem 9, la IA validó los "Safety and red teaming efforts" de los autores. Los ejercicios de "red-teaming" buscan mitigar impactos negativos en la sociedad (Broader Impacts). Denegar este ítem por "no discutir impactos sociales" muestra una falta de comprensión.
+- **Valoración Auditor:** Yes
+- **Justificación Auditor:** "The paper explicitly identifies 'Safety tuning efforts' and 'Safety and red teaming efforts' as part of the development lifecycle... Additionally, the authors discuss the limitations of their model... which are critical for understanding the reliability and potential misuse of the technology."
+- **Mi Valoración:** Correcto
+- **Mi Justificación:** Relaciona lógicamente la discusión sobre los modos de fallo y vulnerabilidades del modelo con la advertencia sobre los riesgos de inestabilidad y uso malicioso en la sociedad.
 
 **Ítem 11. Safeguards**
-- **Valoración Auditor:** N/A
-- **Justificación Auditor:** The paper does not present a high-risk artefact... focuses on the development of mixed-modal early-fusion foundation models and does not involve any direct path to misuse.
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** Fallo Conceptual sobre Modelos de Frontera. Un modelo fundacional que fusiona la comprensión/generación de texto e imagen a la escala de Chameleon es, por definición en NeurIPS 2026, una tecnología dual de alto riesgo (capaz de generar desinformación multimodal). Justificar un "N/A" argumentando que "no tiene un camino directo al mal uso" muestra que no se comprenden las capacidades actuales del Deep Learning.
+- **Valoración Auditor:** Yes
+- **Justificación Auditor:** "The paper explicitly mentions in the 'Broader Impacts' and 'Safety' sections that the authors conducted 'Safety tuning efforts' and 'Safety and red teaming efforts' to mitigate risks associated with the model's deployment."
+- **Mi Valoración:** Correcto
+- **Mi Justificación:** Detecta que los controles de alineamiento por seguridad actúan como mecanismos para mitigar riesgos duales ante una posible liberación del modelo fundacional.
 
 **Ítem 12. Licenses**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The paper mentions that the image tokenizer was trained using only licensed images and cites specific licenses such as CC-BY-SA 2.0, CC-BY-SA 3.0, and CC-BY-SA 4.0.
+- **Justificación Auditor:** "The paper explicitly references the use of licensed assets, stating: 'Image tokenizer trained using only licensed images' and citing various Creative Commons licenses including 'CC-BY-SA 2.0', 'CC-BY-SA 3.0', and 'CC-BY-SA 4.0'."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** El modelo usa las referencias de las imágenes (ej. Sagrada Familia, Mille-feuille) y extrae las licencias Creative Commons descritas en el paper.
+- **Mi Justificación:** Excelente extracción exenta de alucinaciones. Extrae las licencias reales estipuladas en el documento (CC-BY-SA) sin asumir falsamente que el código o el paper operan bajo la clásica licencia MIT.
 
 **Ítem 13. Assets**
 - **Valoración Auditor:** N/A
-- **Justificación Auditor:** The provided JSON summary does not indicate that the authors are releasing new assets such as datasets, model weights, or software libraries... Since the authors are not releasing new assets but rather reusing existing ones, this item does not apply.
+- **Justificación Auditor:** "The paper utilizes established datasets such as Llama-2 pre-training data, MS-COCO, Flickr30k, VQA-v2, ShareGPT..."
 - **Mi Valoración:** Correcto
-- **Mi Justificación:** No se liberan los activos fundacionales en este preprint, lo que justifica la exención de documentación (Model Card).
+- **Mi Justificación:** Deducción coherente con los ítems 4 y 5. Al constatar que Meta no está liberando los pesos de Chameleon ni sus bases de datos en esta iteración, el estudio queda exento de rellenar tarjetas documentales (Model Cards) para nuevos activos.
 
 **Ítem 14. Crowdsourcing & Human Subjects**
-- **Valoración Auditor:** No
-- **Justificación Auditor:** The provided JSON summary does not mention any use of crowdsourcing or conducting research with human subjects. There are no indications that the authors hired or compensated human workers to collect or label new data.
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** Falso negativo por confiar en metadatos. El artículo original de Chameleon incluye un Apéndice B, "Additional Information of Human Evaluations", donde se detalla cómo humanos evaluaron sus respuestas frente a GPT-4V y Gemini. La IA se basó en su "JSON summary" incompleto y negó un hecho documentado en el texto.
+- **Valoración Auditor:** Yes
+- **Justificación Auditor:** "Appendix B, 'Additional Information of Human Evaluations', details the methodology for human preference evaluation against baselines like Gemini-Pro and GPT-4V. The authors describe the task categories..."
+- **Mi Valoración:** Correcto
+- **Mi Justificación:** Localiza e inspecciona los anexos técnicos para validar la metodología formal de recolección de preferencias humanas (RLHF) utilizada contra los baselines.
 
 **Ítem 15. IRB Approvals**
-- **Valoración Auditor:** N/A
-- **Justificación Auditor:** The paper does not involve any direct research with human subjects. It primarily uses existing, public datasets...
-- **Mi Valoración:** Medianamente correcto
-- **Mi Justificación:** El "N/A" es aceptable porque no se reportan aprobaciones IRB formales para anotaciones de RLHF de bajo riesgo. Sin embargo, el argumento de "no involucra investigación con humanos" es incorrecto y pasa por alto las evaluaciones citadas en el apéndice.
+- **Valoración Auditor:** Yes
+- **Justificación Auditor:** "Appendix B: 'Additional Information of Human Evaluations' describes the methodology for human preference data collection. The authors state: 'Human evaluation experiment measuring quality of mixed-modal long-form responses to open-ended prompts.'"
+- **Mi Valoración:** Incorrecto
+- **Mi Justificación:** Falso positivo. La IA asume que el simple hecho de mencionar un "experimento de evaluación humana para medir calidad" implica que los autores poseen una aprobación médica u oficial de un comité ético institucional (IRB). Ejecutar pruebas de preferencia de respuestas (A/B testing) en plataformas digitales no garantiza ni reemplaza la declaración formal de un IRB.
 
 **Ítem 16. Declaration of LLM Usage**
 - **Valoración Auditor:** Yes
-- **Justificación Auditor:** The paper uses LLMs as an important component of the core methods for pre-training and evaluation. Specifically, it mentions the use of 'Llama-2 pre-training data' and 'ShareGPT'.
-- **Mi Valoración:** Incorrecto
-- **Mi Justificación:** Fallo Conceptual. Usar datos preexistentes y estáticos (el corpus ShareGPT y datos de Llama-2) para entrenar no es lo mismo que usar un LLM como herramienta metodológica. Confunde el origen de los datos con la asistencia algorítmica.
+- **Justificación Auditor:** "The paper utilizes 'Llama-2 pre-training data' and 'ShareGPT' as core components of the training pipeline. Furthermore, the methodology involves comparing the model against 'GPT-4V' and 'Gemini' as primary benchmarks for performance validation."
+- **Mi Valoración:** Medianamente correcto
+- **Mi Justificación:** El veredicto afirmativo es técnicamente defendible por la inyección de datos provenientes de ShareGPT (creados por otros LLMs). No obstante, la justificación de Qwen es metodológicamente defectuosa: utilizar a "GPT-4V" o "Gemini" como rivales a batir en una tabla de benchmarks empíricos no constituye "uso instrumental de LLMs" bajo las normativas de desarrollo exigidas a auditar.
