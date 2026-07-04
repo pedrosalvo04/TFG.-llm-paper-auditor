@@ -5,8 +5,19 @@ from backend.common.logger import get_logger
 
 logger = get_logger(__name__)
 
+import requests
+import json
+import logging
+from backend.common.config import MODEL_NAME
+
+logger = logging.getLogger(__name__)
+
+class LLMResponse:
+    def __init__(self, text):
+        self.text = text
+
 class LLMClient:
-    """Cliente reutilizable para interactuar con Gemini"""
+    """Cliente reutilizable para interactuar con Ollama localmente (qwen2.5)"""
     
     def __init__(self, model_name=None, generation_config=None):
         """
@@ -16,61 +27,81 @@ class LLMClient:
             model_name: Nombre del modelo a usar
             generation_config: Diccionario con configuración de generación
         """
-        if not GOOGLE_API_KEY:
-            logger.error("ERROR: No se encontró la GOOGLE_API_KEY en el .env")
-            raise ValueError("No se encontró la GOOGLE_API_KEY en el .env")
-        
-        self.client = genai.Client(api_key=GOOGLE_API_KEY)
-        
-        self.model_name = model_name or MODEL_NAME
+        self.api_url = "http://localhost:11434/api/generate"
+        # Forzamos qwen2.5 por defecto
+        self.model_name = model_name if (model_name and "qwen2.5" in model_name) else "qwen2.5" 
         self.generation_config = generation_config or {}
         
-        logger.info(f"✅ Cliente LLM inicializado: {self.model_name}")
+        logger.info(f"✅ Cliente LLM inicializado (Ollama): {self.model_name}")
+        self._check_ollama_status()
+            
+    def _check_ollama_status(self):
+        """Verifica que el demonio de Ollama esté en ejecución y avisa si no lo está."""
+        import streamlit as st
+        try:
+            requests.get("http://localhost:11434/", timeout=2)
+        except requests.exceptions.RequestException:
+            error_msg = "⚠️ OLLAMA NO ESTÁ EN EJECUCIÓN. Asegúrate de iniciar Ollama en tu máquina (puerto 11434)."
+            logger.warning(error_msg)
+            try:
+                st.warning(error_msg, icon="⚠️")
+            except Exception:
+                pass
     
     def generate(self, prompt):
         """
-        Genera contenido usando el modelo, con reintentos automáticos
-        y backoff exponencial en caso de saturación (503) o límites de cuota (429).
+        Genera contenido usando el modelo local Ollama.
         """
-        import time
         import streamlit as st
-        import random
         
-        max_retries = 5 # Aumentado para mayor resiliencia
-        base_delay = 2  # Reducido para que la espera no sea tan larga al principio
+        payload = {
+            "model": self.model_name,
+            "prompt": prompt,
+            "stream": False,
+            "format": "json"  # Forzar salida en formato JSON estructurado
+        }
         
-        for attempt in range(max_retries + 1):
+        options = {
+            "num_ctx": 32768  # qwen2.5 soporta ventana grande, ponemos suficiente para el prompt unico
+        }
+        
+        if self.generation_config:
+            if "temperature" in self.generation_config:
+                options["temperature"] = self.generation_config["temperature"]
+            if "top_p" in self.generation_config:
+                options["top_p"] = self.generation_config["top_p"]
+            if "top_k" in self.generation_config:
+                options["top_k"] = self.generation_config["top_k"]
+            if "max_output_tokens" in self.generation_config:
+                options["num_predict"] = self.generation_config["max_output_tokens"]
+                
+        payload["options"] = options
+
+        try:
+            logger.info(f"Iniciando generación con modelo local: {self.model_name}...")
+            
+            response = requests.post(self.api_url, json=payload, timeout=None)
+            response.raise_for_status()
+            
+            result = response.json()
+            
+            return LLMResponse(text=result.get("response", ""))
+            
+        except requests.exceptions.ConnectionError:
+            error_msg = "No se pudo conectar a Ollama. Por favor, verifica que el demonio de Ollama esté ejecutándose (localhost:11434)."
+            logger.error(f"❌ {error_msg}")
             try:
-                response = self.client.models.generate_content(
-                    model=self.model_name,
-                    contents=prompt,
-                    config=self.generation_config
-                )
-                return response
-            except Exception as e:
-                error_msg = str(e)
-                
-                # Identificar si el error es reintentable (Saturación o Cuota)
-                is_retryable = any(code in error_msg.upper() for code in ["503", "429", "UNAVAILABLE", "RESOURCE_EXHAUSTED", "DEADLINE_EXCEEDED"])
-                
-                if attempt < max_retries and is_retryable:
-                    # Backoff exponencial: delay = base * 2^attempt + jitter
-                    delay = base_delay * (2 ** attempt) + random.uniform(0, 1)
-                    
-                    logger.warning(f"⚠️ Error API Gemini [{self.model_name}]: {error_msg}. Reintento {attempt + 1}/{max_retries} en {delay:.1f}s...")
-                    
-                    # Mostrar el aviso visual en el frontend sin bloquear la interfaz
-                    try:
-                        st.toast(f"⏳ Gemini saturado (Alta demanda). Reintento {attempt + 1}/{max_retries} en {int(delay)}s...", icon="⏳")
-                    except Exception:
-                        pass # Por si se ejecuta fuera de Streamlit
-                        
-                    # Esperar antes del siguiente intento
-                    time.sleep(delay)
-                else:
-                    # Si no es reintentable o ya agotamos intentos, lanzamos el error
-                    if attempt >= max_retries:
-                        logger.error(f"❌ Error crítico tras {max_retries} reintentos: {error_msg}")
-                    else:
-                        logger.error(f"❌ Error no reintentable detectado: {error_msg}")
-                    raise
+                st.error(f"❌ {error_msg}", icon="🚨")
+            except Exception:
+                pass
+            raise ConnectionError(error_msg)
+            
+        except requests.exceptions.RequestException as e:
+            error_msg = f"Error en la petición a Ollama: {str(e)}"
+            logger.error(f"❌ {error_msg}")
+            try:
+                st.error(f"❌ {error_msg}", icon="🚨")
+            except Exception:
+                pass
+            raise Exception(error_msg)
+
