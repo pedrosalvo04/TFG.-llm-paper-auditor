@@ -5,7 +5,7 @@ from frontend.config import SIDEBAR_DESCRIPTION
 def render_sidebar():
     """Renderiza la barra lateral con información del proyecto"""
     with st.sidebar:
-        st.markdown("## 🤖 AI Paper Auditor")
+        st.markdown("## 🤖 IA Paper Auditor")
         st.markdown("---")
         
         st.markdown("### ℹ️ Sobre el Proyecto")

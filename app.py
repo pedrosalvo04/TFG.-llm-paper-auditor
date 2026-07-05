@@ -65,72 +65,117 @@ if criteria_mode == "free":
 
 st.markdown("---")
 # Carga de Documento Principal
-uploaded_file = st.file_uploader(
-    "Sube el artículo científico a auditar (PDF, TXT o Markdown)", 
-    type=["pdf", "txt", "md"]
+uploaded_files = st.file_uploader(
+    "Sube el/los artículo(s) científico(s) a auditar (PDF, TXT o Markdown) [Máximo 20]", 
+    type=["pdf", "txt", "md"],
+    accept_multiple_files=True
 )
 
-# Solo ejecutar si tenemos el paper y, si es modo free, también los criterios
-can_run = uploaded_file is not None and (criteria_mode == "neurips" or (criteria_mode == "free" and criteria_text))
+run_determinism_mode = st.checkbox("🧪 Habilitar Prueba de Determinismo (Ejecutar 9 iteraciones sobre cada archivo)")
 
-if can_run:
-    current_file_hash = f"{uploaded_file.name}_{criteria_mode}"
-    if criteria_mode == "free" and criteria_file:
-        current_file_hash += f"_{criteria_file.name}"
-        
-    if st.session_state.get('last_file_hash') != current_file_hash:
-        st.session_state.resultado = None
-        st.session_state.last_file_hash = current_file_hash
-
-    md_text = extract_text_from_file(uploaded_file)
-    
-    # Iniciar auditoría automáticamente si no hay resultados y no está en progreso
-    if md_text and not st.session_state.get('resultado') and not st.session_state.get('audit_in_progress'):
-        st.session_state.audit_in_progress = True
-        run_audit(md_text, criteria_mode, criteria_text)
-        st.session_state.audit_in_progress = False
-        st.rerun()
+if uploaded_files:
+    if len(uploaded_files) > 20:
+        st.warning("⚠️ Has subido más de 20 archivos. Por favor, selecciona un máximo de 20.")
+    elif len(uploaded_files) > 1:
+        # MODO POR LOTES (BATCH)
+        can_run_batch = (criteria_mode == "neurips" or (criteria_mode == "free" and criteria_text))
+        if can_run_batch:
+            st.info(f"📚 Modo por Lotes activado: {len(uploaded_files)} documentos listos para procesar.")
+            if st.button(f"🚀 Procesar {len(uploaded_files)} documentos en lote"):
+                from frontend.components.file_uploader import run_batch_audit
+                run_batch_audit(uploaded_files, criteria_mode, criteria_text)
+        else:
+            st.warning("⚠️ Faltan los criterios de evaluación para el modo libre.")
     else:
-        if st.button("🔄 Nueva Auditoría / Forzar Recálculo"):
-            st.session_state.resultado = None
-            st.rerun()
+        # MODO INDIVIDUAL
+        uploaded_file = uploaded_files[0]
+        can_run = (criteria_mode == "neurips" or (criteria_mode == "free" and criteria_text))
 
-    # Resultados y herramientas adicionales
-    resultado = st.session_state.get('resultado')
-    md_text = st.session_state.get('md_text')
-    
-    if resultado:
-        if "error" in resultado or "evaluation_error" in resultado:
-            error_msg = resultado.get("error") or resultado.get("evaluation_error")
-            st.error(f"❌ Error: {error_msg}")
-        elif resultado.get("claims") or resultado.get("limitations") or len(resultado) > 5:
-            puntuacion = render_audit_results(resultado, uploaded_file)
-            render_sota_analysis(md_text)
-            
-            st.markdown("---")
-            st.subheader("📄 Descargar Informe")
-            col_md, col_pdf = st.columns(2)
-            
-            with col_md:
-                reporte_md = generate_report(resultado, uploaded_file, puntuacion)
-                st.download_button(
-                    label="📥 Descargar Informe Markdown (.md)",
-                    data=reporte_md,
-                    file_name=f"auditoria_{uploaded_file.name.replace('.pdf', '')}.md",
-                    mime="text/markdown",
-                    use_container_width=True
-                )
+        if can_run:
+            current_file_hash = f"{uploaded_file.name}_{criteria_mode}_{run_determinism_mode}"
+            if criteria_mode == "free" and criteria_file:
+                current_file_hash += f"_{criteria_file.name}"
                 
-            with col_pdf:
-                with st.spinner("Compilando PDF..."):
-                    try:
-                        reporte_pdf = generate_pdf_report(resultado, uploaded_file, puntuacion)
+            if st.session_state.get('last_file_hash') != current_file_hash:
+                st.session_state.resultado = None
+                st.session_state.determinism_zip = None
+                st.session_state.last_file_hash = current_file_hash
+
+            md_text = extract_text_from_file(uploaded_file)
+            
+            # Iniciar auditoría automáticamente si no hay resultados y no está en progreso
+            if md_text and not st.session_state.get('resultado') and not st.session_state.get('audit_in_progress'):
+                st.session_state.audit_in_progress = True
+                if run_determinism_mode:
+                    from frontend.components.file_uploader import run_determinism_test
+                    st.session_state.determinism_zip = run_determinism_test(uploaded_file, criteria_mode, criteria_text)
+                    st.session_state.resultado = {"determinism_done": True}
+                else:
+                    run_audit(md_text, criteria_mode, criteria_text)
+                st.session_state.audit_in_progress = False
+                st.rerun()
+            else:
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("🔄 Nueva Auditoría / Forzar Recálculo"):
+                        st.session_state.resultado = None
+                        st.session_state.determinism_zip = None
+                        st.rerun()
+                with col2:
+                    if not st.session_state.get("resultado", {}).get("determinism_done"):
+                        if st.button("🧪 Ejecutar Prueba Determinismo (9x)"):
+                            from frontend.components.file_uploader import run_determinism_test
+                            st.session_state.determinism_zip = run_determinism_test(uploaded_file, criteria_mode, criteria_text)
+                            st.session_state.resultado = {"determinism_done": True}
+                            st.rerun()
+
+                if st.session_state.get('determinism_zip'):
+                    st.download_button(
+                        label="📥 Descargar Prueba de Determinismo (ZIP)",
+                        data=st.session_state.determinism_zip,
+                        file_name=f"determinismo_9x_{uploaded_file.name}.zip",
+                        mime="application/zip",
+                        use_container_width=True
+                    )
+
+            # Resultados y herramientas adicionales
+            resultado = st.session_state.get('resultado')
+            md_text = st.session_state.get('md_text')
+            
+            if resultado:
+                if resultado.get("determinism_done"):
+                    st.success("✅ La prueba de determinismo de 9 iteraciones ha finalizado. Los archivos se han guardado localmente.")
+                elif "error" in resultado or "evaluation_error" in resultado:
+                    error_msg = resultado.get("error") or resultado.get("evaluation_error")
+                    st.error(f"❌ Error: {error_msg}")
+                elif resultado.get("claims") or resultado.get("limitations") or len(resultado) > 5:
+                    puntuacion = render_audit_results(resultado, uploaded_file)
+                    render_sota_analysis(md_text)
+                    
+                    st.markdown("---")
+                    st.subheader("📄 Descargar Informe")
+                    col_md, col_pdf = st.columns(2)
+                    
+                    with col_md:
+                        reporte_md = generate_report(resultado, uploaded_file, puntuacion)
                         st.download_button(
-                            label="📥 Descargar Informe PDF (.pdf)",
-                            data=reporte_pdf,
-                            file_name=f"auditoria_{uploaded_file.name.replace('.pdf', '')}.pdf",
-                            mime="application/pdf",
+                            label="📥 Descargar Informe Markdown (.md)",
+                            data=reporte_md,
+                            file_name=f"auditoria_basico_{uploaded_file.name.replace('.pdf', '')}.md",
+                            mime="text/markdown",
                             use_container_width=True
                         )
-                    except Exception as pdf_error:
-                        st.error(f"Error al generar PDF: {str(pdf_error)}")
+                        
+                    with col_pdf:
+                        with st.spinner("Compilando PDF..."):
+                            try:
+                                reporte_pdf = generate_pdf_report(resultado, uploaded_file, puntuacion)
+                                st.download_button(
+                                    label="📥 Descargar Informe PDF (.pdf)",
+                                    data=reporte_pdf,
+                                    file_name=f"auditoria_basico_{uploaded_file.name.replace('.pdf', '')}.pdf",
+                                    mime="application/pdf",
+                                    use_container_width=True
+                                )
+                            except Exception as pdf_error:
+                                st.error(f"Error al generar PDF: {str(pdf_error)}")

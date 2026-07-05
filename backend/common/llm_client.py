@@ -62,7 +62,7 @@ class LLMClient:
         }
         
         options = {
-            "num_ctx": 32768  # qwen2.5 soporta ventana grande, ponemos suficiente para el prompt unico
+            "num_ctx": 16384  # qwen2.5 soporta ventana grande, pero el usuario ha pedido 16k
         }
         
         if self.generation_config:

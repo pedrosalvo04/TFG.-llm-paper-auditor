@@ -96,7 +96,7 @@ def render_initial_loader():
                     <div class="dot strand-2" style="left: 67.5%; animation-delay: 0.6s;"></div>
                     <div class="dot strand-2" style="left: 85%; animation-delay: 0.8s;"></div>
                 </div>
-                <div class="loading-text">Nature Auditor Pro</div>
+                <div class="loading-text">IA Paper Auditor</div>
                 <div class="loading-subtext">Iniciando motor de análisis científico...</div>
             </div>
         </div>
