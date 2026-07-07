@@ -44,6 +44,16 @@ def get_criteria_extraction_prompt(criteria_text: str) -> str:
     template = load_prompt("auditor", "0. criteria_extraction")
     return render_prompt(template, criteria_text=criteria_text)
 
+def get_basic_audit_prompt(paper_text: str, criteria_mode: str, criteria_literal_text: str) -> str:
+    """Prompt para evaluación completa en un solo paso."""
+    template = load_prompt("auditor", "basic_audit")
+    return render_prompt(
+        template,
+        paper_text=paper_text,
+        criteria_mode=criteria_mode,
+        criteria_literal_text=criteria_literal_text
+    )
+
 def get_extraction_prompt(paper_text: str) -> str:
     """Prompt monolítico (legacy/fallback)."""
     template = load_prompt("auditor", "extraction")

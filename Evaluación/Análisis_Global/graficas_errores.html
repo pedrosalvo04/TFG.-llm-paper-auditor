@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tendencia de Fallo - Auditoría de Papers</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --fp-color: #ef4444; /* Rojo para Falsos Positivos (Alucinaciones) */
+            --fn-color: #64748b; /* Gris para Falsos Negativos (Ceguera/Sobre-estricto) */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 50px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0 0 12px 0;
+            color: #0f172a;
+            letter-spacing: -0.02em;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        .dashboard {
+            width: 100%;
+            max-width: 1000px;
+            animation: fadeInUp 0.6s ease-out backwards;
+            animation-delay: 0.1s;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 35px 40px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .title-group h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            color: #0f172a;
+        }
+        
+        .title-group p {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin: 0;
+            max-width: 800px;
+        }
+
+
+
+        .gemini-badge {
+            width: 12px; height: 12px; background-color: #3b82f6; border-radius: 50%; display: inline-block;
+        }
+        .qwen-badge {
+            width: 12px; height: 12px; background-color: #f59e0b; border-radius: 50%; display: inline-block;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .legend-custom {
+            display: flex;
+            gap: 24px;
+            margin-top: 30px;
+            justify-content: center;
+            width: 100%;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #334155;
+        }
+        
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+        }
+
+        .stats-box {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .card { padding: 25px 20px; }
+            .charts-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Naturaleza del Error: Falsos Positivos vs Negativos</h1>
+        <p>Análisis de los fallos cometidos por cada modelo. ¿El auditor inventa información que no existe o es incapaz de ver la que sí existe?</p>
+    </div>
+
+    <div class="dashboard">
+        <div class="card">
+            <div class="card-header">
+                <div class="title-group">
+                    <h2>Distribución del tipo de error cuando la IA falla</h2>
+                    <p><b>Falso Positivo (Alucinación):</b> El modelo evaluó el paper como "Cumple (Yes)" pero era falso. Es un comportamiento peligrosamente optimista.<br>
+                    <b>Falso Negativo (Sobre-estricto):</b> El modelo evaluó el paper como "No Cumple (No/NA)" pero la información sí estaba presente. Es un comportamiento ciego o demasiado estricto.</p>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="stackedBarChart"></canvas>
+            </div>
+
+            <div class="legend-custom">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #4ade80;"></div>
+                    <span>Aciertos (Correcto)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #f87171;"></div>
+                    <span>Falsos Positivos (Alucina Cumplimiento)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #94a3b8;"></div>
+                    <span>Falsos Negativos (Ciego/Sobre-estricto)</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        Chart.defaults.color = '#64748b';
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.font.size = 14;
+        
+        const totalItems = 320; // 20 papers * 16 items
+        
+        // Gemini
+        const geminiFP = 24.6;
+        const geminiFN = 17.4;
+        const geminiCorrect = totalItems - (geminiFP + geminiFN);
+        
+        // Qwen
+        const qwenFP = 33.9;
+        const qwenFN = 75.9;
+        const qwenCorrect = totalItems - (qwenFP + qwenFN);
+        
+        // Baseline
+        const baselineFP = 54.7;
+        const baselineFN = 17.2;
+        const baselineCorrect = totalItems - (baselineFP + baselineFN);
+
+        // Baseline Qwen
+        const baselineQwenFP = 74.5;
+        const baselineQwenFN = 150.0;
+        const baselineQwenCorrect = totalItems - (baselineQwenFP + baselineQwenFN);
+
+        const ctx = document.getElementById('stackedBarChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Gemini Flash Lite', 'Baseline Gemini (Single-Prompt)', 'Qwen 2.5 7B', 'Baseline Qwen2.5 (Single-Prompt)'],
+                datasets: [
+                    {
+                        label: 'Aciertos',
+                        data: [
+                            (geminiCorrect / totalItems) * 100,
+                            (baselineCorrect / totalItems) * 100,
+                            (qwenCorrect / totalItems) * 100,
+                            (baselineQwenCorrect / totalItems) * 100
+                        ],
+                        backgroundColor: '#4ade80', // Verde suave
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Falsos Positivos (Alucinación)',
+                        data: [
+                            (geminiFP / totalItems) * 100,
+                            (baselineFP / totalItems) * 100,
+                            (qwenFP / totalItems) * 100,
+                            (baselineQwenFP / totalItems) * 100
+                        ],
+                        backgroundColor: '#f87171', // Rojo suave
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Falsos Negativos (Ceguera)',
+                        data: [
+                            (geminiFN / totalItems) * 100,
+                            (baselineFN / totalItems) * 100,
+                            (qwenFN / totalItems) * 100,
+                            (baselineQwenFN / totalItems) * 100
+                        ],
+                        backgroundColor: '#94a3b8', // Gris suave
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                indexAxis: 'y', // Hace que las barras sean horizontales
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        titleColor: '#f8fafc',
+                        bodyColor: '#e2e8f0',
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                let percent = context.parsed.x.toFixed(1);
+                                let rawValue = 0;
+                                const index = context.dataIndex;
+                                if (context.datasetIndex === 0) {
+                                    rawValue = index === 0 ? geminiCorrect : (index === 1 ? baselineCorrect : (index === 2 ? qwenCorrect : baselineQwenCorrect));
+                                } else if (context.datasetIndex === 1) {
+                                    rawValue = index === 0 ? geminiFP : (index === 1 ? baselineFP : (index === 2 ? qwenFP : baselineQwenFP));
+                                } else if (context.datasetIndex === 2) {
+                                    rawValue = index === 0 ? geminiFN : (index === 1 ? baselineFN : (index === 2 ? qwenFN : baselineQwenFN));
+                                }
+                                return ` ${context.dataset.label}: ${rawValue} ítems (${percent}%)`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) { return value + '%' },
+                            font: { weight: '500' }
+                        },
+                        grid: { color: '#f1f5f9' },
+                        border: { display: false }
+                    },
+                    y: {
+                        stacked: true,
+                        ticks: { font: { weight: '600', size: 14 } },
+                        grid: { display: false },
+                        border: { display: false }
+                    }
+                },
+                animation: {
+                    duration: 1500,
+                    easing: 'easeOutQuart'
+                }
+            }
+        });
+    </script>
+</body>
+</html>

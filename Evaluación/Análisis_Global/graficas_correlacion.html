@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Correlación Longitud vs Precisión - Auditoría de Papers</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --accent-gemini: #3b82f6; /* Azul */
+            --accent-gemini-basico: #14b8a6; /* Teal */
+            --accent-qwen: #f59e0b; /* Ambar */
+            --accent-qwen-basico: #8b5cf6; /* Violeta */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 50px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0 0 12px 0;
+            color: #0f172a;
+            letter-spacing: -0.02em;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        .dashboard {
+            width: 100%;
+            max-width: 1200px;
+            animation: fadeInUp 0.6s ease-out backwards;
+            animation-delay: 0.1s;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 35px 40px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .title-group h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            color: #0f172a;
+        }
+        
+        .title-group p {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin: 0;
+            max-width: 800px;
+        }
+
+        .legend-custom {
+            display: flex;
+            gap: 24px;
+            margin-top: 10px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #334155;
+        }
+        
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 550px;
+            width: 100%;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .card { padding: 25px 20px; }
+            .chart-container { height: 400px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Correlación: Precisión vs. Longitud</h1>
+        <p>Análisis de degradación de contexto ("Lost in the Middle"). Cada punto representa un paper científico evaluado por Gemini, Qwen2.5 o el modelo Baseline (Gemini).</p>
+    </div>
+
+    <div class="dashboard">
+        <div class="card">
+            <div class="card-header">
+                <div class="title-group">
+                    <h2>Impacto de la longitud del documento en la eficacia de la auditoría</h2>
+                    <p>En el Eje X vemos la cantidad total de caracteres analizados del paper. En el Eje Y vemos la nota global (%) que sacó el modelo en ese paper. Si la precisión disminuyera drásticamente en los papers más largos (a la derecha de la gráfica), indicaríamos una limitación severa del modelo para procesar contextos amplios.</p>
+                    <div class="legend-custom">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--accent-gemini);"></div>
+                            <span>Gemini 3.1 Flash Lite</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--accent-gemini-basico);"></div>
+                            <span>Gemini 3.1 Flash (Básico)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--accent-qwen);"></div>
+                            <span>Qwen 2.5</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--accent-qwen-basico);"></div>
+                            <span>Qwen 2.5 Básico</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="scatterChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de Chart.js por defecto para tema claro
+        Chart.defaults.color = '#64748b';
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.font.size = 13;
+        
+        const geminiData = [
+          { "paper_id": 1, "x": 73466, "y": 7.19 },
+          { "paper_id": 2, "x": 70371, "y": 8.75 },
+          { "paper_id": 3, "x": 88952, "y": 10.00 },
+          { "paper_id": 4, "x": 48969, "y": 9.06 },
+          { "paper_id": 5, "x": 64398, "y": 9.06 },
+          { "paper_id": 6, "x": 30416, "y": 9.69 },
+          { "paper_id": 7, "x": 85158, "y": 9.38 },
+          { "paper_id": 8, "x": 129014, "y": 7.50 },
+          { "paper_id": 9, "x": 90066, "y": 7.81 },
+          { "paper_id": 10, "x": 248573, "y": 10.00 },
+          { "paper_id": 11, "x": 156326, "y": 8.75 },
+          { "paper_id": 12, "x": 112564, "y": 7.19 },
+          { "paper_id": 13, "x": 568870, "y": 8.44 },
+          { "paper_id": 14, "x": 147169, "y": 8.44 },
+          { "paper_id": 15, "x": 53153, "y": 8.75 },
+          { "paper_id": 16, "x": 172737, "y": 9.06 },
+          { "paper_id": 17, "x": 240545, "y": 8.75 },
+          { "paper_id": 18, "x": 151354, "y": 8.44 },
+          { "paper_id": 19, "x": 51839, "y": 9.06 },
+          { "paper_id": 20, "x": 98976, "y": 8.44 }
+        ];
+
+        const qwenData = [
+          { "paper_id": 1, "x": 73466, "y": 5.62 },
+          { "paper_id": 2, "x": 70371, "y": 6.56 },
+          { "paper_id": 3, "x": 88952, "y": 6.88 },
+          { "paper_id": 4, "x": 48969, "y": 6.25 },
+          { "paper_id": 5, "x": 64398, "y": 7.19 },
+          { "paper_id": 6, "x": 30416, "y": 6.09 },
+          { "paper_id": 7, "x": 85158, "y": 0.00 },
+          { "paper_id": 8, "x": 129014, "y": 3.75 },
+          { "paper_id": 9, "x": 90066, "y": 5.31 },
+          { "paper_id": 10, "x": 248573, "y": 9.69 },
+          { "paper_id": 11, "x": 156326, "y": 8.75 },
+          { "paper_id": 12, "x": 112564, "y": 5.31 },
+          { "paper_id": 13, "x": 568870, "y": 6.56 },
+          { "paper_id": 14, "x": 147169, "y": 8.44 },
+          { "paper_id": 15, "x": 53153, "y": 8.75 },
+          { "paper_id": 16, "x": 172737, "y": 8.75 },
+          { "paper_id": 17, "x": 240545, "y": 6.56 },
+          { "paper_id": 18, "x": 151354, "y": 5.31 },
+          { "paper_id": 19, "x": 51839, "y": 7.19 },
+          { "paper_id": 20, "x": 98976, "y": 8.44 }
+        ];
+
+        const baselineData = [
+          { "paper_id": 1, "x": 73466, "y": 5.94 },
+          { "paper_id": 2, "x": 70371, "y": 6.56 },
+          { "paper_id": 3, "x": 88952, "y": 6.25 },
+          { "paper_id": 4, "x": 48969, "y": 8.12 },
+          { "paper_id": 5, "x": 64398, "y": 7.19 },
+          { "paper_id": 6, "x": 30416, "y": 6.56 },
+          { "paper_id": 7, "x": 85158, "y": 9.38 },
+          { "paper_id": 8, "x": 129014, "y": 4.06 },
+          { "paper_id": 9, "x": 90066, "y": 6.88 },
+          { "paper_id": 10, "x": 248573, "y": 9.69 },
+          { "paper_id": 11, "x": 156326, "y": 8.75 },
+          { "paper_id": 12, "x": 112564, "y": 7.19 },
+          { "paper_id": 13, "x": 568870, "y": 6.88 },
+          { "paper_id": 14, "x": 147169, "y": 9.38 },
+          { "paper_id": 15, "x": 53153, "y": 9.06 },
+          { "paper_id": 16, "x": 172737, "y": 9.06 },
+          { "paper_id": 17, "x": 240545, "y": 9.38 },
+          { "paper_id": 18, "x": 151354, "y": 7.81 },
+          { "paper_id": 19, "x": 51839, "y": 9.06 },
+          { "paper_id": 20, "x": 98976, "y": 7.81 }
+        ];
+
+        const baselineQwenData = [
+          { "paper_id": 1, "x": 73466, "y": 3.75 },
+          { "paper_id": 2, "x": 70371, "y": 5.31 },
+          { "paper_id": 3, "x": 88952, "y": 5.00 },
+          { "paper_id": 4, "x": 48969, "y": 5.31 },
+          { "paper_id": 5, "x": 64398, "y": 4.06 },
+          { "paper_id": 6, "x": 30416, "y": 6.25 },
+          { "paper_id": 7, "x": 85158, "y": 1.88 },
+          { "paper_id": 8, "x": 129014, "y": 4.69 },
+          { "paper_id": 9, "x": 90066, "y": 5.62 },
+          { "paper_id": 10, "x": 248573, "y": 3.44 },
+          { "paper_id": 11, "x": 156326, "y": 0.00 },
+          { "paper_id": 12, "x": 112564, "y": 0.00 },
+          { "paper_id": 13, "x": 568870, "y": 4.06 },
+          { "paper_id": 14, "x": 147169, "y": 0.00 },
+          { "paper_id": 15, "x": 53153, "y": 2.19 },
+          { "paper_id": 16, "x": 172737, "y": 1.56 },
+          { "paper_id": 17, "x": 240545, "y": 0.00 },
+          { "paper_id": 18, "x": 151354, "y": 0.00 },
+          { "paper_id": 19, "x": 51839, "y": 3.75 },
+          { "paper_id": 20, "x": 98976, "y": 2.81 }
+        ];
+
+        // Extraemos las 20 longitudes únicas y las ordenamos para crear el eje categórico
+        const uniqueChars = Array.from(new Set([...geminiData, ...baselineData, ...qwenData, ...baselineQwenData].map(p => p.x))).sort((a, b) => a - b);
+        const labels = uniqueChars.map(c => (c / 1000).toFixed(0) + 'k');
+
+        const prepareDataset = (dataset) => {
+            return dataset.map(p => {
+                const label = (p.x / 1000).toFixed(0) + 'k';
+                return {
+                    x: label,
+                    y: p.y,
+                    original_y: p.y,
+                    paper_id: p.paper_id,
+                    original_x: p.x
+                };
+            });
+        };
+
+        const gData = prepareDataset(geminiData);
+        const bData = prepareDataset(baselineData);
+        const qData = prepareDataset(qwenData);
+        const bqData = prepareDataset(baselineQwenData);
+
+        // Evitar que los puntos se tapen completamente si coinciden en la misma coordenada exacta (mismo paper, misma nota)
+        const collisions = {};
+        const allPrepared = [...gData, ...bData, ...qData, ...bqData];
+        allPrepared.forEach(p => {
+            const key = `${p.original_x}_${p.original_y}`;
+            if (!collisions[key]) collisions[key] = [];
+            collisions[key].push(p);
+        });
+        
+        Object.values(collisions).forEach(group => {
+            if (group.length > 1) {
+                const spread = 2.0; // 2% de separación vertical visual
+                const step = spread / (group.length - 1);
+                const start = -spread / 2;
+                group.forEach((p, index) => {
+                    p.y += start + (step * index);
+                });
+            }
+        });
+
+        // Calcular regresión lineal visual basada en el ORDEN (índice categórico) para que cuadre con la gráfica
+        const calculateTrendline = (dataset) => {
+            const n = dataset.length;
+            let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+            
+            dataset.forEach(p => {
+                const xIndex = uniqueChars.indexOf(p.original_x);
+                const y = p.original_y; 
+                sumX += xIndex;
+                sumY += y;
+                sumXY += xIndex * y;
+                sumXX += xIndex * xIndex;
+            });
+            const m = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+            const b = (sumY - m * sumX) / n;
+            
+            // Generar los puntos Y esperados para cada columna
+            return uniqueChars.map((charCount, xIndex) => {
+                const yVal = m * xIndex + b;
+                const label = (charCount / 1000).toFixed(0) + 'k';
+                return { x: label, y: yVal, isTrend: true };
+            });
+        };
+
+        const gTrend = calculateTrendline(gData);
+        const bTrend = calculateTrendline(bData);
+        const qTrend = calculateTrendline(qData);
+        const bqTrend = calculateTrendline(bqData);
+
+        const ctx = document.getElementById('scatterChart').getContext('2d');
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Gemini',
+                        data: gData,
+                        showLine: false,
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                        borderColor: '#2563eb',
+                        borderWidth: 1,
+                        pointRadius: 7,
+                        pointHoverRadius: 10
+                    },
+                    {
+                        label: 'Gemini 3.1 Flash (Básico)',
+                        data: bData,
+                        showLine: false,
+                        backgroundColor: 'rgba(20, 184, 166, 0.7)',
+                        borderColor: '#14b8a6',
+                        borderWidth: 1,
+                        pointRadius: 7,
+                        pointHoverRadius: 10
+                    },
+                    {
+                        label: 'Qwen2.5',
+                        data: qData,
+                        showLine: false,
+                        backgroundColor: 'rgba(245, 158, 11, 0.7)',
+                        borderColor: '#d97706',
+                        borderWidth: 1,
+                        pointRadius: 7,
+                        pointHoverRadius: 10
+                    },
+                    {
+                        label: 'Qwen 2.5 Básico',
+                        data: bqData,
+                        showLine: false,
+                        backgroundColor: 'rgba(139, 92, 246, 0.7)',
+                        borderColor: '#8b5cf6',
+                        borderWidth: 1,
+                        pointRadius: 7,
+                        pointHoverRadius: 10
+                    },
+                    {
+                        label: 'Tendencia Gemini',
+                        data: gTrend,
+                        showLine: true,
+                        borderColor: 'rgba(37, 99, 235, 0.6)',
+                        borderWidth: 2,
+                        borderDash: [6, 4],
+                        pointRadius: 0,
+                        pointHoverRadius: 0,
+                        fill: false
+                    },
+                    {
+                        label: 'Tendencia Gemini (Básico)',
+                        data: bTrend,
+                        showLine: true,
+                        borderColor: 'rgba(20, 184, 166, 0.6)',
+                        borderWidth: 2,
+                        borderDash: [6, 4],
+                        pointRadius: 0,
+                        pointHoverRadius: 0,
+                        fill: false
+                    },
+                    {
+                        label: 'Tendencia Qwen2.5',
+                        data: qTrend,
+                        showLine: true,
+                        borderColor: 'rgba(217, 119, 6, 0.6)',
+                        borderWidth: 2,
+                        borderDash: [6, 4],
+                        pointRadius: 0,
+                        pointHoverRadius: 0,
+                        fill: false
+                    },
+                    {
+                        label: 'Tendencia Qwen 2.5 Básico',
+                        data: bqTrend,
+                        showLine: true,
+                        borderColor: 'rgba(139, 92, 246, 0.6)',
+                        borderWidth: 2,
+                        borderDash: [6, 4],
+                        pointRadius: 0,
+                        pointHoverRadius: 0,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { 
+                        display: false 
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        titleColor: '#f8fafc',
+                        bodyColor: '#e2e8f0',
+                        titleFont: { size: 14, weight: '600' },
+                        bodyFont: { size: 13 },
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: true,
+                        boxPadding: 6,
+                        callbacks: {
+                            label: function(context) {
+                                if (context.raw.isTrend) {
+                                    return ` ${context.dataset.label}: ${context.raw.y.toFixed(1)}%`;
+                                }
+                                const paperId = context.raw.paper_id;
+                                const originalX = context.raw.original_x;
+                                const chars = originalX.toLocaleString('es-ES');
+                                const acc = context.raw.original_y;
+                                return ` Paper ${paperId}: ${acc}% prec. (${chars} chars)`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 105,
+                        title: { display: true, text: 'Precisión Global (%)', font: { weight: '600' } },
+                        ticks: {
+                            stepSize: 20,
+                            callback: function(value) { return value + '%' },
+                            font: { weight: '500' }
+                        },
+                        grid: {
+                            color: '#f1f5f9',
+                            drawBorder: false,
+                        },
+                        border: { display: false }
+                    },
+                    x: {
+                        type: 'category',
+                        title: { display: true, text: 'Longitud del Documento (Caracteres)', font: { weight: '600' } },
+                        grid: {
+                            color: '#f1f5f9',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            font: { weight: '500' },
+                            maxRotation: 45,
+                            minRotation: 45
+                        },
+                        border: { display: false }
+                    }
+                },
+                animation: {
+                    duration: 1200,
+                    easing: 'easeOutQuart'
+                }
+            }
+        });
+    </script>
+</body>
+</html>

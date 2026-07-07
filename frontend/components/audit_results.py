@@ -291,6 +291,7 @@ def generate_report(resultado, uploaded_file, health=None):
     reporte += f"| Parámetro | Detalle |\n"
     reporte += f"| :--- | :--- |\n"
     reporte += f"| 📄 **Artículo** | `{paper_name}` |\n"
+    reporte += f"| 🤖 **Modelo** | Gemini Básico (Single Prompt) |\n"
     reporte += f"| 📅 **Fecha de Análisis** | {fecha} |\n"
     reporte += f"| ⏳ **Tiempo de Ejecución** | {tiempo}s |\n"
     reporte += f"| 📊 **Caracteres Analizados** | {caracteres:,} |\n\n"

@@ -256,10 +256,16 @@ def generate_pdf_report(resultado, uploaded_file, health=None):
             Paragraph(fecha_hoy, body_style)
         ],
         [
+            Paragraph("<b>Modelo Usado:</b>", body_style),
+            Paragraph("Gemini Básico (Single Prompt)", body_style),
             Paragraph("<b>Tiempo Ejecución:</b>", body_style),
-            Paragraph(f"{tiempo}s" if isinstance(tiempo, (int, float)) else str(tiempo), body_style),
+            Paragraph(f"{tiempo}s" if isinstance(tiempo, (int, float)) else str(tiempo), body_style)
+        ],
+        [
             Paragraph("<b>Caract. Analizados:</b>", body_style),
-            Paragraph(f"{caracteres:,}" if isinstance(caracteres, int) else str(caracteres), body_style)
+            Paragraph(f"{caracteres:,}" if isinstance(caracteres, int) else str(caracteres), body_style),
+            Paragraph("", body_style),
+            Paragraph("", body_style)
         ]
     ]
     

@@ -1,6 +1,6 @@
 """Gestión del estado de sesión de Streamlit"""
 import streamlit as st
-from backend.services.auditor import PaperAuditor
+from backend.services.basic_auditor import BasicAuditor
 from backend.services.sota_analyzer import SotaAnalyzer
 
 def initialize_session_state():
@@ -9,7 +9,7 @@ def initialize_session_state():
         st.session_state.resultado = None
     
     if 'auditor' not in st.session_state:
-        st.session_state.auditor = PaperAuditor()
+        st.session_state.auditor = BasicAuditor()
     
     if 'sota_analyzer' not in st.session_state:
         st.session_state.sota_analyzer = SotaAnalyzer()

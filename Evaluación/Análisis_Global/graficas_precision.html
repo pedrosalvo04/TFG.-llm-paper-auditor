@@ -17,6 +17,8 @@
             --border-color: #e2e8f0;
             --accent-gemini: #3b82f6; /* Azul moderno */
             --accent-qwen: #f59e0b; /* Ambar vibrante */
+            --accent-baseline: #ef4444; /* Rojo coral */
+            --accent-baseline-qwen: #14b8a6; /* Teal moderno */
         }
 
         body {
@@ -139,16 +141,18 @@
 
     <div class="header">
         <h1>Análisis de Precisión por Ítem</h1>
-        <p>Comparativa del porcentaje de accuracy para Gemini y Qwen2.5 sobre los 16 criterios evaluados.</p>
+        <p>Comparativa del porcentaje de accuracy para Gemini, Qwen2.5 y Baseline (Gemini) sobre los 16 criterios evaluados.</p>
     </div>
 
     <div class="dashboard">
         <div class="card">
             <div class="card-header">
-                <div class="global-stats" style="display: flex; gap: 20px; font-size: 1.05rem; font-weight: 600; color: #334155;">
+                <div class="kpi-card" style="display: flex; gap: 20px; font-size: 1.05rem; font-weight: 600; color: #334155;">
                     <div>Exactitud Global:</div>
-                    <div>Gemini <span style="color: var(--accent-gemini);">84.1%</span></div>
-                    <div>Qwen2.5 <span style="color: var(--accent-qwen);">59.4%</span></div>
+                    <div>Gemini <span style="color: var(--accent-gemini);">86.9%</span></div>
+                    <div>Baseline (Gemini) <span style="color: var(--accent-baseline);">60.5%</span></div>
+                    <div>Qwen2.5 <span style="color: var(--accent-qwen);">68.8%</span></div>
+                    <div>Baseline (Qwen2.5) <span style="color: var(--accent-baseline-qwen);">29.8%</span></div>
                 </div>
                 <div class="legend-custom">
                     <div class="legend-item">
@@ -156,8 +160,16 @@
                         <span>Gemini</span>
                     </div>
                     <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--accent-baseline);"></div>
+                        <span>Baseline Gemini (Single-Prompt)</span>
+                    </div>
+                    <div class="legend-item">
                         <div class="legend-color" style="background-color: var(--accent-qwen);"></div>
                         <span>Qwen2.5</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--accent-baseline-qwen);"></div>
+                        <span>Baseline Qwen2.5 (Single-Prompt)</span>
                     </div>
                 </div>
             </div>
@@ -176,8 +188,10 @@
         
         // Datos de precisión extraídos por el parser
         const items = ['Claims', 'Limits', 'Theory', 'Repro', 'OpenA', 'ExpSet', 'StatSig', 'Compute', 'Ethics', 'Impact', 'Guard', 'Licen', 'Assets', 'Crowds', 'IRB', 'LLM Use'];
-        const geminiData = [100.0, 100.0, 85.0, 75.0, 80.0, 100.0, 75.0, 85.0, 85.0, 90.0, 80.0, 55.0, 75.0, 90.0, 80.0, 90.0];
-        const qwenData = [100.0, 90.0, 75.0, 55.0, 60.0, 85.0, 65.0, 65.0, 55.0, 60.0, 65.0, 35.0, 40.0, 35.0, 80.0, 45.0];
+        const geminiData = [7.19, 8.75, 10.0, 9.06, 9.06, 9.69, 9.38, 7.5, 7.81, 10.0, 8.75, 7.19, 8.44, 8.44, 8.75, 9.06, 8.75, 8.44, 9.06, 8.44];
+        const qwenData = [5.62, 6.56, 6.88, 6.25, 7.19, 6.09, 0.0, 3.75, 5.31, 9.69, 8.75, 5.31, 6.56, 8.44, 8.75, 8.75, 6.56, 5.31, 7.19, 8.44];
+        const baselineData = [5.94, 6.56, 6.25, 8.12, 7.19, 6.56, 9.38, 4.06, 6.88, 9.69, 8.75, 7.19, 6.88, 9.38, 9.06, 9.06, 9.38, 7.81, 9.06, 7.81];
+        const baselineQwenData = [3.75, 5.31, 5.0, 5.31, 4.06, 6.25, 1.88, 4.69, 5.62, 3.44, 0.0, 0.0, 4.06, 0.0, 2.19, 1.56, 0.0, 0.0, 3.75, 2.81];
 
         const ctx = document.getElementById('accuracyChart').getContext('2d');
         
@@ -197,10 +211,30 @@
                         categoryPercentage: 0.8
                     },
                     {
+                        label: 'Baseline (Gemini)',
+                        data: baselineData,
+                        backgroundColor: '#ef4444',
+                        hoverBackgroundColor: '#dc2626',
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        barPercentage: 0.85,
+                        categoryPercentage: 0.8
+                    },
+                    {
                         label: 'Qwen2.5',
                         data: qwenData,
                         backgroundColor: '#f59e0b',
                         hoverBackgroundColor: '#d97706',
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        barPercentage: 0.85,
+                        categoryPercentage: 0.8
+                    },
+                    {
+                        label: 'Baseline (Qwen2.5)',
+                        data: baselineQwenData,
+                        backgroundColor: '#14b8a6',
+                        hoverBackgroundColor: '#0d9488',
                         borderRadius: 6,
                         borderSkipped: false,
                         barPercentage: 0.85,

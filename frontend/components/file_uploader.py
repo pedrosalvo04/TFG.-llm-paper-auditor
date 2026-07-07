@@ -78,14 +78,17 @@ def extract_text_from_file(uploaded_file):
             
     return st.session_state.get('md_text')
 
-def run_audit(md_text, criteria_mode="neurips", criteria_text=None):
+def run_audit(md_text, criteria_mode="neurips", criteria_text=None, iteration=None):
     """Ejecuta el proceso de auditoría sobre el texto proporcionado"""
     if not md_text:
         st.error("⚠️ No hay texto para auditar.")
         return None
 
+    # Determinar el mensaje de estado
+    status_label = f"🧠 Analizando el documento (Iteración {iteration}/9)..." if iteration is not None else "🧠 Analizando el documento..."
+    
     # Auditar con logs de progreso
-    with st.status("🧠 Analizando el documento...", expanded=True) as status:
+    with st.status(status_label, expanded=True) as status:
         from frontend.components.phase_tracker import get_phase_tracker_html
         
         # El tracker se queda fijo arriba de los logs dentro del status
@@ -164,14 +167,19 @@ def run_audit(md_text, criteria_mode="neurips", criteria_text=None):
                 
                 base_name = os.path.splitext(st.session_state.archivo_actual)[0]
                 
+                if iteration is not None:
+                    filename_md = f"determinismo_gemini_basico_{base_name}_iter_{iteration}.md"
+                    filename_pdf = f"determinismo_gemini_basico_{base_name}_iter_{iteration}.pdf"
+                else:
+                    filename_md = f"auditoria_gemini_basico_{base_name}.md"
+                    filename_pdf = f"auditoria_gemini_basico_{base_name}.pdf"
+                
                 # Guardar reporte Markdown
-                filename_md = f"auditoria_{base_name}.md"
                 save_path_md = os.path.join(save_dir, filename_md)
                 with open(save_path_md, "w", encoding="utf-8") as f:
                     f.write(reporte_contenido)
                 
                 # Guardar reporte PDF
-                filename_pdf = f"auditoria_{base_name}.pdf"
                 save_path_pdf = os.path.join(save_dir, filename_pdf)
                 reporte_pdf = generate_pdf_report(st.session_state.resultado, st.session_state.uploaded_file_obj, health)
                 with open(save_path_pdf, "wb") as f:

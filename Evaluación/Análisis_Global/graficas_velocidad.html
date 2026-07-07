@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Velocidad de Modelos - Auditoría de Papers</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --accent-gemini: #3b82f6; /* Azul moderno */
+            --accent-qwen: #f59e0b; /* Ambar vibrante */
+            --accent-baseline: #ef4444; /* Rojo coral */
+            --accent-baseline-qwen: #14b8a6; /* Teal moderno */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 50px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0 0 12px 0;
+            color: #0f172a;
+            letter-spacing: -0.02em;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        .dashboard {
+            width: 100%;
+            max-width: 1200px;
+            animation: fadeInUp 0.6s ease-out backwards;
+            animation-delay: 0.1s;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 35px 40px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .kpi-container {
+            display: flex;
+            gap: 20px;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .kpi-card {
+            flex: 1;
+            min-width: 250px;
+            background-color: var(--bg-color);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .kpi-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .kpi-values {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 10px;
+        }
+        
+        .kpi-val {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .kpi-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .kpi-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .title-group h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            color: #0f172a;
+        }
+
+        .legend-custom {
+            display: flex;
+            gap: 24px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #334155;
+        }
+        
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .card { padding: 25px 20px; }
+            .chart-container { height: 350px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Análisis de Velocidad (Inferencia)</h1>
+        <p>Comparativa de tiempo de ejecución (en segundos) para auditar un paper científico completo. Gemini vs Qwen2.5 vs Baseline (Gemini).</p>
+    </div>
+
+    <div class="dashboard">
+        
+        <div class="kpi-container">
+            <div class="kpi-card">
+                <div class="kpi-title">Tiempo Medio (Por Paper)</div>
+                <div class="kpi-values">
+                    <div class="kpi-val">
+                        <div class="kpi-number" style="color: var(--accent-gemini);">418.6 s</div>
+                        <div class="kpi-label" style="color: var(--accent-gemini);">Gemini</div>
+                    </div>
+                    <div class="kpi-val" style="text-align: center;">
+                        <div class="kpi-number" style="color: var(--accent-baseline);">8.2 s</div>
+                        <div class="kpi-label" style="color: var(--accent-baseline);">Baseline (Gemini)</div>
+                    </div>
+                    <div class="kpi-val" style="text-align: center;">
+                        <div class="kpi-number" style="color: var(--accent-baseline-qwen);">636.4 s</div>
+                        <div class="kpi-label" style="color: var(--accent-baseline-qwen);">Baseline (Qwen2.5)</div>
+                    </div>
+                    <div class="kpi-val" style="text-align: right;">
+                        <div class="kpi-number" style="color: var(--accent-qwen);">898.3 s</div>
+                        <div class="kpi-label" style="color: var(--accent-qwen);">Qwen2.5</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-title">Rango de Tiempos (Mín / Máx)</div>
+                <div class="kpi-values">
+                    <div class="kpi-val">
+                        <div class="kpi-number" style="color: var(--accent-gemini);">61s - 1214s</div>
+                        <div class="kpi-label" style="color: var(--accent-gemini);">Gemini</div>
+                    </div>
+                    <div class="kpi-val" style="text-align: center;">
+                        <div class="kpi-number" style="color: var(--accent-baseline);">5s - 49s</div>
+                        <div class="kpi-label" style="color: var(--accent-baseline);">Baseline (Gemini)</div>
+                    </div>
+                    <div class="kpi-val" style="text-align: center;">
+                        <div class="kpi-number" style="color: var(--accent-baseline-qwen);">103s - 1920s</div>
+                        <div class="kpi-label" style="color: var(--accent-baseline-qwen);">Baseline (Qwen2.5)</div>
+                    </div>
+                    <div class="kpi-val" style="text-align: right;">
+                        <div class="kpi-number" style="color: var(--accent-qwen);">354s - 1960s</div>
+                        <div class="kpi-label" style="color: var(--accent-qwen);">Qwen2.5</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="kpi-card">
+                <div class="kpi-title">Tiempo Total Invertido (20 papers)</div>
+                <div class="kpi-values">
+                    <div class="kpi-val">
+                        <div class="kpi-number" style="color: var(--accent-gemini);">2.32 hrs</div>
+                        <div class="kpi-label" style="color: var(--accent-gemini);">Gemini (8372s)</div>
+                    </div>
+                    <div class="kpi-val" style="text-align: center;">
+                        <div class="kpi-number" style="color: var(--accent-baseline);">0.04 hrs</div>
+                        <div class="kpi-label" style="color: var(--accent-baseline);">Baseline (Gemini) (163s)</div>
+                    </div>
+                    <div class="kpi-val" style="text-align: center;">
+                        <div class="kpi-number" style="color: var(--accent-baseline-qwen);">3.53 hrs</div>
+                        <div class="kpi-label" style="color: var(--accent-baseline-qwen);">Baseline (Qwen2.5) (12728s)</div>
+                    </div>
+                    <div class="kpi-val" style="text-align: right;">
+                        <div class="kpi-number" style="color: var(--accent-qwen);">4.99 hrs</div>
+                        <div class="kpi-label" style="color: var(--accent-qwen);">Qwen2.5 (17966s)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="title-group">
+                    <h2>Distribución y Varianza por Paper</h2>
+                    <p>Muestra los tiempos de los 20 papers analizados para observar los picos y la volatilidad.</p>
+                </div>
+                <div class="legend-custom">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--accent-gemini);"></div>
+                        <span>Gemini</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--accent-qwen);"></div>
+                        <span>Qwen2.5</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--accent-baseline);"></div>
+                        <span>Baseline Gemini</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--accent-baseline-qwen);"></div>
+                        <span>Baseline Qwen2.5</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: transparent; border: 2px dashed #8b5cf6;"></div>
+                        <span>Longitud (Caracteres)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="varianceChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="title-group">
+                    <h2>Estabilidad Continua (Determinismo)</h2>
+                    <p>Tiempos de ejecución al auditar el mismo documento de forma repetida. La <b>Iteración 0</b> (ejecutada dentro del lote original de 20 papers) absorbe todo el "ruido" del sistema (Rate-Limits en API y estrés de hardware local). Al aislar la prueba (Iter 1 a 9), ambos modelos demuestran una inferencia temporal matemáticamente estable y determinista.</p>
+                </div>
+                <div class="legend-custom">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--accent-gemini);"></div>
+                        <span>Gemini</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--accent-qwen);"></div>
+                        <span>Qwen2.5</span>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="determinismChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="title-group">
+                    <h2>Comparativa: Media, Mediana y Extremos</h2>
+                    <p>Resumen estadístico del rendimiento temporal entre la API en la nube (Gemini) e Inferencia Local (Qwen).</p>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="summaryChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Configuración de Chart.js por defecto para tema claro
+        Chart.defaults.color = '#64748b';
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.font.size = 13;
+        
+        // Datos extraidos por python
+        const geminiRaw = [242.8, 353.9, 1214.72, 866.79, 72.9, 838.35, 326.06, 61.87, 224.27, 120.92, 574.59, 143.37, 189.65, 289.8, 192.54, 420.63, 229.77, 753.18, 652.75, 603.8];
+        const qwenRaw = [718.67, 1585.17, 748.81, 488.52, 578.98, 354.98, 665.14, 973.8, 698.3, 1788.0, 664.09, 1960.89, 485.88, 937.45, 558.97, 824.72, 809.07, 872.7, 864.61, 1387.36];
+        const baselineRaw = [5.94, 5.45, 5.89, 5.36, 5.63, 5.33, 6.24, 5.82, 6.1, 6.37, 6.36, 6.86, 49.39, 5.99, 5.06, 6.14, 6.64, 6.81, 5.44, 6.5];
+        const baselineQwenRaw = [959.1, 752.62, 869.19, 402.16, 563.34, 321.06, 748.51, 1440.42, 644.99, 146.78, 139.79, 109.44, 116.07, 128.89, 483.22, 116.48, 119.43, 117.42, 1753.03, 1919.83];
+        const charsRaw = [73466, 70371, 88952, 48969, 64398, 30416, 85158, 129014, 90066, 248573, 156326, 112564, 568870, 147169, 53153, 172737, 240545, 151354, 51839, 98976];
+        const labels = Array.from({length: 20}, (_, i) => `Paper ${i+1}`);
+
+        const geminiDet = [420.63, 68.54, 58.89, 97.53, 75.76, 61.69, 53.47, 97.88, 69.96, 55.84];
+        const qwenDet = [824.72, 429.13, 382.21, 388.24, 343.43, 333.29, 350.54, 349.41, 332.65, 329.93];
+        const detLabels = Array.from({length: 10}, (_, i) => `Iter ${i}`);
+
+        // --- Gráfico 1: Varianza (Líneas) ---
+        const ctxVariance = document.getElementById('varianceChart').getContext('2d');
+        new Chart(ctxVariance, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Gemini (Segundos)',
+                        data: geminiRaw,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        pointBackgroundColor: '#3b82f6',
+                        fill: true,
+                        tension: 0.3,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Qwen2.5 (Segundos)',
+                        data: qwenRaw,
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        pointBackgroundColor: '#f59e0b',
+                        fill: true,
+                        tension: 0.3,
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Baseline Gemini (Segundos)',
+                        data: baselineRaw,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        pointBackgroundColor: '#ef4444',
+                        fill: true,
+                        tension: 0.3,
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Baseline Qwen2.5 (Segundos)',
+                        data: baselineQwenRaw,
+                        borderColor: '#14b8a6',
+                        backgroundColor: 'rgba(20, 184, 166, 0.1)',
+                        pointBackgroundColor: '#14b8a6',
+                        fill: true,
+                        tension: 0.3,
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Longitud (Caracteres)',
+                        data: charsRaw,
+                        borderColor: '#8b5cf6', // Purpura
+                        backgroundColor: 'transparent',
+                        pointBackgroundColor: '#8b5cf6',
+                        borderDash: [5, 5],
+                        fill: false,
+                        tension: 0.3,
+                        borderWidth: 2,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        titleColor: '#f8fafc',
+                        bodyColor: '#e2e8f0',
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: true,
+                        boxPadding: 6,
+                        callbacks: {
+                            label: function(context) {
+                                return ` ${context.dataset.label}: ${context.parsed.y}s`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        beginAtZero: true,
+                        title: { display: true, text: 'Tiempo (segundos)' },
+                        grid: { color: '#f1f5f9' },
+                        border: { display: false }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        beginAtZero: true,
+                        title: { display: true, text: 'Caracteres Analizados' },
+                        grid: { drawOnChartArea: false }, // avoid overlapping grids
+                        border: { display: false }
+                    },
+                    x: {
+                        grid: { display: false },
+                        border: { display: false }
+                    }
+                },
+                animation: { duration: 1500, easing: 'easeOutQuart' }
+            }
+        });
+
+        // --- Gráfico 2: Summary (Barras) ---
+        const ctxSummary = document.getElementById('summaryChart').getContext('2d');
+        new Chart(ctxSummary, {
+            type: 'bar',
+            data: {
+                labels: ['Tiempo Mínimo', 'Mediana', 'Tiempo Medio', 'Tiempo Máximo'],
+                datasets: [
+                    {
+                        label: 'Gemini',
+                        data: [61.87, 307.93, 418.63, 1214.72],
+                        backgroundColor: '#3b82f6',
+                        hoverBackgroundColor: '#2563eb',
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Qwen2.5',
+                        data: [354.98, 778.94, 898.31, 1960.89],
+                        backgroundColor: '#f59e0b',
+                        hoverBackgroundColor: '#d97706',
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Baseline (Gemini)',
+                        data: [5.06, 6.04, 8.17, 49.39],
+                        backgroundColor: '#ef4444',
+                        hoverBackgroundColor: '#dc2626',
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Baseline (Qwen2.5)',
+                        data: [103.45, 523.28, 636.4, 1919.83],
+                        backgroundColor: '#14b8a6',
+                        hoverBackgroundColor: '#0d9488',
+                        borderRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { 
+                        position: 'top',
+                        labels: { font: { family: "'Inter', sans-serif", weight: '600' } }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Segundos' },
+                        grid: { color: '#f1f5f9' },
+                        border: { display: false }
+                    },
+                    x: {
+                        grid: { display: false },
+                        border: { display: false },
+                        ticks: { font: { weight: '600', size: 14 } }
+                    }
+                }
+            }
+        });
+
+        // --- Gráfico 3: Determinismo (Líneas) ---
+        const ctxDet = document.getElementById('determinismChart').getContext('2d');
+        new Chart(ctxDet, {
+            type: 'line',
+            data: {
+                labels: detLabels,
+                datasets: [
+                    {
+                        label: 'Gemini',
+                        data: geminiDet,
+                        borderColor: '#3b82f6',
+                        backgroundColor: '#3b82f6',
+                        tension: 0.2,
+                        borderWidth: 3
+                    },
+                    {
+                        label: 'Qwen2.5',
+                        data: qwenDet,
+                        borderColor: '#f59e0b',
+                        backgroundColor: '#f59e0b',
+                        tension: 0.2,
+                        borderWidth: 3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return ` ${context.dataset.label}: ${context.parsed.y}s`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Segundos' },
+                        grid: { color: '#f1f5f9' },
+                        border: { display: false }
+                    },
+                    x: {
+                        grid: { display: false },
+                        border: { display: false },
+                        ticks: { font: { weight: '600' } }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

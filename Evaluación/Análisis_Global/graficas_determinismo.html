@@ -15,8 +15,12 @@
             --border-color: #e2e8f0;
             --accent-gemini: #3b82f6; /* Azul */
             --accent-gemini-light: rgba(59, 130, 246, 0.2);
+            --accent-gemini-basico: #14b8a6; /* Verde Azulado (Teal) */
+            --accent-gemini-basico-light: rgba(20, 184, 166, 0.2);
             --accent-qwen: #f59e0b; /* Ambar */
             --accent-qwen-light: rgba(245, 158, 11, 0.2);
+            --accent-qwen-basico: #8b5cf6; /* Violeta */
+            --accent-qwen-basico-light: rgba(139, 92, 246, 0.2);
             
             --color-stable: #10b981; /* Verde */
             --color-semantic: #f59e0b; /* Ambar */
@@ -181,11 +185,19 @@
                 <div class="legend-custom">
                     <div class="legend-item">
                         <div class="legend-color" style="background-color: var(--accent-gemini);"></div>
-                        <span>Gemini</span>
+                        <span>Gemini 3.1 Flash Lite</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--accent-gemini-basico);"></div>
+                        <span>Gemini 3.1 Flash (Básico)</span>
                     </div>
                     <div class="legend-item">
                         <div class="legend-color" style="background-color: var(--accent-qwen);"></div>
                         <span>Qwen2.5</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--accent-qwen-basico);"></div>
+                        <span>Qwen2.5 Básico</span>
                     </div>
                 </div>
             </div>
@@ -200,7 +212,7 @@
             <div class="card">
                 <div class="card-header" style="justify-content: center; text-align: center;">
                     <div class="title-group">
-                        <h2>Perfil de Estabilidad: Gemini</h2>
+                        <h2>Perfil de Estabilidad: Gemini 3.1 Flash Lite</h2>
                         <p>Distribución de los 16 ítems según su nivel de determinismo.</p>
                     </div>
                 </div>
@@ -212,12 +224,39 @@
             <div class="card">
                 <div class="card-header" style="justify-content: center; text-align: center;">
                     <div class="title-group">
+                        <h2>Perfil de Estabilidad: Gemini 3.1 Flash (Básico)</h2>
+                        <p>Distribución de los 16 ítems según su nivel de determinismo.</p>
+                    </div>
+                </div>
+                <div class="chart-container doughnut-container">
+                    <canvas id="geminiBasicoDoughnut"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            
+            <div class="card">
+                <div class="card-header" style="justify-content: center; text-align: center;">
+                    <div class="title-group">
                         <h2>Perfil de Estabilidad: Qwen 2.5</h2>
                         <p>Distribución de los 16 ítems según su nivel de determinismo.</p>
                     </div>
                 </div>
                 <div class="chart-container doughnut-container">
                     <canvas id="qwenDoughnut"></canvas>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header" style="justify-content: center; text-align: center;">
+                    <div class="title-group">
+                        <h2>Perfil de Estabilidad: Qwen 2.5 Básico</h2>
+                        <p>Distribución de los 16 ítems según su nivel de determinismo.</p>
+                    </div>
+                </div>
+                <div class="chart-container doughnut-container">
+                    <canvas id="qwenBasicoDoughnut"></canvas>
                 </div>
             </div>
         </div>
@@ -231,8 +270,10 @@
         const items = ['Claims', 'Limits', 'Theory', 'Repro', 'OpenA', 'ExpSet', 'StatSig', 'Compute', 'Ethics', 'Impact', 'Guard', 'Licen', 'Assets', 'Crowds', 'IRB', 'LLM Use'];
         
         // Data for Consistency Line Chart
-        const geminiConsistency = [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100];
-        const qwenConsistency = [100, 100, 100, 100, 100, 100, 90, 80, 100, 100, 100, 90, 100, 80, 100, 90];
+        const geminiConsistency = [100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0];
+        const geminiBasicoConsistency = [100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 90.0, 100.0, 100.0, 100.0, 90.0, 100.0, 100.0, 100.0, 100.0, 100.0];
+        const qwenConsistency = [100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 90.0, 80.0, 100.0, 100.0, 100.0, 90.0, 100.0, 80.0, 100.0, 90.0];
+        const qwenBasicoConsistency = [100.0, 90.0, 100.0, 90.0, 100.0, 100.0, 90.0, 100.0, 100.0, 90.0, 100.0, 100.0, 100.0, 90.0, 100.0, 100.0];
 
         // 1. Line Chart: Consistency
         const ctxConsistency = document.getElementById('consistencyChart').getContext('2d');
@@ -242,17 +283,31 @@
                 labels: items,
                 datasets: [
                     {
-                        label: 'Gemini',
+                        label: 'Gemini 3.1 Flash Lite',
                         data: geminiConsistency,
                         borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.15)',
                         borderWidth: 3,
                         pointBackgroundColor: '#3b82f6',
                         pointBorderColor: '#ffffff',
                         pointBorderWidth: 2,
                         pointRadius: 4,
                         pointHoverRadius: 6,
-                        fill: true,
+                        fill: false,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Gemini 3.1 Flash (Básico)',
+                        data: geminiBasicoConsistency,
+                        borderColor: '#14b8a6',
+                        backgroundColor: 'rgba(20, 184, 166, 0.15)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#14b8a6',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: false,
                         tension: 0.3
                     },
                     {
@@ -266,7 +321,22 @@
                         pointBorderWidth: 2,
                         pointRadius: 4,
                         pointHoverRadius: 6,
-                        fill: true,
+                        fill: false,
+                        tension: 0.3
+                    },
+
+                    {
+                        label: 'Qwen 2.5 Básico',
+                        data: qwenBasicoConsistency,
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.15)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#8b5cf6',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: false,
                         tension: 0.3
                     }
                 ]
@@ -291,7 +361,7 @@
                 },
                 scales: {
                     y: {
-                        min: 40,
+                        min: 60,
                         max: 100,
                         ticks: {
                             stepSize: 20,
@@ -317,8 +387,10 @@
 
         // Data for Doughnuts
         // Categories: Estable/Determinista (Verde), Degradación Semántica (Ambar), Inestabilidad Crítica (Rojo)
-        const geminiPieData = [16, 0, 0]; // 16 Estable, 0 Semantica, 0 Critica
-        const qwenPieData = [11, 5, 0];   // 11 Estable, 5 Semantica, 0 Critica
+        const geminiPieData = [100.0, 0.0, 0.0, 0.0]; // 16 Estable, 0 Semantica, 0 Critica
+        const geminiBasicoPieData = [87.5, 12.5, 0.0, 0.0]; // 16 Estable, 0 Semantica, 0 Critica
+        const qwenPieData = [68.8, 18.8, 12.5, 0.0];   // 11 Estable, 5 Semantica, 0 Critica
+        const qwenBasicoPieData = [68.8, 31.2, 0.0, 0.0]; // 11 Estable, 5 Semantica, 0 Critica
         const pieLabels = ['Determinismo Estable', 'Degradación Semántica', 'Inestabilidad Crítica'];
         const pieColors = ['#10b981', '#f59e0b', '#ef4444'];
 
@@ -369,6 +441,22 @@
             options: doughnutOptions
         });
 
+        // 2. Gemini Basico Doughnut
+        new Chart(document.getElementById('geminiBasicoDoughnut').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: pieLabels,
+                datasets: [{
+                    data: geminiBasicoPieData,
+                    backgroundColor: pieColors,
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 4
+                }]
+            },
+            options: doughnutOptions
+        });
+
         // 3. Qwen Doughnut
         new Chart(document.getElementById('qwenDoughnut').getContext('2d'), {
             type: 'doughnut',
@@ -376,6 +464,22 @@
                 labels: pieLabels,
                 datasets: [{
                     data: qwenPieData,
+                    backgroundColor: pieColors,
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 4
+                }]
+            },
+            options: doughnutOptions
+        });
+
+        // 4. Qwen Basico Doughnut
+        new Chart(document.getElementById('qwenBasicoDoughnut').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: pieLabels,
+                datasets: [{
+                    data: qwenBasicoPieData,
                     backgroundColor: pieColors,
                     borderWidth: 2,
                     borderColor: '#ffffff',

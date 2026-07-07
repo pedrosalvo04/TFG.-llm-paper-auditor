@@ -1989,3 +1989,28 @@
 - **Justificación Auditor:** The paper utilizes 'Llama-2 pre-training data' and 'ShareGPT' as core components of the training pipeline. Furthermore, the methodology involves comparing the model against 'GPT-4V' and 'Gemini' as primary benchmarks for performance validation.
 - **Mi Valoración:** Medianamente correcto
 - **Mi Justificación:** El veredicto es aceptable porque usa datos de ShareGPT. Sin embargo, la justificación tiene un error: usar "GPT-4V" y "Gemini" como rivales en un benchmark no es lo mismo que usar LLMs para el desarrollo metodológico del paper.
+
+# Notas de Evaluación
+
+- **Paper 1: Gemma 2**: 11.5 / 16 puntos -> **7.19 / 10**
+- **Paper 2: Phi-3 Technical Report**: 14.0 / 16 puntos -> **8.75 / 10**
+- **Paper 3: OLMo: Accelerating the Science of Language Models**: 16.0 / 16 puntos -> **10 / 10**
+- **Paper 4: Attention Is All You Need**: 14.5 / 16 puntos -> **9.06 / 10**
+- **Paper 5: Deep Residual Learning for Image Recognition**: 14.5 / 16 puntos -> **9.06 / 10**
+- **Paper 6: Generative Adversarial Nets**: 15.5 / 16 puntos -> **9.69 / 10**
+- **Paper 7: Gated Attention for Large Language Models**: 15.0 / 16 puntos -> **9.38 / 10**
+- **Paper 8: LLaDA Large Language Diffusion Models**: 12.0 / 16 puntos -> **7.5 / 10**
+- **Paper 9: Logical reasoning in latent activation spaces**: 12.5 / 16 puntos -> **7.81 / 10**
+- **Paper 10: OLMo 2**: 16.0 / 16 puntos -> **10 / 10**
+- **Paper 11: LLMs get lost in multi-turn conversation**: 14.0 / 16 puntos -> **8.75 / 10**
+- **Paper 12: LiveCodeBench**: 11.5 / 16 puntos -> **7.19 / 10**
+- **Paper 13: Artificial Hivemind**: 13.5 / 16 puntos -> **8.44 / 10**
+- **Paper 14: KAN**: 13.5 / 16 puntos -> **8.44 / 10**
+- **Paper 15: Transformers are inherently succinct**: 14.0 / 16 puntos -> **8.75 / 10**
+- **Paper 16: SAM 2**: 14.5 / 16 puntos -> **9.06 / 10**
+- **Paper 17: DeepSeek-R1**: 14.0 / 16 puntos -> **8.75 / 10**
+- **Paper 18: Mamba**: 13.5 / 16 puntos -> **8.44 / 10**
+- **Paper 19: Jamba**: 14.5 / 16 puntos -> **9.06 / 10**
+- **Paper 20: Chameleon**: 13.5 / 16 puntos -> **8.44 / 10**
+
+**Nota Media Global:** 8.69 / 10

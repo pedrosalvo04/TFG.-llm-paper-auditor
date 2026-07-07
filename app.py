@@ -65,72 +65,111 @@ if criteria_mode == "free":
 
 st.markdown("---")
 # Carga de Documento Principal
-uploaded_file = st.file_uploader(
-    "Sube el artículo científico a auditar (PDF, TXT o Markdown)", 
-    type=["pdf", "txt", "md"]
+uploaded_files = st.file_uploader(
+    "Sube el/los artículo(s) científico(s) a auditar (PDF, TXT o Markdown)", 
+    type=["pdf", "txt", "md"],
+    accept_multiple_files=True
 )
 
 # Solo ejecutar si tenemos el paper y, si es modo free, también los criterios
-can_run = uploaded_file is not None and (criteria_mode == "neurips" or (criteria_mode == "free" and criteria_text))
+can_run = len(uploaded_files) > 0 and (criteria_mode == "neurips" or (criteria_mode == "free" and criteria_text))
 
 if can_run:
-    current_file_hash = f"{uploaded_file.name}_{criteria_mode}"
-    if criteria_mode == "free" and criteria_file:
-        current_file_hash += f"_{criteria_file.name}"
-        
-    if st.session_state.get('last_file_hash') != current_file_hash:
-        st.session_state.resultado = None
-        st.session_state.last_file_hash = current_file_hash
-
-    md_text = extract_text_from_file(uploaded_file)
-    
-    # Iniciar auditoría automáticamente si no hay resultados y no está en progreso
-    if md_text and not st.session_state.get('resultado') and not st.session_state.get('audit_in_progress'):
-        st.session_state.audit_in_progress = True
-        run_audit(md_text, criteria_mode, criteria_text)
-        st.session_state.audit_in_progress = False
-        st.rerun()
-    else:
-        if st.button("🔄 Nueva Auditoría / Forzar Recálculo"):
+    if len(uploaded_files) == 1:
+        uploaded_file = uploaded_files[0]
+        current_file_hash = f"{uploaded_file.name}_{criteria_mode}"
+        if criteria_mode == "free" and criteria_file:
+            current_file_hash += f"_{criteria_file.name}"
+            
+        if st.session_state.get('last_file_hash') != current_file_hash:
             st.session_state.resultado = None
-            st.rerun()
+            st.session_state.last_file_hash = current_file_hash
 
-    # Resultados y herramientas adicionales
-    resultado = st.session_state.get('resultado')
-    md_text = st.session_state.get('md_text')
-    
-    if resultado:
-        if "error" in resultado or "evaluation_error" in resultado:
-            error_msg = resultado.get("error") or resultado.get("evaluation_error")
-            st.error(f"❌ Error: {error_msg}")
-        elif resultado.get("claims") or resultado.get("limitations") or len(resultado) > 5:
-            puntuacion = render_audit_results(resultado, uploaded_file)
-            render_sota_analysis(md_text)
-            
-            st.markdown("---")
-            st.subheader("📄 Descargar Informe")
-            col_md, col_pdf = st.columns(2)
-            
-            with col_md:
-                reporte_md = generate_report(resultado, uploaded_file, puntuacion)
-                st.download_button(
-                    label="📥 Descargar Informe Markdown (.md)",
-                    data=reporte_md,
-                    file_name=f"auditoria_{uploaded_file.name.replace('.pdf', '')}.md",
-                    mime="text/markdown",
-                    use_container_width=True
-                )
+        md_text = extract_text_from_file(uploaded_file)
+        
+        # Iniciar auditoría automáticamente si no hay resultados y no está en progreso
+        if md_text and not st.session_state.get('resultado') and not st.session_state.get('audit_in_progress'):
+            st.session_state.audit_in_progress = True
+            run_audit(md_text, criteria_mode, criteria_text)
+            st.session_state.audit_in_progress = False
+            st.rerun()
+        else:
+            col_btn1, col_btn2 = st.columns(2)
+            with col_btn1:
+                if st.button("🔄 Nueva Auditoría / Forzar Recálculo"):
+                    st.session_state.resultado = None
+                    st.rerun()
+            with col_btn2:
+                if st.button("🔄 Ejecutar Prueba de Determinismo (9 iteraciones)"):
+                    st.session_state.audit_in_progress = True
+                    progress_bar = st.progress(0, text="Iniciando prueba de determinismo...")
+                    
+                    for i in range(1, 10):
+                        progress_bar.progress(i / 9.0, text=f"⏳ Ejecutando iteración {i} de 9...")
+                        run_audit(md_text, criteria_mode, criteria_text, iteration=i)
+                        
+                    st.session_state.audit_in_progress = False
+                    progress_bar.empty()
+                    st.success("✅ ¡9 iteraciones completadas con éxito y guardadas en el escritorio!")
+
+            # 6. Renderizar Resultados (Modo individual)
+            if st.session_state.get('resultado'):
+                resultado = st.session_state.resultado
                 
-            with col_pdf:
-                with st.spinner("Compilando PDF..."):
-                    try:
-                        reporte_pdf = generate_pdf_report(resultado, uploaded_file, puntuacion)
+                if "error" in resultado:
+                    st.error(f"❌ La auditoría falló: {resultado['error']}")
+                else:
+                    # Mostrar tabla visual
+                    puntuacion = render_audit_results(resultado, uploaded_file)
+                    
+                    st.markdown("---")
+                    st.subheader("📄 Descargar Informe")
+                    col_md, col_pdf = st.columns(2)
+                    
+                    with col_md:
+                        reporte_md = generate_report(resultado, uploaded_file, puntuacion)
                         st.download_button(
-                            label="📥 Descargar Informe PDF (.pdf)",
-                            data=reporte_pdf,
-                            file_name=f"auditoria_{uploaded_file.name.replace('.pdf', '')}.pdf",
-                            mime="application/pdf",
+                            label="📥 Descargar Informe Markdown (.md)",
+                            data=reporte_md,
+                            file_name=f"auditoria_gemini_basico_{uploaded_file.name.replace('.pdf', '')}.md",
+                            mime="text/markdown",
                             use_container_width=True
                         )
-                    except Exception as pdf_error:
-                        st.error(f"Error al generar PDF: {str(pdf_error)}")
+                        
+                    with col_pdf:
+                        with st.spinner("Compilando PDF..."):
+                            try:
+                                reporte_pdf = generate_pdf_report(resultado, uploaded_file, puntuacion)
+                                st.download_button(
+                                    label="📥 Descargar Informe PDF (.pdf)",
+                                    data=reporte_pdf,
+                                    file_name=f"auditoria_gemini_basico_{uploaded_file.name.replace('.pdf', '')}.pdf",
+                                    mime="application/pdf",
+                                    use_container_width=True
+                                )
+                            except Exception as pdf_error:
+                                st.error(f"Error al generar PDF: {str(pdf_error)}")
+    else:
+        # Modo Lote (Batch)
+        st.info(f"📁 Modo Lote Activo: {len(uploaded_files)} artículos cargados.")
+        if st.button(f"🚀 Procesar {len(uploaded_files)} documentos secuencialmente"):
+            st.session_state.audit_in_progress = True
+            progress_bar = st.progress(0, text="Iniciando procesamiento en lote...")
+            
+            for i, f in enumerate(uploaded_files):
+                progress_bar.progress(i / len(uploaded_files), text=f"⏳ Procesando {i+1}/{len(uploaded_files)}: {f.name}...")
+                
+                # Resetear resultado por si acaso para forzar un calculo limpio
+                st.session_state.archivo_actual = "" # Forzar a que extract_text_from_file lo procese de nuevo
+                st.session_state.file_hash = ""
+                st.session_state.resultado = None
+                
+                md_text = extract_text_from_file(f)
+                
+                if md_text:
+                    run_audit(md_text, criteria_mode, criteria_text)
+                    st.success(f"✅ {f.name} procesado y guardado correctamente.")
+                    
+            progress_bar.progress(1.0, text="✅ Procesamiento en lote completado.")
+            st.session_state.audit_in_progress = False
+            st.success("🎉 Todos los documentos han sido procesados y guardados automáticamente en tu escritorio (C:\\Users\\pedro\\Desktop\\papers IA resultado).")
