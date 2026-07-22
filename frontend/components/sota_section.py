@@ -410,82 +410,76 @@ def _render_unified_evaluated_papers(df_papers, papers_omitidos, año_paper_estu
             )
             card_border = "1px solid rgba(255,255,255,0.1)"
 
-        metrics_html = f"""
-        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:12px; margin-top:12px;">
-            <div style="background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
-              <span style="font-size:0.70em; color:#94a3b8; display:block; font-weight:600; text-transform:uppercase;">Citations</span>
-              <span style="font-weight:700; color:#f8fafc; font-size:1.0em;">📈 {paper['citationCount']}</span>
-            </div>
-            <div style="background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
-              <span style="font-size:0.70em; color:#94a3b8; display:block; font-weight:600; text-transform:uppercase;">Year</span>
-              <span style="font-weight:700; color:#f8fafc; font-size:1.0em;">📅 {paper['year']}</span>
-            </div>
-            <div style="background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
-              <span style="font-size:0.70em; color:#94a3b8; display:block; font-weight:600; text-transform:uppercase;">Later Than Yours</span>
-              <span style="font-weight:700; color:#f8fafc; font-size:1.0em;">📅 {es_posterior}</span>
-            </div>
-        """
+        metrics_html = (
+            '<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:12px; margin-top:12px;">'
+            '<div style="background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">'
+            '<span style="font-size:0.70em; color:#94a3b8; display:block; font-weight:600; text-transform:uppercase;">Citations</span>'
+            f'<span style="font-weight:700; color:#f8fafc; font-size:1.0em;">📈 {paper["citationCount"]}</span>'
+            '</div>'
+            '<div style="background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">'
+            '<span style="font-size:0.70em; color:#94a3b8; display:block; font-weight:600; text-transform:uppercase;">Year</span>'
+            f'<span style="font-weight:700; color:#f8fafc; font-size:1.0em;">📅 {paper["year"]}</span>'
+            '</div>'
+            '<div style="background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">'
+            '<span style="font-size:0.70em; color:#94a3b8; display:block; font-weight:600; text-transform:uppercase;">Later Than Yours</span>'
+            f'<span style="font-weight:700; color:#f8fafc; font-size:1.0em;">📅 {es_posterior}</span>'
+            '</div>'
+        )
 
         if es_om:
-            metrics_html += f"""
-            <div style="background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
-              <span style="font-size:0.70em; color:#94a3b8; display:block; font-weight:600; text-transform:uppercase;">Relevance</span>
-              <span style="font-weight:700; color:#f8fafc; font-size:1.0em;">⭐ {relevancia or 'High'}</span>
-            </div>
-            """
+            metrics_html += (
+                '<div style="background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">'
+                '<span style="font-size:0.70em; color:#94a3b8; display:block; font-weight:600; text-transform:uppercase;">Relevance</span>'
+                f'<span style="font-weight:700; color:#f8fafc; font-size:1.0em;">⭐ {relevancia or "High"}</span>'
+                '</div>'
+            )
             if subtema:
-                metrics_html += f"""
-                <div style="background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
-                  <span style="font-size:0.70em; color:#94a3b8; display:block; font-weight:600; text-transform:uppercase;">Subtopic</span>
-                  <span style="font-weight:700; color:#f8fafc; font-size:1.0em;">🏷️ {subtema}</span>
-                </div>
-                """
+                metrics_html += (
+                    '<div style="background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">'
+                    '<span style="font-size:0.70em; color:#94a3b8; display:block; font-weight:600; text-transform:uppercase;">Subtopic</span>'
+                    f'<span style="font-weight:700; color:#f8fafc; font-size:1.0em;">🏷️ {subtema}</span>'
+                    '</div>'
+                )
 
-        metrics_html += "</div>"
+        metrics_html += '</div>'
 
         box_html = ""
         if es_om and justificacion:
-            box_html = f"""
-            <div style="background:rgba(14,165,233,0.15); padding:16px; border-radius:8px; border-left:5px solid #0ea5e9;">
-              <p style="margin:0; font-size:0.95em; line-height:1.6;">
-                <b style="color:#38bdf8; font-size:1.02em;">💡 Why cite it:</b><br>
-                <span style="color:#e2e8f0;">{justificacion}</span>
-              </p>
-            </div>
-            """
+            box_html = (
+                '<div style="background:rgba(14,165,233,0.15); padding:16px; border-radius:8px; border-left:5px solid #0ea5e9;">'
+                '<p style="margin:0; font-size:0.95em; line-height:1.6;">'
+                '<b style="color:#38bdf8; font-size:1.02em;">💡 Why cite it:</b><br>'
+                f'<span style="color:#e2e8f0;">{justificacion}</span>'
+                '</p>'
+                '</div>'
+            )
         elif not es_om:
-            box_html = """
-            <div style="background:rgba(16,185,129,0.1); padding:10px 14px; border-radius:8px; border-left:4px solid #10b981;">
-              <p style="margin:0; font-size:0.90em; color:#a7f3d0;">
-                <b>✅ Citation Verified:</b> This paper is already cited in your manuscript's reference section.
-              </p>
-            </div>
-            """
+            box_html = (
+                '<div style="background:rgba(16,185,129,0.1); padding:10px 14px; border-radius:8px; border-left:4px solid #10b981;">'
+                '<p style="margin:0; font-size:0.90em; color:#a7f3d0;">'
+                '<b>✅ Citation Verified:</b> This paper is already cited in your manuscript\'s reference section.'
+                '</p>'
+                '</div>'
+            )
 
-        st.markdown(
-            f"""
-<div style="background-color: rgba(255,255,255,0.06); padding:20px; border-radius:12px;
-            border:{card_border}; margin-bottom:16px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2); backdrop-filter:blur(15px);">
-  <div style="display:flex; align-items:flex-start; gap:10px; margin-bottom:6px;">
-    <span style="font-size:1.3em;">{'🔴' if es_om else '🟢'}</span>
-    <div style="flex:1;">
-      <h4 style="margin:0 0 6px 0; color:#FFFFFF; font-weight:700;">{paper['title']}</h4>
-      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-        {status_badge}
-        {cluster_badge}
-      </div>
-    </div>
-  </div>
-  <p style="color:#cbd5e1; font-size:0.92em; margin-bottom:8px; margin-top:8px;">
-    👤 {paper['authors_display']} &nbsp;|&nbsp; 📅 Year: {paper['year']}
-  </p>
-  {metrics_html}
-  {box_html}
-</div>
-""",
-            unsafe_allow_html=True,
+        card_html = (
+            f'<div style="background-color: rgba(255,255,255,0.06); padding:20px; border-radius:12px; '
+            f'border:{card_border}; margin-bottom:16px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); backdrop-filter:blur(15px);">'
+            '<div style="display:flex; align-items:flex-start; gap:10px; margin-bottom:6px;">'
+            f'<span style="font-size:1.3em;">{"🔴" if es_om else "🟢"}</span>'
+            '<div style="flex:1;">'
+            f'<h4 style="margin:0 0 6px 0; color:#FFFFFF; font-weight:700;">{paper["title"]}</h4>'
+            '<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">'
+            f'{status_badge} {cluster_badge}'
+            '</div></div></div>'
+            f'<p style="color:#cbd5e1; font-size:0.92em; margin-bottom:8px; margin-top:8px;">'
+            f'👤 {paper["authors_display"]} &nbsp;|&nbsp; 📅 Year: {paper["year"]}</p>'
+            f'{metrics_html}'
+            f'{box_html}'
+            '</div>'
         )
+
+        st.markdown(card_html, unsafe_allow_html=True)
 
     if año_paper_estudiado:
         st.caption(
