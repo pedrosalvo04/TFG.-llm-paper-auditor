@@ -15,7 +15,7 @@ def render_sota_analysis(md_text: str):
     st.subheader("📚 State of the Art Validation (SOTA)")
 
     if "sota_results" not in st.session_state:
-        st.info("By default, the system selects the top-10 papers based on citation count. You can change this priority after the initial analysis.")
+        st.info("By default, the system selects the top-20 papers based on citation count. You can change this priority after the initial analysis.")
         if st.button("Run Literature Analysis", type="primary"):
             with st.spinner("Connecting to Semantic Scholar and validating bibliography..."):
                 resultado_sota = st.session_state.sota_analyzer.analyze_sota(
@@ -47,8 +47,8 @@ def render_sota_analysis(md_text: str):
             _render_clustering_section(papers_analizados, clustering)
 
         # --- Selector de criterio de ranking y filtros (Dentro de los resultados) ---
-        st.markdown("#### ⚙️ Top-10 Selection Criterion & Filters")
-        st.caption("Change how the top-10 papers are selected and filter by thematic cluster.")
+        st.markdown("#### ⚙️ Top-20 Selection Criterion & Filters")
+        st.caption("Change how the top-20 papers are selected and filter by thematic cluster.")
         
         criterion_map = {
             "📈 Citations": "citations",
@@ -109,7 +109,7 @@ def render_sota_analysis(md_text: str):
         _criterion_tooltips = {
             "citations": "ℹ️ Papers with the highest citation count are prioritised. Fast and deterministic.",
             "similarity": "ℹ️ Papers whose abstract is most semantically similar to yours (cosine similarity on embeddings).",
-            "llm": "ℹ️ The LLM scores each paper's relevance to your research (0–10) and picks the top-10. Slower but most contextual.",
+            "llm": "ℹ️ The LLM scores each paper's relevance to your research (0–10) and picks the top-20. Slower but most contextual.",
         }
         st.caption(_criterion_tooltips[selected_crit])
 
@@ -128,12 +128,12 @@ def render_sota_analysis(md_text: str):
         st.markdown("### 📝 Conclusion")
         st.info(resultado_sota.get("conclusion_sota", ""))
 
-        # --- Papers omitidos ---
+        # --- Lista unificada de los papers evaluados (destacando citados y no citados) ---
         df_papers = pd.DataFrame(papers_analizados)
-        if not df_papers.empty and papers_omitidos:
-            _render_missing_papers(df_papers, papers_omitidos, año_paper_estudiado, clustering)
-        elif not papers_omitidos:
-            st.success("✅ No significant omissions detected in your bibliography.")
+        if not df_papers.empty:
+            _render_unified_evaluated_papers(df_papers, papers_omitidos, año_paper_estudiado, clustering)
+        else:
+            st.warning("No papers available for evaluation.")
 
 
 # ---------------------------------------------------------------------------
@@ -320,8 +320,8 @@ def _render_similarity_bars(user_similarities: list):
 # Sección de papers omitidos (existente, enriquecida con badges de cluster)
 # ---------------------------------------------------------------------------
 
-def _render_missing_papers(df_papers, papers_omitidos, año_paper_estudiado, clustering: dict):
-    """Renderiza la tabla de papers no citados con badges de cluster."""
+def _render_unified_evaluated_papers(df_papers, papers_omitidos, año_paper_estudiado, clustering: dict):
+    """Renderiza la lista completa de los 20 papers evaluados, destacando visualmente los omitidos/no citados."""
     df_papers["authors_display"] = df_papers["autores"].apply(
         lambda x: (
             ", ".join([a.get("name", "") for a in x[:2]]) + (" et al." if len(x) > 2 else "")
@@ -337,128 +337,158 @@ def _render_missing_papers(df_papers, papers_omitidos, año_paper_estudiado, clu
     titulos_omitidos = {p["titulo"].lower().strip() for p in papers_omitidos}
 
     def es_omitido(titulo):
-        titulo_lower = titulo.lower().strip()
+        titulo_lower = str(titulo).lower().strip()
         for omitido in titulos_omitidos:
             if omitido in titulo_lower or titulo_lower in omitido:
                 return True
         return False
 
     df_papers["es_omitido"] = df_papers["title"].apply(es_omitido)
-    df_no_citados = df_papers[df_papers["es_omitido"]]
+    num_omitidos = df_papers["es_omitido"].sum()
 
-    if not df_no_citados.empty:
-        st.markdown("### 💡 Relevant Articles NOT Cited in Your Manuscript")
-        st.caption(f"Found {len(df_no_citados)} articles you should consider citing")
+    st.markdown("### 📚 Complete Evaluated Literature")
+    st.caption(
+        f"Displaying all **{len(df_papers)} top evaluated papers**. "
+        f"🔴 **{num_omitidos} missing citations** flagged for recommended inclusion."
+    )
 
-        # Construir lookup cluster por título
-        cluster_by_title = {}
-        for paper in clustering.get("cluster_summary", {}).values():
-            for t in paper.get("paper_titles", []):
-                cluster_by_title[t.lower().strip()] = paper
+    # Lookup cluster por título
+    cluster_by_title = {}
+    for paper in clustering.get("cluster_summary", {}).values():
+        for t in paper.get("paper_titles", []):
+            cluster_by_title[t.lower().strip()] = paper
 
-        tabla_recomendaciones = []
-        for _, paper in df_no_citados.iterrows():
-            justificacion = relevancia = subtema = ""
-            titulo_paper = paper["title"].lower().strip()
+    for _, paper in df_papers.iterrows():
+        titulo_paper = str(paper["title"]).lower().strip()
+        es_om = paper["es_omitido"]
+
+        justificacion = relevancia = subtema = ""
+        if es_om:
             for omitido in papers_omitidos:
-                titulo_omitido = omitido["titulo"].lower().strip()
+                titulo_omitido = str(omitido["titulo"]).lower().strip()
                 if titulo_omitido in titulo_paper or titulo_paper in titulo_omitido:
                     justificacion = omitido.get("justificacion", "")
-                    relevancia = omitido.get("relevancia", "")
+                    relevancia = omitido.get("relevancia", "High")
                     subtema = omitido.get("subtema_relacionado", "")
                     break
 
-            es_posterior = (
-                "✅ Sí"
-                if año_paper_estudiado and paper["year"] > año_paper_estudiado
-                else "❌ No"
-            )
-            if not año_paper_estudiado:
-                es_posterior = "?"
+        es_posterior = (
+            "✅ Sí"
+            if año_paper_estudiado and paper["year"] > año_paper_estudiado
+            else "❌ No"
+        )
+        if not año_paper_estudiado:
+            es_posterior = "?"
 
-            # Buscar cluster info
-            cluster_info = cluster_by_title.get(titulo_paper, {})
+        cluster_info = cluster_by_title.get(titulo_paper, {})
+        cluster_color = cluster_info.get("color", "#6366f1")
+        cluster_emoji = cluster_info.get("emoji", "📄")
+        cluster_label = cluster_info.get("label", "")
 
-            tabla_recomendaciones.append(
-                {
-                    "Título": paper["title"],
-                    "Autores": paper["authors_display"],
-                    "Año": paper["year"],
-                    "Posterior": es_posterior,
-                    "Citas": paper["citationCount"],
-                    "Relevancia": relevancia,
-                    "Subtema": subtema,
-                    "Justificación": justificacion,
-                    "_cluster_color": cluster_info.get("color", "#6366f1"),
-                    "_cluster_emoji": cluster_info.get("emoji", "📄"),
-                    "_cluster_label": cluster_info.get("label", ""),
-                }
+        cluster_badge = ""
+        if cluster_label:
+            cluster_badge = (
+                f'<span style="background:{cluster_color}22; '
+                f'color:{cluster_color}; font-size:0.72em; '
+                f'padding:2px 10px; border-radius:999px; font-weight:600; '
+                f'border:1px solid {cluster_color}55;">'
+                f'{cluster_emoji} {cluster_label}</span>'
             )
 
-        for row in tabla_recomendaciones:
-            cluster_badge = ""
-            if row["_cluster_label"]:
-                cluster_badge = (
-                    f'<span style="background:{row["_cluster_color"]}22; '
-                    f'color:{row["_cluster_color"]}; font-size:0.72em; '
-                    f'padding:2px 10px; border-radius:999px; font-weight:600; '
-                    f'border:1px solid {row["_cluster_color"]}55;">'
-                    f'{row["_cluster_emoji"]} {row["_cluster_label"]}</span>'
-                )
+        if es_om:
+            status_badge = (
+                '<span style="background:rgba(239,68,68,0.2); color:#fca5a5; font-size:0.72em; '
+                'padding:3px 12px; border-radius:999px; font-weight:700; border:1px solid rgba(239,68,68,0.5);">'
+                '🔴 NOT CITED — Recommended Gap</span>'
+            )
+            card_border = f"1px solid {cluster_color}55"
+        else:
+            status_badge = (
+                '<span style="background:rgba(16,185,129,0.2); color:#6ee7b7; font-size:0.72em; '
+                'padding:3px 12px; border-radius:999px; font-weight:700; border:1px solid rgba(16,185,129,0.5);">'
+                '🟢 CITED IN MANUSCRIPT</span>'
+            )
+            card_border = "1px solid rgba(255,255,255,0.1)"
 
-            st.markdown(
-                f"""
-<div style="background-color: rgba(255,255,255,0.07); padding:24px; border-radius:12px;
-            border:1px solid {row['_cluster_color']}44; margin-bottom:20px;
+        metrics_html = f"""
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:12px; margin-top:12px;">
+            <div style="background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
+              <span style="font-size:0.70em; color:#94a3b8; display:block; font-weight:600; text-transform:uppercase;">Citations</span>
+              <span style="font-weight:700; color:#f8fafc; font-size:1.0em;">📈 {paper['citationCount']}</span>
+            </div>
+            <div style="background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
+              <span style="font-size:0.70em; color:#94a3b8; display:block; font-weight:600; text-transform:uppercase;">Year</span>
+              <span style="font-weight:700; color:#f8fafc; font-size:1.0em;">📅 {paper['year']}</span>
+            </div>
+            <div style="background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
+              <span style="font-size:0.70em; color:#94a3b8; display:block; font-weight:600; text-transform:uppercase;">Later Than Yours</span>
+              <span style="font-weight:700; color:#f8fafc; font-size:1.0em;">📅 {es_posterior}</span>
+            </div>
+        """
+
+        if es_om:
+            metrics_html += f"""
+            <div style="background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
+              <span style="font-size:0.70em; color:#94a3b8; display:block; font-weight:600; text-transform:uppercase;">Relevance</span>
+              <span style="font-weight:700; color:#f8fafc; font-size:1.0em;">⭐ {relevancia or 'High'}</span>
+            </div>
+            """
+            if subtema:
+                metrics_html += f"""
+                <div style="background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
+                  <span style="font-size:0.70em; color:#94a3b8; display:block; font-weight:600; text-transform:uppercase;">Subtopic</span>
+                  <span style="font-weight:700; color:#f8fafc; font-size:1.0em;">🏷️ {subtema}</span>
+                </div>
+                """
+
+        metrics_html += "</div>"
+
+        box_html = ""
+        if es_om and justificacion:
+            box_html = f"""
+            <div style="background:rgba(14,165,233,0.15); padding:16px; border-radius:8px; border-left:5px solid #0ea5e9;">
+              <p style="margin:0; font-size:0.95em; line-height:1.6;">
+                <b style="color:#38bdf8; font-size:1.02em;">💡 Why cite it:</b><br>
+                <span style="color:#e2e8f0;">{justificacion}</span>
+              </p>
+            </div>
+            """
+        elif not es_om:
+            box_html = """
+            <div style="background:rgba(16,185,129,0.1); padding:10px 14px; border-radius:8px; border-left:4px solid #10b981;">
+              <p style="margin:0; font-size:0.90em; color:#a7f3d0;">
+                <b>✅ Citation Verified:</b> This paper is already cited in your manuscript's reference section.
+              </p>
+            </div>
+            """
+
+        st.markdown(
+            f"""
+<div style="background-color: rgba(255,255,255,0.06); padding:20px; border-radius:12px;
+            border:{card_border}; margin-bottom:16px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.2); backdrop-filter:blur(15px);">
   <div style="display:flex; align-items:flex-start; gap:10px; margin-bottom:6px;">
-    <span style="font-size:1.4em;">📄</span>
+    <span style="font-size:1.3em;">{'🔴' if es_om else '🟢'}</span>
     <div style="flex:1;">
-      <h4 style="margin:0 0 4px 0; color:#FFFFFF; font-weight:700;">{row['Título']}</h4>
-      {cluster_badge}
+      <h4 style="margin:0 0 6px 0; color:#FFFFFF; font-weight:700;">{paper['title']}</h4>
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        {status_badge}
+        {cluster_badge}
+      </div>
     </div>
   </div>
-  <p style="color:#cbd5e1; font-size:0.95em; margin-bottom:16px; margin-top:10px;">
-    👤 {row['Autores']} &nbsp;|&nbsp; 📅 Year: {row['Año']}
+  <p style="color:#cbd5e1; font-size:0.92em; margin-bottom:8px; margin-top:8px;">
+    👤 {paper['authors_display']} &nbsp;|&nbsp; 📅 Year: {paper['year']}
   </p>
-  <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:20px;">
-    <div style="background:rgba(255,255,255,0.05); padding:10px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
-      <span style="font-size:0.72em; color:#94a3b8; display:block; font-weight:600; text-transform:uppercase;">Relevance</span>
-      <span style="font-weight:700; color:#f8fafc; font-size:1.05em;">⭐ {row['Relevancia']}</span>
-    </div>
-    <div style="background:rgba(255,255,255,0.05); padding:10px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
-      <span style="font-size:0.72em; color:#94a3b8; display:block; font-weight:600; text-transform:uppercase;">Citations</span>
-      <span style="font-weight:700; color:#f8fafc; font-size:1.05em;">📈 {row['Citas']}</span>
-    </div>
-    <div style="background:rgba(255,255,255,0.05); padding:10px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
-      <span style="font-size:0.72em; color:#94a3b8; display:block; font-weight:600; text-transform:uppercase;">Later Than Yours</span>
-      <span style="font-weight:700; color:#f8fafc; font-size:1.05em;">📅 {row['Posterior']}</span>
-    </div>
-    <div style="background:rgba(255,255,255,0.05); padding:10px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
-      <span style="font-size:0.72em; color:#94a3b8; display:block; font-weight:600; text-transform:uppercase;">Subtopic</span>
-      <span style="font-weight:700; color:#f8fafc; font-size:1.05em;">🏷️ {row['Subtema']}</span>
-    </div>
-  </div>
-  <div style="background:rgba(14,165,233,0.15); padding:18px; border-radius:8px; border-left:5px solid #0ea5e9;">
-    <p style="margin:0; font-size:1em; line-height:1.6;">
-      <b style="color:#38bdf8; font-size:1.05em;">💡 Why cite it:</b><br>
-      <span style="color:#e2e8f0;">{row['Justificación']}</span>
-    </p>
-  </div>
+  {metrics_html}
+  {box_html}
 </div>
 """,
-                unsafe_allow_html=True,
-            )
+            unsafe_allow_html=True,
+        )
 
-        if año_paper_estudiado:
-            st.caption(
-                f"📅 Your article is from {año_paper_estudiado}. "
-                "Those marked with ✅ are published later."
-            )
-        else:
-            st.warning(
-                "⚠️ Could not detect your article's year. "
-                "The 'Later than yours' column shows '?' for all articles."
-            )
-    else:
-        st.success("✅ Your manuscript adequately cites the relevant literature.")
+    if año_paper_estudiado:
+        st.caption(
+            f"📅 Your article is from {año_paper_estudiado}. "
+            "Those marked with ✅ are published later."
+        )

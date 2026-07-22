@@ -200,7 +200,7 @@ class SemanticScholarSearchSkill(BaseSkill):
             unique_papers, 
             key=lambda x: x.get('citationCount', 0), 
             reverse=True
-        )[:20]
+        )[:30]
         
         self.log_execution(f"✅ Total papers únicos: {len(sorted_papers)}")
         return {'sota_papers': sorted_papers}
@@ -282,7 +282,7 @@ class CrossValidationSkill(BaseSkill):
                     "url": p.get('url', 'N/A'),
                     "autores": p.get('authors', [])
                 }
-                for p in sota_papers[:20]
+                for p in sota_papers[:30]
             ]
             
             return {'validation_results': validation_results}
@@ -295,17 +295,17 @@ class PaperRankingSkill(BaseSkill):
     """
     Skill de selección de top-K papers para análisis profundo (CrossValidation).
 
-    Recibe los N papers recuperados (típ. 20) y selecciona los top-10
+    Recibe los N papers recuperados (típ. 30) y selecciona los top-20
     según el criterio elegido por el usuario:
 
     - 'citations'   : Ordena por número de citas desc (determinista, sin LLM).
     - 'similarity'  : Ordena por similitud coseno con el paper del usuario
                       (requiere que PaperClusteringSkill ya haya corrido).
     - 'llm'         : Pide al LLM que puntúe la relevancia subjetiva de
-                      cada paper y selecciona los 10 mejor valorados.
+                      cada paper y selecciona los 20 mejor valorados.
     """
 
-    TOP_K = 10
+    TOP_K = 20
 
     def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
         sota_papers = context.get('sota_papers', [])

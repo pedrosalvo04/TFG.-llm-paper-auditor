@@ -22,10 +22,10 @@ class SotaAnalyzer:
     Pipeline (6 pasos + 2 nuevos):
     1. ThematicCoverageSkill    – identifica subtemas y áreas técnicas
     2. QueryGenerationSkill     – genera queries de búsqueda
-    3. SemanticScholarSearchSkill – recupera hasta 20 papers
+    3. SemanticScholarSearchSkill – recupera hasta 30 papers
     3b. PaperClusteringSkill    – clustering semántico + similitud vs usuario
-    3c. PaperRankingSkill       – selecciona top-10 por criterio configurable
-    4. CrossValidationSkill     – validación cruzada sobre el top-10
+    3c. PaperRankingSkill       – selecciona top-20 por criterio configurable
+    4. CrossValidationSkill     – validación cruzada sobre el top-20
     """
 
     def __init__(self):
@@ -52,11 +52,11 @@ class SotaAnalyzer:
 
         Args:
             paper_text: Texto completo del paper a analizar.
-            ranking_criterion: Criterio para seleccionar el top-10 que se analiza
+            ranking_criterion: Criterio para seleccionar el top-20 que se analiza
                 en profundidad. Valores válidos:
-                - 'citations'  : top-10 por número de citas (default).
-                - 'similarity' : top-10 por similitud coseno con el paper del usuario.
-                - 'llm'        : top-10 según score de relevancia subjetiva del LLM.
+                - 'citations'  : top-20 por número de citas (default).
+                - 'similarity' : top-20 por similitud coseno con el paper del usuario.
+                - 'llm'        : top-20 según score de relevancia subjetiva del LLM.
 
         Returns:
             Diccionario con resultados completos del análisis, incluyendo
