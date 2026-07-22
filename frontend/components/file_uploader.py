@@ -78,14 +78,14 @@ def extract_text_from_file(uploaded_file):
             
     return st.session_state.get('md_text')
 
-def run_audit(md_text, criteria_mode="neurips", criteria_text=None, iteration=None):
+def run_audit(md_text, criteria_mode="neurips", criteria_text=None):
     """Ejecuta el proceso de auditoría sobre el texto proporcionado"""
     if not md_text:
         st.error("⚠️ No hay texto para auditar.")
         return None
 
     # Determinar el mensaje de estado
-    status_label = f"🧠 Analizando el documento (Iteración {iteration}/9)..." if iteration is not None else "🧠 Analizando el documento..."
+    status_label = "🧠 Analizando el documento..."
     
     # Auditar con logs de progreso
     with st.status(status_label, expanded=True) as status:
@@ -151,7 +151,7 @@ def run_audit(md_text, criteria_mode="neurips", criteria_text=None, iteration=No
             status.update(label="✅ Análisis completado", state="complete", expanded=False)
             st.success("✅ Análisis completado")
 
-            # --- NUEVO: Guardar automáticamente en el escritorio ---
+            # --- Guardar automáticamente en el escritorio ---
             try:
                 from frontend.components.audit_results import generate_report
                 from frontend.utils.scoring import get_checklist_health
@@ -166,13 +166,8 @@ def run_audit(md_text, criteria_mode="neurips", criteria_text=None, iteration=No
                     os.makedirs(save_dir)
                 
                 base_name = os.path.splitext(st.session_state.archivo_actual)[0]
-                
-                if iteration is not None:
-                    filename_md = f"determinismo_gemini_basico_{base_name}_iter_{iteration}.md"
-                    filename_pdf = f"determinismo_gemini_basico_{base_name}_iter_{iteration}.pdf"
-                else:
-                    filename_md = f"auditoria_gemini_basico_{base_name}.md"
-                    filename_pdf = f"auditoria_gemini_basico_{base_name}.pdf"
+                filename_md = f"auditoria_gemini_basico_{base_name}.md"
+                filename_pdf = f"auditoria_gemini_basico_{base_name}.pdf"
                 
                 # Guardar reporte Markdown
                 save_path_md = os.path.join(save_dir, filename_md)

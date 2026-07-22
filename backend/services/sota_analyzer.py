@@ -1,5 +1,5 @@
 """Servicio de análisis del Estado del Arte (SOTA) - Refactorizado con Skills"""
-from typing import Dict, Any
+from typing import Dict, Any, List
 from backend.common.llm_client import LLMClient
 from backend.common.config import SOTA_CONFIG
 from backend.common.logger import get_logger
@@ -105,28 +105,15 @@ class SotaAnalyzer:
         
         final_results = dict(cached_validation)
         
-        # Filtrar para devolver solo los del top-10 inicial (ranked_papers)
+        # Reordenar y filtrar para devolver los papers en el orden exacto de ranked_papers
         ranked_papers = context.get('ranked_papers', [])
-        ranked_titles_lower = [p['title'].lower().strip() for p in ranked_papers]
-        
-        def is_ranked(t):
-            t_omit = t.lower().strip()
-            for rt in ranked_titles_lower:
-                if t_omit in rt or rt in t_omit:
-                    return True
-            return False
-
-        final_results['papers_analizados'] = [
-            p for p in final_results.get('papers_analizados', []) if is_ranked(p.get('titulo', ''))
-        ]
-        final_results['papers_omitidos'] = [
-            p for p in final_results.get('papers_omitidos', []) if is_ranked(p.get('titulo', ''))
-        ]
+        ordered_data = self._filter_and_order_results(cached_validation, ranked_papers)
+        final_results['papers_analizados'] = ordered_data['papers_analizados']
+        final_results['papers_omitidos'] = ordered_data['papers_omitidos']
 
         # Metadata
         thematic_data = context.get('thematic_data', {})
         sota_papers = context.get('sota_papers', [])
-        ranked_papers = context.get('ranked_papers', [])
         search_queries = context.get('search_queries', [])
 
         final_results["metadata"] = {
@@ -174,27 +161,14 @@ class SotaAnalyzer:
         ranking_result = self.ranking_skill.execute(context)
         context.update(ranking_result)
 
-        # Paso 4: Validación cruzada (YA NO ES NECESARIO REEJECUTAR)
-        # Reutilizamos los resultados originales y filtramos localmente para respuesta instantánea.
+        # Paso 4: Reutilizar validación cruzada cacheada y reordenar por el nuevo criterio
         cached_validation = context.get('cached_validation', {})
         final_results = dict(cached_validation)
         
         ranked_papers = context.get('ranked_papers', [])
-        ranked_titles_lower = [p['title'].lower().strip() for p in ranked_papers]
-        
-        def is_ranked(t):
-            t_omit = t.lower().strip()
-            for rt in ranked_titles_lower:
-                if t_omit in rt or rt in t_omit:
-                    return True
-            return False
-
-        final_results['papers_analizados'] = [
-            p for p in final_results.get('papers_analizados', []) if is_ranked(p.get('titulo', ''))
-        ]
-        final_results['papers_omitidos'] = [
-            p for p in final_results.get('papers_omitidos', []) if is_ranked(p.get('titulo', ''))
-        ]
+        ordered_data = self._filter_and_order_results(cached_validation, ranked_papers)
+        final_results['papers_analizados'] = ordered_data['papers_analizados']
+        final_results['papers_omitidos'] = ordered_data['papers_omitidos']
 
         # Reconstruir Metadata
         thematic_data = context.get('thematic_data', {})
@@ -237,3 +211,53 @@ class SotaAnalyzer:
 
         logger.info("✅ Re-análisis SOTA completado exitosamente")
         return final_results
+
+    def _filter_and_order_results(
+        self,
+        cached_validation: Dict[str, Any],
+        ranked_papers: List[Dict[str, Any]]
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        """
+        Filtra y reordena 'papers_analizados' y 'papers_omitidos' siguiendo
+        estrictamente la secuencia de 'ranked_papers' (según el criterio de ordenación elegido).
+        """
+        val_analizados = cached_validation.get('papers_analizados', [])
+        val_omitidos = cached_validation.get('papers_omitidos', [])
+
+        ordered_analizados = []
+        ordered_omitidos = []
+
+        for rp in ranked_papers:
+            rp_title = rp.get('title', '').lower().strip()
+            if not rp_title:
+                continue
+
+            # Buscar en analizados
+            found_analizado = False
+            for p in val_analizados:
+                t = p.get('titulo', '').lower().strip()
+                if rp_title in t or t in rp_title:
+                    ordered_analizados.append(p)
+                    found_analizado = True
+                    break
+
+            if not found_analizado:
+                ordered_analizados.append({
+                    "titulo": rp.get('title'),
+                    "año": rp.get('year'),
+                    "citas": rp.get('citationCount', 0),
+                    "url": rp.get('url', 'N/A'),
+                    "autores": rp.get('authors', [])
+                })
+
+            # Buscar en omitidos
+            for p in val_omitidos:
+                t = p.get('titulo', '').lower().strip()
+                if rp_title in t or t in rp_title:
+                    ordered_omitidos.append(p)
+                    break
+
+        return {
+            'papers_analizados': ordered_analizados,
+            'papers_omitidos': ordered_omitidos
+        }

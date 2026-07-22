@@ -168,6 +168,15 @@ class SemanticScholarSearchSkill(BaseSkill):
                     timeout=15
                 )
                 
+                if response.status_code == 403 and "x-api-key" in headers:
+                    self.log_execution("⚠️ API Key de Semantic Scholar rechazada (403). Reintentando sin API Key...", level="warning")
+                    response = requests.get(
+                        SEMANTIC_SCHOLAR_BASE_URL,
+                        params=params,
+                        headers={},
+                        timeout=15
+                    )
+                
                 if response.status_code == 200:
                     data = response.json().get("data", [])
                     self.log_execution(f"Encontrados: {len(data)} papers")

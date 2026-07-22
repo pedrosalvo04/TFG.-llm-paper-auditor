@@ -83,6 +83,8 @@ if can_run:
             
         if st.session_state.get('last_file_hash') != current_file_hash:
             st.session_state.resultado = None
+            if 'sota_results' in st.session_state:
+                del st.session_state.sota_results
             st.session_state.last_file_hash = current_file_hash
 
         md_text = extract_text_from_file(uploaded_file)
@@ -94,23 +96,11 @@ if can_run:
             st.session_state.audit_in_progress = False
             st.rerun()
         else:
-            col_btn1, col_btn2 = st.columns(2)
-            with col_btn1:
-                if st.button("🔄 Nueva Auditoría / Forzar Recálculo"):
-                    st.session_state.resultado = None
-                    st.rerun()
-            with col_btn2:
-                if st.button("🔄 Ejecutar Prueba de Determinismo (9 iteraciones)"):
-                    st.session_state.audit_in_progress = True
-                    progress_bar = st.progress(0, text="Iniciando prueba de determinismo...")
-                    
-                    for i in range(1, 10):
-                        progress_bar.progress(i / 9.0, text=f"⏳ Ejecutando iteración {i} de 9...")
-                        run_audit(md_text, criteria_mode, criteria_text, iteration=i)
-                        
-                    st.session_state.audit_in_progress = False
-                    progress_bar.empty()
-                    st.success("✅ ¡9 iteraciones completadas con éxito y guardadas en el escritorio!")
+            if st.button("🔄 Nueva Auditoría / Forzar Recálculo"):
+                st.session_state.resultado = None
+                if 'sota_results' in st.session_state:
+                    del st.session_state.sota_results
+                st.rerun()
 
             # 6. Renderizar Resultados (Modo individual)
             if st.session_state.get('resultado'):
@@ -121,6 +111,9 @@ if can_run:
                 else:
                     # Mostrar tabla visual
                     puntuacion = render_audit_results(resultado, uploaded_file)
+                    
+                    # Renderizar sección de análisis del Estado del Arte (SOTA)
+                    render_sota_analysis(md_text)
                     
                     st.markdown("---")
                     st.subheader("📄 Descargar Informe")
