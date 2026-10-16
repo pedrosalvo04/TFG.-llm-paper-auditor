@@ -15,12 +15,10 @@ def render_sota_analysis(md_text: str):
     st.subheader("📚 State of the Art Validation (SOTA)")
 
     if "sota_results" not in st.session_state:
-        st.info("By default, the system selects the top-10 papers based on citation count. You can change this priority after the initial analysis.")
+        st.info("The system retrieves and analyzes the 20 most cited relevant papers from Semantic Scholar.")
         if st.button("Run Literature Analysis", type="primary"):
             with st.spinner("Connecting to Semantic Scholar and validating bibliography..."):
-                resultado_sota = st.session_state.sota_analyzer.analyze_sota(
-                    md_text, ranking_criterion="citations"
-                )
+                resultado_sota = st.session_state.sota_analyzer.analyze_sota(md_text)
                 st.session_state.sota_results = resultado_sota
             st.rerun()
     else:
@@ -46,94 +44,45 @@ def render_sota_analysis(md_text: str):
         if clustering.get("diversity_score") is not None:
             _render_clustering_section(papers_analizados, clustering)
 
-        # --- Selector de criterio de ranking y filtros (Dentro de los resultados) ---
-        st.markdown("#### ⚙️ Top-10 Selection Criterion & Filters")
-        st.caption("Change how the top-10 papers are selected and filter by thematic cluster.")
-        
-        criterion_map = {
-            "📈 Citations": "citations",
-            "🧬 Cosine Similarity": "similarity",
-            "🤖 LLM Relevance": "llm",
-        }
-        
-        current_crit = resultado_sota.get("ranking_criterion", "citations")
-        current_cluster = meta.get("target_cluster_id", "all")
-        
-        idx = 0
-        keys = list(criterion_map.keys())
-        for i, k in enumerate(keys):
-            if criterion_map[k] == current_crit:
-                idx = i
-                break
-
-        cluster_summary = clustering.get("cluster_summary", {})
-        
-        cluster_options = ["All Clusters"]
-        cluster_map = {"All Clusters": "all"}
-        for cid, info in cluster_summary.items():
-            label = f"{info.get('emoji', '📁')} {info.get('label', f'Cluster {cid}')}"
-            cluster_options.append(label)
-            cluster_map[label] = str(cid)
-
-        cluster_idx = 0
-        for i, opt in enumerate(cluster_options):
-            if cluster_map[opt] == str(current_cluster):
-                cluster_idx = i
-                break
-
-        col1, col2 = st.columns(2)
-        with col1:
-            criterion_label = st.selectbox(
-                "Ranking strategy:",
-                options=keys,
-                index=idx,
-            )
-            selected_crit = criterion_map[criterion_label]
-
-        with col2:
-            cluster_label = st.selectbox(
-                "Filter by Cluster:",
-                options=cluster_options,
-                index=cluster_idx,
-            )
-            selected_cluster = cluster_map[cluster_label]
-
-        # Auto-update logic
-        if selected_crit != current_crit or selected_cluster != str(current_cluster):
-            with st.spinner(f"Re-analyzing using '{selected_crit}' and cluster filter..."):
-                new_resultado = st.session_state.sota_analyzer.update_ranking_and_reanalyze(selected_crit, selected_cluster)
-                st.session_state.sota_results = new_resultado
-            st.rerun()
-
-        # Tooltip explicativo según criterio seleccionado
-        _criterion_tooltips = {
-            "citations": "ℹ️ Papers with the highest citation count are prioritised. Fast and deterministic.",
-            "similarity": "ℹ️ Papers whose abstract is most semantically similar to yours (cosine similarity on embeddings).",
-            "llm": "ℹ️ The LLM scores each paper's relevance to your research (0–10) and picks the top-10. Slower but most contextual.",
-        }
-        st.caption(_criterion_tooltips[selected_crit])
-
         st.markdown("<br>", unsafe_allow_html=True)
-        
-        n_rec = meta.get("total_papers_recuperados", "?")
-        n_ana = meta.get("total_papers_analizados", "?")
-        
         st.info(
-            f"📊 **Analysis Scope:** Retrieved **{n_rec}** candidates from Semantic Scholar. "
-            f"Currently displaying in-depth analysis for the top **{n_ana}** papers, "
-            f"filtered and ranked by **{selected_crit}**."
+            f"📊 **Analysis Scope:** Evaluated **{len(papers_analizados)}** relevant papers retrieved from Semantic Scholar, ordered by citation count."
         )
 
         # --- Conclusión ---
         st.markdown("### 📝 Conclusion")
         st.info(resultado_sota.get("conclusion_sota", ""))
 
-        # --- Papers omitidos ---
+        # --- Papers analizados y omitidos ---
         df_papers = pd.DataFrame(papers_analizados)
-        if not df_papers.empty and papers_omitidos:
-            _render_missing_papers(df_papers, papers_omitidos, año_paper_estudiado, clustering)
-        elif not papers_omitidos:
-            st.success("✅ No significant omissions detected in your bibliography.")
+        if not df_papers.empty:
+            if papers_omitidos:
+                _render_missing_papers(df_papers, papers_omitidos, año_paper_estudiado, clustering)
+            else:
+                st.success("✅ No significant omissions detected in your bibliography.")
+            
+            with st.expander(f"📋 View All {len(df_papers)} Evaluated SOTA Papers (Ordered by Citations)", expanded=False):
+                df_display = df_papers.copy()
+                if "authors_display" not in df_display.columns:
+                    df_display["authors_display"] = df_display["autores"].apply(
+                        lambda x: (
+                            ", ".join([a.get("name", "") for a in x[:2]]) + (" et al." if len(x) > 2 else "")
+                            if isinstance(x, list)
+                            else "N/A"
+                        )
+                    )
+                if "title" not in df_display.columns:
+                    df_display.rename(
+                        columns={"titulo": "title", "año": "year", "citas": "citationCount"}, inplace=True
+                    )
+                
+                titulos_omitidos = {p["titulo"].lower().strip() for p in papers_omitidos}
+                df_display["Status"] = df_display["title"].apply(
+                    lambda t: "⚠️ Omitted (Not cited)" if any(o in t.lower().strip() or t.lower().strip() in o for o in titulos_omitidos) else "✅ Cited in manuscript"
+                )
+                df_table = df_display[["title", "year", "citationCount", "Status", "authors_display"]].copy()
+                df_table.columns = ["Title", "Year", "Citations", "Bibliographic Status", "Authors"]
+                st.dataframe(df_table, use_container_width=True, hide_index=True)
 
 
 # ---------------------------------------------------------------------------

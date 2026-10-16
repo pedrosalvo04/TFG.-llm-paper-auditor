@@ -55,25 +55,14 @@ graph TD
         CL --> CLC["🌈 Diversity Score"]
     end
 
-    subgraph "3c. Ranking y Filtrado"
-        G & CLB --> R["🎯 PaperRankingSkill"]
-        R --> RA["📋 Top-10 Papers Seleccionados"]
-    end
-
-    subgraph "4. Análisis de Deficiencias"
-        A & C & RA --> H["📉 CoverageGapAnalysisSkill"]
-        PE -. "3. gap_analysis.md" .-> H
-        H --> I["🚩 Gaps de Cobertura Detectados"]
-    end
-
-    subgraph "5. Validación y Recomendación"
-        A & RA & I --> J["🔬 CrossValidationSkill"]
+    subgraph "4. Validación y Recomendación"
+        A & G --> J["🔬 CrossValidationSkill"]
         PE -. "4. cross_validation.md" .-> J
         J --> K["✅ Resultados de Validación"]
-        K --> L["✨ Papers Omitidos y Conclusiones"]
+        K --> L["✨ 20 Papers Analizados y Omitidos (Ordenados por Citas)"]
     end
 
-    CLB & CLC --> M["🎨 Dashboard SOTA (Caché de Re-análisis Rápido)"]
+    CLB & CLC --> M["🎨 Dashboard SOTA"]
     L --> M
 ```
 
@@ -82,13 +71,9 @@ graph TD
 ### ⏱️ Cronología de Ejecución
 1. **`1. thematic.md`**: Identifica de qué trata el paper.
 2. **`2. query_generation.md`**: Traduce temas a términos de búsqueda técnica.
-3. **Llamada API SS**: Recupera candidatos reales de la web científica.
+3. **Llamada API SS**: Recupera candidatos reales (hasta 20) ordenados por número de citas.
 4. **`PaperClusteringSkill`**: Embebe abstracts, calcula similitud coseno, agrupa por clusters usando KMeans y nombra descriptivamente con el LLM.
-5. **`PaperRankingSkill`**: Selecciona el "Top-10" usando el criterio elegido (Citas, Similitud o LLM) y permite filtrar por un clúster específico.
-6. **`3. gap_analysis.md`**: Compara la bibliografía y el texto del autor con los temas técnicos extraídos en la Fase 1.
-7. **`4. cross_validation.md`**: Cruza TODOS los resultados de búsqueda (hasta 20) con el paper para cachear resultados, y luego filtra la salida final para mostrar solo las omisiones del top-10 seleccionado.
-
-*Nota: La arquitectura permite **Re-análisis en Caché**. Si el usuario cambia el criterio de ranking o el clúster desde la UI, el sistema salta directamente al paso 5 recuperando los datos en memoria, actualizándose instantáneamente (ahorra ~15-20s).*
+5. **`4. cross_validation.md`**: Cruza los 20 papers recuperados con el manuscrito y sus referencias, identificando omisiones bibliográficas y ordenándolas por citas.
 
 ---
 
@@ -156,43 +141,20 @@ Esta fase es **completamente local** (no requiere LLM ni API externa) y se ejecu
     - `user_similarities` (Similitud coseno exacta de cada paper contra el texto del usuario).
 - **Tecnología**: `sentence-transformers` + `scikit-learn` + LLM (para Nombrado).
 
-### 3c. Ranking y Filtrado Temático (`PaperRankingSkill`)
-Reduce el universo total recuperado (ej. 20 papers) a los N (Top-10) más relevantes sobre los que se hará el análisis crítico profundo.
-
-- **Inputs**: `sota_papers`, `ranking_criterion`, `target_cluster_id`.
-- **Proceso**:
-    1. **Filtrado**: Si el usuario seleccionó un clúster específico, elimina temporalmente el resto de papers.
-    2. **Ranking**: Ordena los papers resultantes bajo uno de 3 criterios:
-       - **Citas (`citations`)**: Criterio por defecto determinista. Mayor impacto.
-       - **Similitud Coseno (`similarity`)**: Usa el `user_similarity` calculado en el paso anterior.
-       - **Relevancia LLM (`llm`)**: Hace una llamada adicional al LLM para que actúe como "Peer Reviewer" y puntúe de 0 a 10 cada paper.
-- **Outputs**: `ranked_papers` (Top-10).
-- **Tecnología**: Lógica Python / LLM (opcional).
-
-### 4. Análisis de Gaps (`CoverageGapAnalysisSkill`)
-Identifica debilidades en la revisión de literatura del autor.
-
-- **Inputs**:
-    - `paper_text` (Texto completo).
-    - `thematic_data` (JSON de la Fase 1).
-    - `3. gap_analysis.md` (Plantilla para análisis de deficiencias bibliográficas).
-- **Proceso**: El agente revisa la sección de "Related Work" y las citas del paper original para identificar qué subtemas técnicos no están suficientemente respaldados bibliográficamente.
-- **Outputs**: `coverage_gaps` (Áreas débiles identificadas).
-- **Modelo**: `Gemini 3.1 Flash Lite`.
-
-### 5. Validación Cruzada (`CrossValidationSkill`)
+### 4. Validación Cruzada (`CrossValidationSkill`)
 El "juez final" que decide qué papers del SOTA real faltan en el artículo.
 
 - **Inputs**:
     - `paper_text` (Texto original y referencias).
-    - `sota_papers` (Resultados de Semantic Scholar de la Fase 3).
-    - `coverage_gaps` (Gaps detectados en la Fase 4).
+    - `sota_papers` (Resultados de Semantic Scholar de la Fase 3, hasta 20 papers ordenados por citas).
     - `4. cross_validation.md` (Plantilla para validación cruzada final).
 - **Proceso**:
-    - Compara los títulos y abstracts de **todos los papers encontrados (hasta 20)** contra el texto completo del manuscrito analizado.
-    - Filtra falsos positivos (papers que sí están citados pero con nombres ligeramente distintos).
-    - Genera una justificación técnica de por qué cada paper omitido es relevante.
-    - **Filtrado final**: Extrae del caché únicamente las validaciones correspondientes al top-10 actual (`ranked_papers`) para enviarlas a la interfaz gráfica.
+    - Compara los títulos y abstracts de **todos los papers encontrados (hasta 20)** contra el texto completo del manuscrito analizado y sus referencias.
+    - Filtra falsos positivos (papers que sí están citados pero con nombres ligeramente distintos o el propio manuscrito).
+    - Genera una justificación técnica de por qué cada paper omitido es relevante y en qué sección encaja.
+    - Devuelve todos los papers evaluados (hasta 20) y las omisiones ordenadas por número de citas.
+- **Outputs**: `validation_results` (Papers analizados, papers omitidos, conclusión final).
+- **Modelo**: `Gemini 3.1 Flash Lite`.
 - **Outputs**: `validation_results` (Papers omitidos, nivel de cobertura, conclusión final).
 - **Modelo**: `Gemini 3.1 Flash Lite`.
 
